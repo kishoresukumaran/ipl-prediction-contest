@@ -163,14 +163,16 @@ export function calculateAllPlayerPoints(
     return b.correctPredictions - a.correctPredictions;
   });
 
-  // Assign tied ranks: players with same points get same rank
+  // Assign dense ranks: ties share rank, next rank increments by 1
+  let currentRank = 1;
   results.forEach((r, i) => {
     if (i === 0) {
       r.rank = 1;
     } else if (r.totalPoints === results[i - 1].totalPoints) {
       r.rank = results[i - 1].rank;
     } else {
-      r.rank = i + 1;
+      currentRank++;
+      r.rank = currentRank;
     }
   });
 
