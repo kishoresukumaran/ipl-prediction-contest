@@ -32,11 +32,10 @@ export function WeeklyPointsChart({ data }: { data: WeeklyData[] }) {
                   .sort((a, b) => (b.value as number || 0) - (a.value as number || 0));
                 const items = highlighted
                   ? sorted.filter(p => p.dataKey === highlighted)
-                  : sorted.slice(0, 10);
-                const remaining = highlighted ? 0 : Math.max(0, sorted.length - 10);
+                  : sorted;
                 return (
-                  <div className="bg-slate-800 border border-white/10 rounded-lg p-2.5 text-xs text-white shadow-xl">
-                    <p className="font-bold mb-1.5">Week of {label}</p>
+                  <div className="bg-slate-800 border border-white/10 rounded-lg p-2.5 text-xs text-white shadow-xl max-h-[70vh] overflow-y-auto">
+                    <p className="font-bold mb-1.5 sticky top-0 bg-slate-800 pb-1">Week of {label}</p>
                     {items.map(item => (
                       <div key={item.dataKey as string} className="flex items-center gap-2 py-0.5">
                         <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
@@ -44,7 +43,6 @@ export function WeeklyPointsChart({ data }: { data: WeeklyData[] }) {
                         <span className="ml-auto font-bold">{item.value}</span>
                       </div>
                     ))}
-                    {remaining > 0 && <p className="text-slate-500 mt-1">+{remaining} more</p>}
                   </div>
                 );
               }}
