@@ -3,6 +3,7 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useState } from 'react';
 import { PARTICIPANTS } from '@/lib/constants';
+import { useChartTheme } from '@/hooks/useChartTheme';
 
 interface FormData {
   matchId: number;
@@ -10,6 +11,7 @@ interface FormData {
 }
 
 export function FormChart({ data }: { data: FormData[] }) {
+  const chartTheme = useChartTheme();
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>(
     PARTICIPANTS.slice(0, 5).map(p => p.id)
   );
@@ -32,7 +34,7 @@ export function FormChart({ data }: { data: FormData[] }) {
             className={`text-[10px] px-2 py-0.5 rounded-full transition-all ${
               selectedPlayers.includes(p.id)
                 ? 'text-black font-bold'
-                : 'bg-white/5 text-slate-500 hover:bg-white/10'
+                : 'bg-[var(--app-surface)] text-[var(--app-text-tertiary)] hover:bg-[var(--app-surface-alt)]'
             }`}
             style={selectedPlayers.includes(p.id) ? { backgroundColor: p.avatar_color } : {}}
           >
@@ -44,11 +46,11 @@ export function FormChart({ data }: { data: FormData[] }) {
       <div className="w-full h-[350px]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-            <XAxis dataKey="matchId" stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} />
-            <YAxis domain={[0, 100]} stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} unit="%" />
+            <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+            <XAxis dataKey="matchId" stroke={chartTheme.axis} tick={{ fontSize: 11 }} />
+            <YAxis domain={[0, 100]} stroke={chartTheme.axis} tick={{ fontSize: 11 }} unit="%" />
             <Tooltip
-              contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: 11 }}
+              contentStyle={{ backgroundColor: chartTheme.tooltipBg, border: `1px solid ${chartTheme.tooltipBorder}`, borderRadius: '8px', color: chartTheme.tooltipText, fontSize: 11 }}
               labelFormatter={(v) => `After Match #${v}`}
               formatter={(value) => [`${Number(value).toFixed(1)}%`, '']}
             />
@@ -76,5 +78,5 @@ export function FormChart({ data }: { data: FormData[] }) {
 }
 
 function EmptyState() {
-  return <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">No form data yet</div>;
+  return <div className="flex items-center justify-center h-[300px] text-[var(--app-text-secondary)] text-sm">No form data yet</div>;
 }

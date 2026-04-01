@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -34,15 +36,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-[#1a1040] text-white">
-        <TooltipProvider>
-          <main className="flex-1 pb-20 overflow-x-hidden">
-            {children}
-          </main>
-          <BottomNav />
-          <Analytics />
-        </TooltipProvider>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`} suppressHydrationWarning>
+      <body className="min-h-full flex flex-col text-[var(--app-text)]">
+        <ThemeProvider>
+          <TooltipProvider>
+            <ThemeToggle />
+            <main className="flex-1 pb-20 overflow-x-hidden">
+              {children}
+            </main>
+            <BottomNav />
+            <Analytics />
+          </TooltipProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

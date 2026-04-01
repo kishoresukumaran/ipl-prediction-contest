@@ -36,11 +36,11 @@ function TeamBadge({ team }: { team: string }) {
 function MatchCard({ match, isDoubleHeader }: { match: Match; isDoubleHeader: boolean }) {
   return (
     <Link href={`/matches/${match.id}`}>
-      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 hover:bg-white/[0.08] hover:border-white/20 transition-all group">
+      <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4 hover:bg-[var(--app-surface-hover)] hover:border-[var(--app-border-strong)] transition-all group">
         {/* Top row: Match number + badges + date */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500 font-mono">#{match.id}</span>
+            <span className="text-xs text-[var(--app-text-tertiary)] font-mono">#{match.id}</span>
             {match.is_power_match && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400 text-[10px] font-bold">
                 <Zap className="h-2.5 w-2.5" />
@@ -60,14 +60,14 @@ function MatchCard({ match, isDoubleHeader }: { match: Match; isDoubleHeader: bo
               </span>
             )}
           </div>
-          <ChevronRight className="h-4 w-4 text-slate-600 group-hover:text-slate-400 transition-colors" />
+          <ChevronRight className="h-4 w-4 text-[var(--app-text-tertiary)] group-hover:text-[var(--app-text-secondary)] transition-colors" />
         </div>
 
         {/* Teams */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <TeamBadge team={match.home_team} />
-            <span className="text-slate-500 text-sm font-medium">vs</span>
+            <span className="text-[var(--app-text-tertiary)] text-sm font-medium">vs</span>
             <TeamBadge team={match.away_team} />
           </div>
           {match.is_completed && match.winner && (
@@ -79,7 +79,7 @@ function MatchCard({ match, isDoubleHeader }: { match: Match; isDoubleHeader: bo
         </div>
 
         {/* Bottom row: date, time, venue */}
-        <div className="flex items-center gap-4 text-xs text-slate-400">
+        <div className="flex items-center gap-4 text-xs text-[var(--app-text-secondary)]">
           <span className="inline-flex items-center gap-1">
             <Calendar className="h-3 w-3" />
             {new Date(match.match_date + 'T00:00:00').toLocaleDateString('en-US', {
@@ -162,7 +162,7 @@ export default function MatchesPage() {
       {/* Header */}
       <div className="flex items-center gap-3">
         <Calendar className="h-7 w-7 text-indigo-400" />
-        <h1 className="text-2xl font-extrabold text-white">Match Center</h1>
+        <h1 className="text-2xl font-extrabold text-[var(--app-text)]">Match Center</h1>
       </div>
 
       {/* Filter Tabs */}
@@ -174,13 +174,13 @@ export default function MatchesPage() {
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
               activeTab === tab.id
                 ? 'bg-indigo-500/30 text-indigo-300 border border-indigo-400/30'
-                : 'bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10'
+                : 'bg-[var(--app-surface)] text-[var(--app-text-secondary)] border border-[var(--app-border)] hover:bg-[var(--app-surface-alt)]'
             }`}
           >
             {tab.label}
             <span
               className={`px-1.5 py-0.5 rounded-full text-[10px] ${
-                activeTab === tab.id ? 'bg-indigo-500/30' : 'bg-white/10'
+                activeTab === tab.id ? 'bg-indigo-500/30' : 'bg-[var(--app-surface-alt)]'
               }`}
             >
               {tab.count}
@@ -192,7 +192,7 @@ export default function MatchesPage() {
       {/* Match List */}
       <div className="space-y-3">
         {filtered.length === 0 ? (
-          <div className="text-center py-12 text-slate-400">
+          <div className="text-center py-12 text-[var(--app-text-secondary)]">
             <Calendar className="h-12 w-12 mx-auto mb-3 opacity-30" />
             <p className="text-sm">No matches found</p>
           </div>

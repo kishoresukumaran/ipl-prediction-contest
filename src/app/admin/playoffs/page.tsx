@@ -118,14 +118,14 @@ export default function AdminPlayoffsPage() {
       case 'final':
         return 'border-yellow-500 text-yellow-400';
       default:
-        return 'border-slate-500 text-slate-400';
+        return 'border-[var(--admin-border)] text-[var(--app-text-secondary)]';
     }
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <p className="text-slate-400">Loading...</p>
+        <p className="text-[var(--app-text-secondary)]">Loading...</p>
       </div>
     );
   }
@@ -133,24 +133,24 @@ export default function AdminPlayoffsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Playoff Matches</h1>
-        <p className="text-slate-400 mt-1">Add qualifier, eliminator, and final matches</p>
+        <h1 className="text-2xl font-bold text-[var(--app-text)]">Playoff Matches</h1>
+        <p className="text-[var(--app-text-secondary)] mt-1">Add qualifier, eliminator, and final matches</p>
       </div>
 
       {/* Add New Playoff Match */}
-      <Card className="bg-slate-800/60 border-slate-700">
+      <Card className="bg-[var(--admin-surface)] border-[var(--admin-border)]">
         <CardHeader>
-          <CardTitle className="text-white text-lg">Add Playoff Match</CardTitle>
+          <CardTitle className="text-[var(--app-text)] text-lg">Add Playoff Match</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleCreate} className="space-y-4">
             {/* Match Type */}
             <div className="space-y-2">
-              <Label className="text-slate-300">Match Type</Label>
+              <Label className="text-[var(--app-text-secondary)]">Match Type</Label>
               <select
                 value={matchType}
                 onChange={(e) => setMatchType(e.target.value)}
-                className="w-full h-12 px-3 rounded-md bg-slate-700 border border-slate-600 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-12 px-3 rounded-md bg-[var(--admin-input-bg)] border border-[var(--admin-border)] text-[var(--app-text)] text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 {PLAYOFF_TYPES.map((type) => (
                   <option key={type.value} value={type.value}>
@@ -163,22 +163,22 @@ export default function AdminPlayoffsPage() {
             {/* Date and Time */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-slate-300">Date</Label>
+                <Label className="text-[var(--app-text-secondary)]">Date</Label>
                 <Input
                   type="date"
                   value={matchDate}
                   onChange={(e) => setMatchDate(e.target.value)}
                   required
-                  className="bg-slate-700 border-slate-600 text-white h-12 [color-scheme:dark]"
+                  className="bg-[var(--admin-input-bg)] border-[var(--admin-border)] text-[var(--app-text)] h-12 [color-scheme:dark]"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-300">Start Time</Label>
+                <Label className="text-[var(--app-text-secondary)]">Start Time</Label>
                 <Input
                   type="time"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
-                  className="bg-slate-700 border-slate-600 text-white h-12 [color-scheme:dark]"
+                  className="bg-[var(--admin-input-bg)] border-[var(--admin-border)] text-[var(--app-text)] h-12 [color-scheme:dark]"
                 />
               </div>
             </div>
@@ -186,12 +186,12 @@ export default function AdminPlayoffsPage() {
             {/* Teams */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-slate-300">Home Team</Label>
+                <Label className="text-[var(--app-text-secondary)]">Home Team</Label>
                 <select
                   value={homeTeam}
                   onChange={(e) => setHomeTeam(e.target.value)}
                   required
-                  className="w-full h-12 px-3 rounded-md bg-slate-700 border border-slate-600 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full h-12 px-3 rounded-md bg-[var(--admin-input-bg)] border border-[var(--admin-border)] text-[var(--app-text)] text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="">Select team</option>
                   {teamOptions.map((team) => (
@@ -202,12 +202,12 @@ export default function AdminPlayoffsPage() {
                 </select>
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-300">Away Team</Label>
+                <Label className="text-[var(--app-text-secondary)]">Away Team</Label>
                 <select
                   value={awayTeam}
                   onChange={(e) => setAwayTeam(e.target.value)}
                   required
-                  className="w-full h-12 px-3 rounded-md bg-slate-700 border border-slate-600 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full h-12 px-3 rounded-md bg-[var(--admin-input-bg)] border border-[var(--admin-border)] text-[var(--app-text)] text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="">Select team</option>
                   {teamOptions.map((team) => (
@@ -221,13 +221,13 @@ export default function AdminPlayoffsPage() {
 
             {/* Venue */}
             <div className="space-y-2">
-              <Label className="text-slate-300">Venue</Label>
+              <Label className="text-[var(--app-text-secondary)]">Venue</Label>
               <Input
                 type="text"
                 value={venue}
                 onChange={(e) => setVenue(e.target.value)}
                 placeholder="e.g., Narendra Modi Stadium, Ahmedabad"
-                className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 h-12"
+                className="bg-[var(--admin-input-bg)] border-[var(--admin-border)] text-[var(--app-text)] placeholder:text-[var(--app-text-secondary)] h-12"
               />
             </div>
 
@@ -242,16 +242,16 @@ export default function AdminPlayoffsPage() {
         </CardContent>
       </Card>
 
-      <Separator className="bg-slate-700" />
+      <Separator className="bg-[var(--admin-border)]" />
 
       {/* Existing Playoff Matches */}
       <div>
-        <h2 className="text-lg font-semibold text-white mb-3">
+        <h2 className="text-lg font-semibold text-[var(--app-text)] mb-3">
           Existing Playoff Matches ({matches.length})
         </h2>
 
         {matches.length === 0 && (
-          <p className="text-slate-400 text-sm">No playoff matches added yet.</p>
+          <p className="text-[var(--app-text-secondary)] text-sm">No playoff matches added yet.</p>
         )}
 
         <div className="space-y-3">
@@ -262,10 +262,10 @@ export default function AdminPlayoffsPage() {
             return (
               <Card
                 key={match.id}
-                className={`border-slate-700 ${
+                className={`border-[var(--admin-border)] ${
                   match.is_completed
-                    ? 'bg-slate-800/40 border-green-900/50'
-                    : 'bg-slate-800/50'
+                    ? 'bg-[var(--admin-surface)]/40 border-green-900/50'
+                    : 'bg-[var(--admin-surface)]/50'
                 }`}
               >
                 <CardContent className="py-4">
@@ -278,7 +278,7 @@ export default function AdminPlayoffsPage() {
                         {getPlayoffTypeLabel(match.match_type)}
                       </Badge>
                       <div>
-                        <p className="text-white font-medium">
+                        <p className="text-[var(--app-text)] font-medium">
                           <span style={{ color: homeTeamConfig?.color }}>
                             {match.home_team}
                           </span>
@@ -287,7 +287,7 @@ export default function AdminPlayoffsPage() {
                             {match.away_team}
                           </span>
                         </p>
-                        <p className="text-slate-400 text-sm">
+                        <p className="text-[var(--app-text-secondary)] text-sm">
                           {match.match_date} at {match.start_time}
                           {match.venue && match.venue !== 'TBD' && (
                             <span> - {match.venue}</span>
@@ -303,7 +303,7 @@ export default function AdminPlayoffsPage() {
                       )}
                       <Badge
                         variant="outline"
-                        className="border-slate-600 text-slate-400"
+                        className="border-[var(--admin-border)] text-[var(--app-text-secondary)]"
                       >
                         #{match.id}
                       </Badge>

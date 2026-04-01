@@ -4,8 +4,10 @@ import { useState } from 'react';
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend } from 'recharts';
 import { PARTICIPANTS } from '@/lib/constants';
 import { PlayerPointsBreakdown } from '@/lib/types';
+import { useChartTheme } from '@/hooks/useChartTheme';
 
 export function HeadToHeadChart({ leaderboard }: { leaderboard: PlayerPointsBreakdown[] }) {
+  const chartTheme = useChartTheme();
   const [player1, setPlayer1] = useState(PARTICIPANTS[0]?.id || '');
   const [player2, setPlayer2] = useState(PARTICIPANTS[1]?.id || '');
 
@@ -39,7 +41,7 @@ export function HeadToHeadChart({ leaderboard }: { leaderboard: PlayerPointsBrea
         >
           {PARTICIPANTS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
-        <span className="text-slate-400 self-center text-sm">vs</span>
+        <span className="text-[var(--app-text-secondary)] self-center text-sm">vs</span>
         <select
           value={player2}
           onChange={e => setPlayer2(e.target.value)}
@@ -52,35 +54,35 @@ export function HeadToHeadChart({ leaderboard }: { leaderboard: PlayerPointsBrea
       {/* Stats comparison */}
       <div className="grid grid-cols-3 gap-2 mb-4 text-center text-sm">
         <div className="text-blue-400 font-bold">{p1Data.participantName}</div>
-        <div className="text-slate-500">vs</div>
+        <div className="text-[var(--app-text-tertiary)]">vs</div>
         <div className="text-red-400 font-bold">{p2Data.participantName}</div>
 
         <div className="text-blue-300">{p1Data.totalPoints}</div>
-        <div className="text-slate-500 text-xs">Points</div>
+        <div className="text-[var(--app-text-tertiary)] text-xs">Points</div>
         <div className="text-red-300">{p2Data.totalPoints}</div>
 
         <div className="text-blue-300">{p1Data.accuracy.toFixed(1)}%</div>
-        <div className="text-slate-500 text-xs">Accuracy</div>
+        <div className="text-[var(--app-text-tertiary)] text-xs">Accuracy</div>
         <div className="text-red-300">{p2Data.accuracy.toFixed(1)}%</div>
 
         <div className="text-blue-300">{p1Data.longestStreak}</div>
-        <div className="text-slate-500 text-xs">Best Streak</div>
+        <div className="text-[var(--app-text-tertiary)] text-xs">Best Streak</div>
         <div className="text-red-300">{p2Data.longestStreak}</div>
 
         <div className="text-blue-300">{p1Data.correctPredictions}/{p1Data.totalPredictions}</div>
-        <div className="text-slate-500 text-xs">Correct</div>
+        <div className="text-[var(--app-text-tertiary)] text-xs">Correct</div>
         <div className="text-red-300">{p2Data.correctPredictions}/{p2Data.totalPredictions}</div>
       </div>
 
       <div className="w-full h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart data={radarData}>
-            <PolarGrid stroke="rgba(255,255,255,0.1)" />
-            <PolarAngleAxis dataKey="metric" tick={{ fill: '#94a3b8', fontSize: 11 }} />
+            <PolarGrid stroke={chartTheme.grid} />
+            <PolarAngleAxis dataKey="metric" tick={{ fill: chartTheme.label, fontSize: 11 }} />
             <PolarRadiusAxis tick={false} domain={[0, 100]} />
             <Radar name={p1Data.participantName} dataKey="p1" stroke="#60a5fa" fill="#60a5fa" fillOpacity={0.2} />
             <Radar name={p2Data.participantName} dataKey="p2" stroke="#f87171" fill="#f87171" fillOpacity={0.2} />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
+            <Legend wrapperStyle={{ fontSize: 12, color: chartTheme.tooltipText }} />
           </RadarChart>
         </ResponsiveContainer>
       </div>
@@ -89,5 +91,5 @@ export function HeadToHeadChart({ leaderboard }: { leaderboard: PlayerPointsBrea
 }
 
 function EmptyState() {
-  return <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">No data yet</div>;
+  return <div className="flex items-center justify-center h-[300px] text-[var(--app-text-secondary)] text-sm">No data yet</div>;
 }

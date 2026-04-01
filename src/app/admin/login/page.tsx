@@ -42,19 +42,19 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-      <Card className="w-full max-w-md bg-slate-800/80 border-slate-700">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-[var(--admin-bg-from)] via-[var(--admin-bg-via)] to-[var(--admin-bg-to)]">
+      <Card className="w-full max-w-md bg-[var(--admin-surface)] border-[var(--admin-border)]">
         <CardHeader className="text-center space-y-2">
           <Badge variant="outline" className="w-fit mx-auto border-orange-500 text-orange-400">
             Admin Access
           </Badge>
-          <CardTitle className="text-2xl text-white">IPL Prediction Contest</CardTitle>
-          <p className="text-slate-400 text-sm">Enter admin password to continue</p>
+          <CardTitle className="text-2xl text-[var(--app-text)]">IPL Prediction Contest</CardTitle>
+          <p className="text-[var(--app-text-secondary)] text-sm">Enter admin password to continue</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-slate-300">
+              <Label htmlFor="password" className="text-[var(--app-text-secondary)]">
                 Password
               </Label>
               <Input
@@ -63,7 +63,7 @@ export default function AdminLoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter admin password"
-                className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 h-12"
+                className="bg-[var(--admin-input-bg)] border-[var(--admin-border)] text-[var(--app-text)] placeholder:text-[var(--app-text-secondary)] h-12"
                 autoFocus
               />
             </div>

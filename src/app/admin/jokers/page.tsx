@@ -93,7 +93,7 @@ export default function AdminJokersPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <p className="text-slate-400">Loading...</p>
+        <p className="text-[var(--app-text-secondary)]">Loading...</p>
       </div>
     );
   }
@@ -104,8 +104,8 @@ export default function AdminJokersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Joker Management</h1>
-          <p className="text-slate-400 mt-1">Assign joker cards to participants</p>
+          <h1 className="text-2xl font-bold text-[var(--app-text)]">Joker Management</h1>
+          <p className="text-[var(--app-text-secondary)] mt-1">Assign joker cards to participants</p>
         </div>
         <Badge variant="outline" className="border-yellow-500 text-yellow-400">
           {usedCount}/29 Used
@@ -134,8 +134,8 @@ export default function AdminJokersPage() {
           return (
             <Card
               key={participant.id}
-              className={`border-slate-700 ${
-                jokerMatchId ? 'bg-yellow-900/10 border-yellow-800/30' : 'bg-slate-800/50'
+              className={`border-[var(--admin-border)] ${
+                jokerMatchId ? 'bg-yellow-900/10 border-yellow-800/30' : 'bg-[var(--admin-surface)]/50'
               }`}
             >
               <CardContent className="py-3 px-4">
@@ -148,11 +148,11 @@ export default function AdminJokersPage() {
                     >
                       {participant.name.charAt(0)}
                     </div>
-                    <span className="text-white text-sm font-medium">
+                    <span className="text-[var(--app-text)] text-sm font-medium">
                       {participant.name}
                     </span>
                     {saving === participant.id && (
-                      <span className="text-xs text-slate-400">saving...</span>
+                      <span className="text-xs text-[var(--app-text-secondary)]">saving...</span>
                     )}
                   </div>
 
@@ -167,7 +167,7 @@ export default function AdminJokersPage() {
                           val ? parseInt(val, 10) : null
                         );
                       }}
-                      className="w-full h-10 px-3 rounded-md bg-slate-700 border border-slate-600 text-white text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                      className="w-full h-10 px-3 rounded-md bg-[var(--admin-input-bg)] border border-[var(--admin-border)] text-[var(--app-text)] text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
                     >
                       <option value="">Not used</option>
                       {matches.map((m) => (
@@ -190,7 +190,7 @@ export default function AdminJokersPage() {
                       >
                         {jokerMatch.home_team}
                       </span>
-                      <span className="text-slate-500">vs</span>
+                      <span className="text-[var(--app-text-tertiary)]">vs</span>
                       <span
                         className="font-semibold px-1.5 py-0.5 rounded"
                         style={{

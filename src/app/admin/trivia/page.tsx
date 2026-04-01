@@ -161,7 +161,7 @@ export default function AdminTriviaPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <p className="text-slate-400">Loading...</p>
+        <p className="text-[var(--app-text-secondary)]">Loading...</p>
       </div>
     );
   }
@@ -169,48 +169,48 @@ export default function AdminTriviaPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Trivia Management</h1>
-        <p className="text-slate-400 mt-1">Create trivia questions and mark correct responses</p>
+        <h1 className="text-2xl font-bold text-[var(--app-text)]">Trivia Management</h1>
+        <p className="text-[var(--app-text-secondary)] mt-1">Create trivia questions and mark correct responses</p>
       </div>
 
       {/* Add New Trivia */}
-      <Card className="bg-slate-800/60 border-slate-700">
+      <Card className="bg-[var(--admin-surface)] border-[var(--admin-border)]">
         <CardHeader>
-          <CardTitle className="text-white text-lg">Add New Trivia Question</CardTitle>
+          <CardTitle className="text-[var(--app-text)] text-lg">Add New Trivia Question</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleCreateTrivia} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-slate-300">Date</Label>
+                <Label className="text-[var(--app-text-secondary)]">Date</Label>
                 <Input
                   type="date"
                   value={newDate}
                   onChange={(e) => setNewDate(e.target.value)}
                   required
-                  className="bg-slate-700 border-slate-600 text-white h-12 [color-scheme:dark]"
+                  className="bg-[var(--admin-input-bg)] border-[var(--admin-border)] text-[var(--app-text)] h-12 [color-scheme:dark]"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-300">Correct Answer</Label>
+                <Label className="text-[var(--app-text-secondary)]">Correct Answer</Label>
                 <Input
                   type="text"
                   value={newAnswer}
                   onChange={(e) => setNewAnswer(e.target.value)}
                   placeholder="Optional"
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 h-12"
+                  className="bg-[var(--admin-input-bg)] border-[var(--admin-border)] text-[var(--app-text)] placeholder:text-[var(--app-text-secondary)] h-12"
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-slate-300">Question</Label>
+              <Label className="text-[var(--app-text-secondary)]">Question</Label>
               <Input
                 type="text"
                 value={newQuestion}
                 onChange={(e) => setNewQuestion(e.target.value)}
                 required
                 placeholder="Enter the trivia question..."
-                className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 h-12"
+                className="bg-[var(--admin-input-bg)] border-[var(--admin-border)] text-[var(--app-text)] placeholder:text-[var(--app-text-secondary)] h-12"
               />
             </div>
             <Button
@@ -224,16 +224,16 @@ export default function AdminTriviaPage() {
         </CardContent>
       </Card>
 
-      <Separator className="bg-slate-700" />
+      <Separator className="bg-[var(--admin-border)]" />
 
       {/* Existing Trivia List */}
       <div>
-        <h2 className="text-lg font-semibold text-white mb-3">
+        <h2 className="text-lg font-semibold text-[var(--app-text)] mb-3">
           Existing Trivia ({triviaList.length})
         </h2>
 
         {triviaList.length === 0 && (
-          <p className="text-slate-400 text-sm">No trivia questions yet.</p>
+          <p className="text-[var(--app-text-secondary)] text-sm">No trivia questions yet.</p>
         )}
 
         <div className="space-y-3">
@@ -246,7 +246,7 @@ export default function AdminTriviaPage() {
             return (
               <Card
                 key={trivia.id}
-                className="bg-slate-800/50 border-slate-700"
+                className="bg-[var(--admin-surface)]/50 border-[var(--admin-border)]"
               >
                 <CardHeader
                   className="cursor-pointer pb-2"
@@ -254,8 +254,8 @@ export default function AdminTriviaPage() {
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-white font-medium">{trivia.question}</p>
-                      <p className="text-slate-400 text-sm mt-1">
+                      <p className="text-[var(--app-text)] font-medium">{trivia.question}</p>
+                      <p className="text-[var(--app-text-secondary)] text-sm mt-1">
                         {trivia.trivia_date}
                         {trivia.correct_answer && (
                           <span className="ml-2 text-green-400">
@@ -271,7 +271,7 @@ export default function AdminTriviaPage() {
                       >
                         {correctCount} correct
                       </Badge>
-                      <span className="text-slate-500">
+                      <span className="text-[var(--app-text-tertiary)]">
                         {isExpanded ? '▲' : '▼'}
                       </span>
                     </div>
@@ -280,7 +280,7 @@ export default function AdminTriviaPage() {
 
                 {isExpanded && (
                   <CardContent className="pt-0">
-                    <Separator className="bg-slate-700 mb-4" />
+                    <Separator className="bg-[var(--admin-border)] mb-4" />
 
                     <div className="flex gap-2 mb-4">
                       <Button
@@ -315,7 +315,7 @@ export default function AdminTriviaPage() {
                             className={`flex items-center gap-2 p-2 rounded-lg border transition-all ${
                               isCorrect
                                 ? 'border-green-500 bg-green-500/10'
-                                : 'border-slate-600 bg-slate-700/30 hover:bg-slate-700/50'
+                                : 'border-[var(--admin-border)] bg-[var(--admin-input-bg)]/30 hover:bg-[var(--admin-input-bg)]/50'
                             }`}
                           >
                             <div
@@ -331,7 +331,7 @@ export default function AdminTriviaPage() {
                               className={`text-sm truncate ${
                                 isCorrect
                                   ? 'text-green-400'
-                                  : 'text-slate-400'
+                                  : 'text-[var(--app-text-secondary)]'
                               }`}
                             >
                               {participant.name}
@@ -370,7 +370,7 @@ export default function AdminTriviaPage() {
                       <Button
                         variant="outline"
                         onClick={() => setExpandedId(null)}
-                        className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                        className="border-[var(--admin-border)] text-[var(--app-text-secondary)] hover:bg-[var(--admin-input-bg)]"
                       >
                         Cancel
                       </Button>

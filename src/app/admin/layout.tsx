@@ -31,8 +31,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (checking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-        <p className="text-slate-400">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[var(--admin-bg-from)] via-[var(--admin-bg-via)] to-[var(--admin-bg-to)]">
+        <p className="text-[var(--app-text-secondary)]">Loading...</p>
       </div>
     );
   }
@@ -46,8 +46,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-      <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur border-b border-slate-700">
+    <div className="min-h-screen bg-gradient-to-b from-[var(--admin-bg-from)] via-[var(--admin-bg-via)] to-[var(--admin-bg-to)]">
+      <header className="sticky top-0 z-50 bg-[var(--admin-header-bg)] backdrop-blur border-b border-[var(--admin-border)]">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/admin">
@@ -60,7 +60,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 variant="ghost"
                 size="sm"
                 onClick={() => router.back()}
-                className="text-slate-400 hover:text-white hover:bg-slate-700"
+                className="text-[var(--app-text-secondary)] hover:text-[var(--app-text)] hover:bg-[var(--admin-input-bg)]"
               >
                 &larr; Back
               </Button>
@@ -68,7 +68,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
           <div className="flex items-center gap-2">
             <Link href="/">
-              <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white hover:bg-slate-700">
+              <Button variant="ghost" size="sm" className="text-[var(--app-text-secondary)] hover:text-[var(--app-text)] hover:bg-[var(--admin-input-bg)]">
                 View Site
               </Button>
             </Link>
@@ -76,7 +76,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               variant="ghost"
               size="sm"
               onClick={handleLogout}
-              className="text-red-400 hover:text-red-300 hover:bg-slate-700"
+              className="text-red-400 hover:text-red-300 hover:bg-[var(--admin-input-bg)]"
             >
               Logout
             </Button>

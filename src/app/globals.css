@@ -81,6 +81,34 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* App semantic tokens — light theme */
+  --app-surface: rgba(0, 0, 0, 0.04);
+  --app-surface-alt: rgba(0, 0, 0, 0.07);
+  --app-surface-hover: rgba(0, 0, 0, 0.09);
+  --app-surface-active: rgba(0, 0, 0, 0.12);
+  --app-text: #1a1040;
+  --app-text-secondary: #475569;
+  --app-text-tertiary: #64748b;
+  --app-border: rgba(0, 0, 0, 0.12);
+  --app-border-strong: rgba(0, 0, 0, 0.2);
+  --app-nav-bg: rgba(255, 255, 255, 0.95);
+  --app-nav-border: rgba(0, 0, 0, 0.1);
+  --app-nav-text: #475569;
+  --app-nav-hover: #1e293b;
+  --app-gradient-from: #f0ecff;
+  --app-gradient-via: #f8f6ff;
+  --app-gradient-to: #ffffff;
+
+  /* Admin semantic tokens — light theme */
+  --admin-bg-from: #f1f5f9;
+  --admin-bg-via: #e2e8f0;
+  --admin-bg-to: #f1f5f9;
+  --admin-surface: rgba(0, 0, 0, 0.04);
+  --admin-surface-alt: rgba(0, 0, 0, 0.06);
+  --admin-border: #cbd5e1;
+  --admin-header-bg: rgba(255, 255, 255, 0.95);
+  --admin-input-bg: #f1f5f9;
 }
 
 .dark {
@@ -115,6 +143,34 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* App semantic tokens — dark theme */
+  --app-surface: rgba(255, 255, 255, 0.05);
+  --app-surface-alt: rgba(255, 255, 255, 0.1);
+  --app-surface-hover: rgba(255, 255, 255, 0.08);
+  --app-surface-active: rgba(255, 255, 255, 0.15);
+  --app-text: #ffffff;
+  --app-text-secondary: #94a3b8;
+  --app-text-tertiary: #64748b;
+  --app-border: rgba(255, 255, 255, 0.1);
+  --app-border-strong: rgba(255, 255, 255, 0.2);
+  --app-nav-bg: rgba(15, 23, 42, 0.95);
+  --app-nav-border: rgba(255, 255, 255, 0.1);
+  --app-nav-text: #94a3b8;
+  --app-nav-hover: #e2e8f0;
+  --app-gradient-from: #1e1b4b;
+  --app-gradient-via: #1a1040;
+  --app-gradient-to: #0f0a2a;
+
+  /* Admin semantic tokens — dark theme */
+  --admin-bg-from: #0f172a;
+  --admin-bg-via: #1e293b;
+  --admin-bg-to: #0f172a;
+  --admin-surface: rgba(255, 255, 255, 0.08);
+  --admin-surface-alt: rgba(255, 255, 255, 0.05);
+  --admin-border: #334155;
+  --admin-header-bg: rgba(15, 23, 42, 0.95);
+  --admin-input-bg: #334155;
 }
 
 @layer base {
@@ -129,13 +185,12 @@
   }
 }
 
-/* Fixed gradient background that doesn't break on scroll */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   z-index: -1;
-  background: radial-gradient(ellipse at top, #1e1b4b 0%, #1a1040 40%, #0f0a2a 100%);
+  background: radial-gradient(ellipse at top, var(--app-gradient-from) 0%, var(--app-gradient-via) 40%, var(--app-gradient-to) 100%);
 }
 
 /* Force visible thin scrollbar on tooltip lists */

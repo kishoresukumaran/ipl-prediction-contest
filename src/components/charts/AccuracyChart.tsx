@@ -1,6 +1,7 @@
 'use client';
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { useChartTheme } from '@/hooks/useChartTheme';
 
 interface AccuracyData {
   id: string;
@@ -11,6 +12,7 @@ interface AccuracyData {
 }
 
 export function AccuracyChart({ data }: { data: AccuracyData[] }) {
+  const chartTheme = useChartTheme();
   if (!data?.length) return <EmptyState />;
 
   const sorted = [...data].sort((a, b) => b.accuracy - a.accuracy);
@@ -22,15 +24,15 @@ export function AccuracyChart({ data }: { data: AccuracyData[] }) {
     <div className="w-full" style={{ height: chartHeight }}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={sorted} layout="vertical" margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-          <XAxis type="number" domain={[0, 100]} stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} unit="%" />
-          <YAxis dataKey="name" type="category" width={90} stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} interval={0} />
+          <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+          <XAxis type="number" domain={[0, 100]} stroke={chartTheme.axis} tick={{ fontSize: 11 }} unit="%" />
+          <YAxis dataKey="name" type="category" width={90} stroke={chartTheme.axis} tick={{ fontSize: 11 }} interval={0} />
           <Tooltip
             content={({ payload }) => {
               if (!payload?.length) return null;
               const d = payload[0].payload as AccuracyData;
               return (
-                <div className="bg-slate-800 border border-white/10 rounded-lg p-2.5 text-xs text-white shadow-xl">
+                <div className="bg-white dark:bg-slate-800 border border-[var(--app-border)] rounded-lg p-2.5 text-xs text-[var(--app-text)] shadow-xl">
                   <p className="font-bold">{d.name} ({d.correct}/{d.total})</p>
                   <p className="text-emerald-400">Accuracy: {d.accuracy.toFixed(1)}%</p>
                 </div>
@@ -61,5 +63,5 @@ function getAccuracyColor(accuracy: number, max: number): string {
 }
 
 function EmptyState() {
-  return <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">No data yet</div>;
+  return <div className="flex items-center justify-center h-[300px] text-[var(--app-text-secondary)] text-sm">No data yet</div>;
 }

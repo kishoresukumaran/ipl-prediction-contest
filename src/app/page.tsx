@@ -52,12 +52,12 @@ function CountdownTimer({ targetDate }: { targetDate: string }) {
         { value: timeLeft.seconds, label: 'Sec' },
       ].map((item) => (
         <div key={item.label} className="flex flex-col items-center">
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 min-w-[48px] text-center">
+          <div className="bg-[var(--app-surface-alt)] backdrop-blur-sm rounded-lg px-3 py-2 min-w-[48px] text-center">
             <span className="text-xl font-bold text-amber-400 tabular-nums">
               {String(item.value).padStart(2, '0')}
             </span>
           </div>
-          <span className="text-[10px] text-slate-400 mt-1">{item.label}</span>
+          <span className="text-[10px] text-[var(--app-text-secondary)] mt-1">{item.label}</span>
         </div>
       ))}
     </div>
@@ -66,10 +66,10 @@ function CountdownTimer({ targetDate }: { targetDate: string }) {
 
 function SkeletonCard() {
   return (
-    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 animate-pulse">
-      <div className="h-4 bg-white/10 rounded w-1/3 mb-3" />
-      <div className="h-8 bg-white/10 rounded w-2/3 mb-2" />
-      <div className="h-4 bg-white/10 rounded w-1/2" />
+    <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4 animate-pulse">
+      <div className="h-4 bg-[var(--app-surface-alt)] rounded w-1/3 mb-3" />
+      <div className="h-8 bg-[var(--app-surface-alt)] rounded w-2/3 mb-2" />
+      <div className="h-4 bg-[var(--app-surface-alt)] rounded w-1/2" />
     </div>
   );
 }
@@ -135,31 +135,31 @@ export default function Home() {
             IPL Prediction
           </span>
           <br />
-          <span className="text-white">League 2026</span>
+          <span className="text-[var(--app-text)]">League 2026</span>
         </h1>
-        <p className="text-slate-400 text-sm">
+        <p className="text-[var(--app-text-secondary)] text-sm">
           {PARTICIPANTS.length} players competing across {totalMatches} matches
         </p>
       </div>
 
       {/* Tournament Progress */}
       {!loading && totalMatches > 0 && (
-        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4">
+        <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-400 font-medium">Tournament Progress</span>
+            <span className="text-xs text-[var(--app-text-secondary)] font-medium">Tournament Progress</span>
             <span className="text-xs text-amber-400 font-bold">
               {completedCount}/{totalMatches} matches
             </span>
           </div>
-          <div className="w-full bg-white/10 rounded-full h-2.5">
+          <div className="w-full bg-[var(--app-surface-alt)] rounded-full h-2.5">
             <div
               className="bg-gradient-to-r from-amber-400 to-orange-500 h-2.5 rounded-full transition-all duration-1000"
               style={{ width: `${progressPct}%` }}
             />
           </div>
           <div className="flex justify-between mt-1.5">
-            <span className="text-[10px] text-slate-500">Started</span>
-            <span className="text-[10px] text-slate-500">{Math.round(progressPct)}% complete</span>
+            <span className="text-[10px] text-[var(--app-text-tertiary)]">Started</span>
+            <span className="text-[10px] text-[var(--app-text-tertiary)]">{Math.round(progressPct)}% complete</span>
           </div>
         </div>
       )}
@@ -182,7 +182,7 @@ export default function Home() {
                 <Calendar className="h-4 w-4 text-indigo-400" />
                 <span className="text-xs font-medium text-indigo-300">Next Match</span>
               </div>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-[var(--app-text-secondary)]">
                 Match #{nextMatch.id}
               </span>
             </div>
@@ -198,7 +198,7 @@ export default function Home() {
                 >
                   {nextMatch.home_team}
                 </span>
-                <span className="text-slate-400 text-xs font-medium">vs</span>
+                <span className="text-[var(--app-text-secondary)] text-xs font-medium">vs</span>
                 <span
                   className="px-3 py-1.5 rounded-lg text-sm font-bold"
                   style={{
@@ -209,10 +209,10 @@ export default function Home() {
                   {nextMatch.away_team}
                 </span>
               </div>
-              <ChevronRight className="h-4 w-4 text-slate-500" />
+              <ChevronRight className="h-4 w-4 text-[var(--app-text-tertiary)]" />
             </div>
 
-            <div className="text-xs text-slate-400 mb-3">
+            <div className="text-xs text-[var(--app-text-secondary)] mb-3">
               <Clock className="inline h-3 w-3 mr-1" />
               {new Date(nextMatch.match_date).toLocaleDateString('en-US', {
                 weekday: 'short',
@@ -220,7 +220,7 @@ export default function Home() {
                 day: 'numeric',
               })}{' '}
               at {matchTimeToIrish(nextMatch.match_date, nextMatch.start_time)}
-              <span className="text-slate-500 ml-1">(Irish Time)</span>
+              <span className="text-[var(--app-text-tertiary)] ml-1">(Irish Time)</span>
             </div>
 
             <CountdownTimer targetDate={matchDateTimeUTC(nextMatch.match_date, nextMatch.start_time).toISOString()} />
@@ -231,13 +231,13 @@ export default function Home() {
       {/* Today's Matches */}
       {!loading && todayMatches.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-[var(--app-text-secondary)] flex items-center gap-2">
             <Star className="h-4 w-4 text-amber-400" />
             Today&apos;s Matches
           </h2>
           {todayMatches.map((match) => (
             <Link key={match.id} href={`/matches/${match.id}`}>
-              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-3 hover:bg-white/10 transition-all">
+              <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-3 hover:bg-[var(--app-surface-alt)] transition-all">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span
@@ -249,7 +249,7 @@ export default function Home() {
                     >
                       {match.home_team}
                     </span>
-                    <span className="text-slate-500 text-xs">vs</span>
+                    <span className="text-[var(--app-text-tertiary)] text-xs">vs</span>
                     <span
                       className="px-2 py-1 rounded text-xs font-bold"
                       style={{
@@ -266,9 +266,9 @@ export default function Home() {
                         {match.winner} won
                       </span>
                     ) : (
-                      <span className="text-xs text-slate-400">{matchTimeToIrish(match.match_date, match.start_time)}</span>
+                      <span className="text-xs text-[var(--app-text-secondary)]">{matchTimeToIrish(match.match_date, match.start_time)}</span>
                     )}
-                    <ChevronRight className="h-4 w-4 text-slate-500" />
+                    <ChevronRight className="h-4 w-4 text-[var(--app-text-tertiary)]" />
                   </div>
                 </div>
               </div>
@@ -292,21 +292,21 @@ export default function Home() {
               {leader.participantName.charAt(0)}
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-bold text-white truncate">{leader.participantName}</h3>
+              <h3 className="text-lg font-bold text-[var(--app-text)] truncate">{leader.participantName}</h3>
               <div className="grid grid-cols-3 gap-2 mt-2">
                 <div className="text-center">
                   <div className="text-lg font-bold text-amber-400">{leader.totalPoints}</div>
-                  <div className="text-[10px] text-slate-400">Points</div>
+                  <div className="text-[10px] text-[var(--app-text-secondary)]">Points</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold text-emerald-400">
                     {leader.accuracy.toFixed(0)}%
                   </div>
-                  <div className="text-[10px] text-slate-400">Accuracy</div>
+                  <div className="text-[10px] text-[var(--app-text-secondary)]">Accuracy</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold text-purple-400">{leader.currentStreak}</div>
-                  <div className="text-[10px] text-slate-400">Streak</div>
+                  <div className="text-[10px] text-[var(--app-text-secondary)]">Streak</div>
                 </div>
               </div>
             </div>
@@ -316,9 +316,9 @@ export default function Home() {
 
       {/* Mini Leaderboard */}
       {!loading && top5.length > 0 && (
-        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4">
+        <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-[var(--app-text-secondary)] flex items-center gap-2">
               <Trophy className="h-4 w-4 text-amber-400" />
               Top 5 Standings
             </h2>
@@ -332,7 +332,7 @@ export default function Home() {
           <div className="space-y-2">
             {top5.map((player, idx) => (
               <Link key={player.participantId} href={`/players/${player.participantId}`}>
-                <div className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-white/5 transition-all">
+                <div className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-[var(--app-surface)] transition-all">
                   <span
                     className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
                       idx === 0
@@ -341,7 +341,7 @@ export default function Home() {
                         ? 'bg-slate-300 text-black'
                         : idx === 2
                         ? 'bg-amber-700 text-white'
-                        : 'bg-white/10 text-slate-400'
+                        : 'bg-[var(--app-surface-alt)] text-[var(--app-text-secondary)]'
                     }`}
                   >
                     {idx + 1}
@@ -353,13 +353,13 @@ export default function Home() {
                     {player.participantName.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium text-white truncate block">
+                    <span className="text-sm font-medium text-[var(--app-text)] truncate block">
                       {player.participantName}
                     </span>
                   </div>
                   <div className="text-right">
                     <span className="text-sm font-bold text-amber-400">{player.totalPoints}</span>
-                    <span className="text-xs text-slate-500 ml-1">pts</span>
+                    <span className="text-xs text-[var(--app-text-tertiary)] ml-1">pts</span>
                   </div>
                 </div>
               </Link>
@@ -370,9 +370,9 @@ export default function Home() {
 
       {/* Recent Results */}
       {!loading && recentResults.length > 0 && (
-        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4">
+        <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-[var(--app-text-secondary)] flex items-center gap-2">
               <Target className="h-4 w-4 text-emerald-400" />
               Recent Results
             </h2>
@@ -386,9 +386,9 @@ export default function Home() {
           <div className="space-y-2">
             {recentResults.map((match) => (
               <Link key={match.id} href={`/matches/${match.id}`}>
-                <div className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-white/5 transition-all">
+                <div className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-[var(--app-surface)] transition-all">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-500 w-6">#{match.id}</span>
+                    <span className="text-xs text-[var(--app-text-tertiary)] w-6">#{match.id}</span>
                     <span
                       className="px-2 py-0.5 rounded text-xs font-bold"
                       style={{
@@ -398,7 +398,7 @@ export default function Home() {
                     >
                       {match.home_team}
                     </span>
-                    <span className="text-slate-600 text-xs">vs</span>
+                    <span className="text-[var(--app-text-tertiary)] text-xs">vs</span>
                     <span
                       className="px-2 py-0.5 rounded text-xs font-bold"
                       style={{
@@ -415,7 +415,7 @@ export default function Home() {
                     >
                       {match.winner}
                     </span>
-                    <ChevronRight className="h-3 w-3 text-slate-600" />
+                    <ChevronRight className="h-3 w-3 text-[var(--app-text-tertiary)]" />
                   </div>
                 </div>
               </Link>
@@ -428,15 +428,15 @@ export default function Home() {
       {!loading && (
         <div className="grid grid-cols-2 gap-3">
           <Link href="/leaderboard">
-            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 text-center hover:bg-white/10 transition-all">
+            <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4 text-center hover:bg-[var(--app-surface-alt)] transition-all">
               <Trophy className="h-6 w-6 text-amber-400 mx-auto mb-2" />
-              <span className="text-sm font-medium text-slate-300">Leaderboard</span>
+              <span className="text-sm font-medium text-[var(--app-text-secondary)]">Leaderboard</span>
             </div>
           </Link>
           <Link href="/players">
-            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 text-center hover:bg-white/10 transition-all">
+            <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4 text-center hover:bg-[var(--app-surface-alt)] transition-all">
               <TrendingUp className="h-6 w-6 text-purple-400 mx-auto mb-2" />
-              <span className="text-sm font-medium text-slate-300">Players</span>
+              <span className="text-sm font-medium text-[var(--app-text-secondary)]">Players</span>
             </div>
           </Link>
         </div>

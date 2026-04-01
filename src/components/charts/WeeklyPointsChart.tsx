@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { PARTICIPANTS } from '@/lib/constants';
+import { useChartTheme } from '@/hooks/useChartTheme';
 
 interface WeeklyData {
   week: string;
@@ -10,6 +11,7 @@ interface WeeklyData {
 }
 
 export function WeeklyPointsChart({ data }: { data: WeeklyData[] }) {
+  const chartTheme = useChartTheme();
   const [highlighted, setHighlighted] = useState<string | null>(null);
 
   if (!data?.length) return <EmptyState />;
@@ -19,11 +21,11 @@ export function WeeklyPointsChart({ data }: { data: WeeklyData[] }) {
       <div className="w-full h-[400px]">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 5, right: 5, left: -10, bottom: 20 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-            <XAxis dataKey="week" stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 10 }} />
-            <YAxis stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} label={{ value: 'Points gained this week', angle: -90, position: 'insideLeft', fill: 'rgba(255,255,255,0.5)', fontSize: 11, offset: 15 }} />
+            <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+            <XAxis dataKey="week" stroke={chartTheme.axis} tick={{ fontSize: 10 }} />
+            <YAxis stroke={chartTheme.axis} tick={{ fontSize: 11 }} label={{ value: 'Points gained this week', angle: -90, position: 'insideLeft', fill: chartTheme.label, fontSize: 11, offset: 15 }} />
             <Tooltip
-              contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: 11 }}
+              contentStyle={{ backgroundColor: chartTheme.tooltipBg, border: `1px solid ${chartTheme.tooltipBorder}`, borderRadius: '8px', color: chartTheme.tooltipText, fontSize: 11 }}
               itemSorter={(item) => -(item.value as number || 0)}
               content={({ label, payload }) => {
                 if (!payload?.length) return null;
@@ -34,7 +36,7 @@ export function WeeklyPointsChart({ data }: { data: WeeklyData[] }) {
                   ? sorted.filter(p => p.dataKey === highlighted)
                   : sorted;
                 return (
-                  <div className="bg-slate-800 border border-white/10 rounded-lg text-xs text-white shadow-xl p-2.5">
+                  <div className="bg-white dark:bg-slate-800 border border-[var(--app-border)] rounded-lg text-xs text-[var(--app-text)] shadow-xl p-2.5">
                     <p className="font-bold mb-1.5">Week of {label}</p>
                     <div className="grid grid-cols-2 gap-x-4">
                       {items.map(item => (
@@ -72,11 +74,11 @@ export function WeeklyPointsChart({ data }: { data: WeeklyData[] }) {
             onMouseLeave={() => setHighlighted(null)}
             onClick={() => setHighlighted(prev => prev === p.id ? null : p.id)}
             className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded transition-all ${
-              highlighted === p.id ? 'bg-white/10 scale-105' : highlighted ? 'opacity-40' : ''
+              highlighted === p.id ? 'bg-[var(--app-surface-alt)] scale-105' : highlighted ? 'opacity-40' : ''
             }`}
           >
             <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: p.avatar_color }} />
-            <span className="text-slate-300">{p.name}</span>
+            <span className="text-[var(--app-text-secondary)]">{p.name}</span>
           </button>
         ))}
       </div>
@@ -85,5 +87,5 @@ export function WeeklyPointsChart({ data }: { data: WeeklyData[] }) {
 }
 
 function EmptyState() {
-  return <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">No weekly data yet</div>;
+  return <div className="flex items-center justify-center h-[300px] text-[var(--app-text-secondary)] text-sm">No weekly data yet</div>;
 }

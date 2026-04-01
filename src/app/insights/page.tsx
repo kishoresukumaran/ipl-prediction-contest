@@ -79,14 +79,14 @@ export default function InsightsPage() {
   }, []);
 
   if (loading) return <LoadingSkeleton />;
-  if (!data) return <div className="p-4 text-center text-slate-400">Failed to load insights data</div>;
+  if (!data) return <div className="p-4 text-center text-[var(--app-text-secondary)]">Failed to load insights data</div>;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
       <h1 className="text-2xl font-bold mb-1 bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
         Insights & Analytics
       </h1>
-      <p className="text-sm text-slate-400 mb-4">Deep dive into prediction patterns and performance</p>
+      <p className="text-sm text-[var(--app-text-secondary)] mb-4">Deep dive into prediction patterns and performance</p>
 
       {/* Tab navigation */}
       <div className="flex gap-1 overflow-x-auto pb-2 mb-6 -mx-4 px-4 scrollbar-hide">
@@ -97,7 +97,7 @@ export default function InsightsPage() {
             className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
               activeTab === tab.id
                 ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
-                : 'bg-white/5 text-slate-400 hover:bg-white/10'
+                : 'bg-[var(--app-surface)] text-[var(--app-text-secondary)] hover:bg-[var(--app-surface-alt)]'
             }`}
           >
             <tab.icon className="h-3.5 w-3.5" />
@@ -166,10 +166,10 @@ export default function InsightsPage() {
 
         {activeTab === 'behavior' && (
           <>
-            <ChartCard title="Contrarian Picks" subtitle="Who goes against the crowd, and does it work?">
+            <ChartCard title="Contrarian Picks" subtitle="Who goes against the crowd, and does it work? Either a lone genius ahead of their time, or just confidently wrong. The chart will tell.">
               <ContrarianChart data={data.contrarianData} />
             </ChartCard>
-            <ChartCard title="Crowd Wisdom" subtitle="Does the majority always pick the winner?">
+            <ChartCard title="Crowd Wisdom" subtitle="Does the majority always pick the winner? Spoiler: not always. Sometimes 29 people can be spectacularly wrong together.">
               <CrowdWisdomChart data={data.crowdWisdom} />
             </ChartCard>
           </>
@@ -211,9 +211,9 @@ export default function InsightsPage() {
 
 function ChartCard({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-4">
-      <h3 className="text-base font-semibold text-white mb-0.5">{title}</h3>
-      <p className="text-xs text-slate-400 mb-4">{subtitle}</p>
+    <div className="bg-[var(--app-surface)] backdrop-blur-sm rounded-xl border border-[var(--app-border)] p-4">
+      <h3 className="text-base font-semibold text-[var(--app-text)] mb-0.5">{title}</h3>
+      <p className="text-xs text-[var(--app-text-secondary)] mb-4">{subtitle}</p>
       {children}
     </div>
   );
@@ -222,17 +222,17 @@ function ChartCard({ title, subtitle, children }: { title: string; subtitle: str
 function LoadingSkeleton() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-      <div className="h-8 w-48 bg-white/5 rounded animate-pulse" />
-      <div className="h-4 w-64 bg-white/5 rounded animate-pulse" />
+      <div className="h-8 w-48 bg-[var(--app-surface)] rounded animate-pulse" />
+      <div className="h-4 w-64 bg-[var(--app-surface)] rounded animate-pulse" />
       <div className="flex gap-2 overflow-hidden">
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="h-8 w-24 bg-white/5 rounded-full animate-pulse shrink-0" />
+          <div key={i} className="h-8 w-24 bg-[var(--app-surface)] rounded-full animate-pulse shrink-0" />
         ))}
       </div>
       {[...Array(3)].map((_, i) => (
-        <div key={i} className="bg-white/5 rounded-xl p-4 space-y-3">
-          <div className="h-5 w-40 bg-white/5 rounded animate-pulse" />
-          <div className="h-[300px] bg-white/5 rounded animate-pulse" />
+        <div key={i} className="bg-[var(--app-surface)] rounded-xl p-4 space-y-3">
+          <div className="h-5 w-40 bg-[var(--app-surface)] rounded animate-pulse" />
+          <div className="h-[300px] bg-[var(--app-surface)] rounded animate-pulse" />
         </div>
       ))}
     </div>

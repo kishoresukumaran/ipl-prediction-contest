@@ -1,9 +1,11 @@
 'use client';
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { PlayerPointsBreakdown } from '@/lib/types';
+import { useChartTheme } from '@/hooks/useChartTheme';
 
 export function PointsGapChart({ data }: { data: PlayerPointsBreakdown[] }) {
+  const chartTheme = useChartTheme();
   if (!data?.length || data.length < 2) return <EmptyState />;
 
   const sorted = [...data].sort((a, b) => b.totalPoints - a.totalPoints);
@@ -22,18 +24,18 @@ export function PointsGapChart({ data }: { data: PlayerPointsBreakdown[] }) {
     <div className="w-full" style={{ height: chartHeight }}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 30, left: 0, bottom: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-          <XAxis type="number" stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} label={{ value: 'Points behind leader', position: 'bottom', fill: 'rgba(255,255,255,0.5)', fontSize: 11, offset: 0 }} />
-          <YAxis dataKey="name" type="category" width={90} stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} interval={0} />
+          <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+          <XAxis type="number" stroke={chartTheme.axis} tick={{ fontSize: 11 }} label={{ value: 'Points behind leader', position: 'bottom', fill: chartTheme.label, fontSize: 11, offset: 0 }} />
+          <YAxis dataKey="name" type="category" width={90} stroke={chartTheme.axis} tick={{ fontSize: 11 }} interval={0} />
           <Tooltip
             content={({ payload }) => {
               if (!payload?.length) return null;
               const d = payload[0].payload as { name: string; gap: number; points: number };
               return (
-                <div className="bg-slate-800 border border-white/10 rounded-lg p-2.5 text-xs text-white shadow-xl">
+                <div className="bg-white dark:bg-slate-800 border border-[var(--app-border)] rounded-lg p-2.5 text-xs text-[var(--app-text)] shadow-xl">
                   <p className="font-bold">{d.name}</p>
                   <p className="text-amber-400">{d.points} total points</p>
-                  <p className="text-slate-300">{d.gap} points behind leader</p>
+                  <p className="text-[var(--app-text-secondary)]">{d.gap} points behind leader</p>
                 </div>
               );
             }}
@@ -53,5 +55,5 @@ export function PointsGapChart({ data }: { data: PlayerPointsBreakdown[] }) {
 }
 
 function EmptyState() {
-  return <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">No data yet</div>;
+  return <div className="flex items-center justify-center h-[300px] text-[var(--app-text-secondary)] text-sm">No data yet</div>;
 }

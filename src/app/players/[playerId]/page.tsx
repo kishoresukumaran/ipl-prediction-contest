@@ -67,10 +67,10 @@ function StatCard({
   icon: React.ElementType;
 }) {
   return (
-    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-3 text-center">
+    <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-3 text-center">
       <Icon className={`h-4 w-4 mx-auto mb-1 ${color}`} />
       <div className={`text-lg font-bold ${color}`}>{value}</div>
-      <div className="text-[10px] text-slate-400">{label}</div>
+      <div className="text-[10px] text-[var(--app-text-secondary)]">{label}</div>
     </div>
   );
 }
@@ -104,7 +104,7 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
   if (!player) {
     return (
       <div className="px-4 py-6 max-w-2xl mx-auto text-center">
-        <p className="text-slate-400">Player not found</p>
+        <p className="text-[var(--app-text-secondary)]">Player not found</p>
         <Link href="/players" className="text-indigo-400 hover:text-indigo-300 text-sm mt-2 inline-block">
           Back to players
         </Link>
@@ -130,17 +130,17 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
       {/* Back Button */}
       <Link
         href="/players"
-        className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm text-[var(--app-text-secondary)] hover:text-[var(--app-text)] transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         All Players
       </Link>
 
       {/* Player Header */}
-      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-5 text-center">
+      <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-5 text-center">
         <div className="relative inline-block mb-3">
           <div
-            className="w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold mx-auto ring-2 ring-white/20"
+            className="w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold mx-auto ring-2 ring-[var(--app-border-strong)]"
             style={{ backgroundColor: player.avatarColor }}
           >
             {player.participantName.charAt(0)}
@@ -161,8 +161,8 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
             </div>
           )}
         </div>
-        <h1 className="text-2xl font-extrabold text-white">{player.participantName}</h1>
-        <p className="text-sm text-slate-400 mt-1">
+        <h1 className="text-2xl font-extrabold text-[var(--app-text)]">{player.participantName}</h1>
+        <p className="text-sm text-[var(--app-text-secondary)] mt-1">
           Rank #{player.rank} of {allPlayers.length}
         </p>
       </div>
@@ -182,15 +182,15 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
       </div>
 
       {/* Points Breakdown */}
-      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4">
-        <h2 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+      <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4">
+        <h2 className="text-sm font-semibold text-[var(--app-text-secondary)] mb-3 flex items-center gap-2">
           <BarChart3 className="h-4 w-4 text-indigo-400" />
           Points Breakdown
         </h2>
 
         {/* Points Bar */}
         {player.totalPoints > 0 && (
-          <div className="flex h-4 rounded-full overflow-hidden bg-white/5 mb-3">
+          <div className="flex h-4 rounded-full overflow-hidden bg-[var(--app-surface)] mb-3">
             {pointsSegments
               .filter((s) => s.value > 0)
               .map((seg) => (
@@ -208,7 +208,7 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
           {pointsSegments.map((seg) => (
             <div key={seg.label} className="flex items-center gap-2 py-1">
               <span className={`w-2.5 h-2.5 rounded-full ${seg.color}`} />
-              <span className="text-xs text-slate-400 flex-1">{seg.label}</span>
+              <span className="text-xs text-[var(--app-text-secondary)] flex-1">{seg.label}</span>
               <span className={`text-xs font-bold ${seg.textColor}`}>{seg.value}</span>
             </div>
           ))}
@@ -216,8 +216,8 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
       </div>
 
       {/* Joker Status */}
-      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4">
-        <h2 className="text-sm font-semibold text-slate-300 mb-2 flex items-center gap-2">
+      <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4">
+        <h2 className="text-sm font-semibold text-[var(--app-text-secondary)] mb-2 flex items-center gap-2">
           <Zap className="h-4 w-4 text-red-400" />
           Joker Card
         </h2>
@@ -229,17 +229,17 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
             )}
           </div>
         ) : (
-          <span className="text-xs text-slate-500">Not yet played</span>
+          <span className="text-xs text-[var(--app-text-tertiary)]">Not yet played</span>
         )}
       </div>
 
       {/* Team Affinity */}
       {topTeams.length > 0 && (
-        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4">
-          <h2 className="text-sm font-semibold text-slate-300 mb-1 flex items-center gap-2">
+        <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4">
+          <h2 className="text-sm font-semibold text-[var(--app-text-secondary)] mb-1 flex items-center gap-2">
             <span className="text-base">😍</span> The Fanboy
           </h2>
-          <p className="text-[10px] text-slate-500 mb-3">Teams you pick the most</p>
+          <p className="text-[10px] text-[var(--app-text-tertiary)] mb-3">Teams you pick the most</p>
           <div className="space-y-2">
             {topTeams.map((ta) => {
               const maxCount = topTeams[0]?.count || 1;
@@ -247,7 +247,7 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
                 <div key={ta.team} className="flex items-center gap-3">
                   <TeamBadge team={ta.team} />
                   <div className="flex-1">
-                    <div className="flex h-2 rounded-full overflow-hidden bg-white/5">
+                    <div className="flex h-2 rounded-full overflow-hidden bg-[var(--app-surface)]">
                       <div
                         className="rounded-full transition-all"
                         style={{
@@ -257,7 +257,7 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
                       />
                     </div>
                   </div>
-                  <span className="text-xs text-slate-400 w-8 text-right">{ta.count}x</span>
+                  <span className="text-xs text-[var(--app-text-secondary)] w-8 text-right">{ta.count}x</span>
                 </div>
               );
             })}
@@ -267,11 +267,11 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
 
       {/* The Hater - most bet against */}
       {player.hatedTeams?.length > 0 && (
-        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4">
-          <h2 className="text-sm font-semibold text-slate-300 mb-1 flex items-center gap-2">
+        <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4">
+          <h2 className="text-sm font-semibold text-[var(--app-text-secondary)] mb-1 flex items-center gap-2">
             <span className="text-base">😤</span> The Hater
           </h2>
-          <p className="text-[10px] text-slate-500 mb-3">Teams you bet against the most</p>
+          <p className="text-[10px] text-[var(--app-text-tertiary)] mb-3">Teams you bet against the most</p>
           <div className="space-y-2">
             {player.hatedTeams.slice(0, 5).map((ht) => {
               const maxCount = player.hatedTeams[0]?.count || 1;
@@ -279,7 +279,7 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
                 <div key={ht.team} className="flex items-center gap-3">
                   <TeamBadge team={ht.team} />
                   <div className="flex-1">
-                    <div className="flex h-2 rounded-full overflow-hidden bg-white/5">
+                    <div className="flex h-2 rounded-full overflow-hidden bg-[var(--app-surface)]">
                       <div className="rounded-full bg-red-500/70 transition-all" style={{ width: `${(ht.count / maxCount) * 100}%` }} />
                     </div>
                   </div>
@@ -293,19 +293,19 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
 
       {/* Most Profitable Team */}
       {player.profitableTeams?.length > 0 && (
-        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4">
-          <h2 className="text-sm font-semibold text-slate-300 mb-1 flex items-center gap-2">
+        <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4">
+          <h2 className="text-sm font-semibold text-[var(--app-text-secondary)] mb-1 flex items-center gap-2">
             <span className="text-base">💰</span> Most Profitable Team
           </h2>
-          <p className="text-[10px] text-slate-500 mb-3">Which team earned you the most points</p>
+          <p className="text-[10px] text-[var(--app-text-tertiary)] mb-3">Which team earned you the most points</p>
           <div className="space-y-2">
             {player.profitableTeams.slice(0, 5).map((pt, i) => (
               <div key={pt.team} className="flex items-center gap-3">
                 <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                  i === 0 ? 'bg-amber-400 text-black' : 'bg-white/10 text-slate-400'
+                  i === 0 ? 'bg-amber-400 text-black' : 'bg-[var(--app-surface-alt)] text-[var(--app-text-secondary)]'
                 }`}>{i + 1}</span>
                 <TeamBadge team={pt.team} />
-                <span className="text-sm text-white flex-1">{TEAMS[pt.team]?.name}</span>
+                <span className="text-sm text-[var(--app-text)] flex-1">{TEAMS[pt.team]?.name}</span>
                 <span className="text-sm font-bold text-amber-400">+{pt.points} pts</span>
               </div>
             ))}
@@ -314,20 +314,20 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
       )}
 
       {/* Prediction History */}
-      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden">
-        <div className="px-4 py-3 border-b border-white/10">
-          <h2 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+      <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-[var(--app-border)]">
+          <h2 className="text-sm font-semibold text-[var(--app-text-secondary)] flex items-center gap-2">
             <Target className="h-4 w-4 text-emerald-400" />
             Prediction History ({player.predictionHistory.length})
           </h2>
         </div>
-        <div className="max-h-[400px] overflow-y-auto divide-y divide-white/5">
+        <div className="max-h-[400px] overflow-y-auto divide-y divide-[var(--app-border)]">
           {player.predictionHistory.length === 0 ? (
-            <div className="px-4 py-6 text-center text-slate-500 text-sm">No completed matches yet</div>
+            <div className="px-4 py-6 text-center text-[var(--app-text-tertiary)] text-sm">No completed matches yet</div>
           ) : (
             [...player.predictionHistory].reverse().map((ph) => (
               <Link key={ph.matchId} href={`/matches/${ph.matchId}`}>
-                <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-all">
+                <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-[var(--app-surface)] transition-all">
                   <div className="shrink-0">
                     {ph.predictedTeam ? (
                       ph.isCorrect ? (
@@ -336,17 +336,17 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
                         <XCircle className="h-5 w-5 text-red-400" />
                       )
                     ) : (
-                      <Minus className="h-5 w-5 text-slate-600" />
+                      <Minus className="h-5 w-5 text-[var(--app-text-tertiary)]" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-500">#{ph.matchId}</span>
+                      <span className="text-xs text-[var(--app-text-tertiary)]">#{ph.matchId}</span>
                       <TeamBadge team={ph.homeTeam} />
-                      <span className="text-slate-600 text-xs">vs</span>
+                      <span className="text-[var(--app-text-tertiary)] text-xs">vs</span>
                       <TeamBadge team={ph.awayTeam} />
                     </div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">
+                    <div className="text-[10px] text-[var(--app-text-tertiary)] mt-0.5">
                       {new Date(ph.matchDate + 'T00:00:00').toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -355,11 +355,11 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
                   </div>
                   <div className="text-right shrink-0">
                     {ph.predictedTeam ? (
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-[var(--app-text-secondary)]">
                         Picked: <TeamBadge team={ph.predictedTeam} />
                       </span>
                     ) : (
-                      <span className="text-xs text-slate-600 italic">No pick</span>
+                      <span className="text-xs text-[var(--app-text-tertiary)] italic">No pick</span>
                     )}
                   </div>
                 </div>

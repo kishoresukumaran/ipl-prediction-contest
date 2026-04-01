@@ -76,19 +76,19 @@ export default function PlayersPage() {
       {/* Header */}
       <div className="flex items-center gap-3">
         <Users className="h-7 w-7 text-purple-400" />
-        <h1 className="text-2xl font-extrabold text-white">Players</h1>
-        <span className="text-xs text-slate-400 ml-auto">{players?.length || 0} participants</span>
+        <h1 className="text-2xl font-extrabold text-[var(--app-text)]">Players</h1>
+        <span className="text-xs text-[var(--app-text-secondary)] ml-auto">{players?.length || 0} participants</span>
       </div>
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--app-text-tertiary)]" />
         <input
           type="text"
           placeholder="Search players..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-400/50 focus:ring-1 focus:ring-indigo-400/30 transition-all"
+          className="w-full bg-[var(--app-surface)] border border-[var(--app-border)] rounded-xl pl-10 pr-4 py-2.5 text-sm text-[var(--app-text)] placeholder:text-[var(--app-text-tertiary)] focus:outline-none focus:border-indigo-400/50 focus:ring-1 focus:ring-indigo-400/30 transition-all"
         />
       </div>
 
@@ -108,7 +108,7 @@ export default function PlayersPage() {
             className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
               sortField === field
                 ? 'bg-indigo-500/30 text-indigo-300 border border-indigo-400/30'
-                : 'bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10'
+                : 'bg-[var(--app-surface)] text-[var(--app-text-secondary)] border border-[var(--app-border)] hover:bg-[var(--app-surface-alt)]'
             }`}
           >
             {label}
@@ -123,7 +123,7 @@ export default function PlayersPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {filtered.map((player) => (
           <Link key={player.participantId} href={`/players/${player.participantId}`}>
-            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 hover:bg-white/[0.08] hover:border-white/20 transition-all group">
+            <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4 hover:bg-[var(--app-surface-hover)] hover:border-[var(--app-border-strong)] transition-all group">
               <div className="flex items-center gap-3 mb-3">
                 {/* Avatar */}
                 <div
@@ -133,17 +133,17 @@ export default function PlayersPage() {
                   {player.participantName.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-bold text-white truncate">{player.participantName}</h3>
+                  <h3 className="text-sm font-bold text-[var(--app-text)] truncate">{player.participantName}</h3>
                   {/* Rank badge */}
                   <span
                     className={`inline-flex items-center gap-1 text-[10px] font-bold mt-0.5 ${
                       player.rank === 1
                         ? 'text-amber-400'
                         : player.rank === 2
-                        ? 'text-slate-300'
+                        ? 'text-[var(--app-text-secondary)]'
                         : player.rank === 3
                         ? 'text-amber-600'
-                        : 'text-slate-500'
+                        : 'text-[var(--app-text-tertiary)]'
                     }`}
                   >
                     <Trophy className="h-3 w-3" />
@@ -154,21 +154,21 @@ export default function PlayersPage() {
 
               {/* Stats */}
               <div className="grid grid-cols-3 gap-2">
-                <div className="text-center bg-white/5 rounded-lg py-1.5">
+                <div className="text-center bg-[var(--app-surface)] rounded-lg py-1.5">
                   <div className="text-sm font-bold text-amber-400">{player.totalPoints}</div>
-                  <div className="text-[10px] text-slate-500">Points</div>
+                  <div className="text-[10px] text-[var(--app-text-tertiary)]">Points</div>
                 </div>
-                <div className="text-center bg-white/5 rounded-lg py-1.5">
+                <div className="text-center bg-[var(--app-surface)] rounded-lg py-1.5">
                   <div className="text-sm font-bold text-emerald-400">
                     {player.accuracy.toFixed(0)}%
                   </div>
-                  <div className="text-[10px] text-slate-500">Accuracy</div>
+                  <div className="text-[10px] text-[var(--app-text-tertiary)]">Accuracy</div>
                 </div>
-                <div className="text-center bg-white/5 rounded-lg py-1.5">
+                <div className="text-center bg-[var(--app-surface)] rounded-lg py-1.5">
                   <div className="text-sm font-bold text-purple-400">
                     {player.correctPredictions}/{player.totalPredictions - player.correctPredictions}
                   </div>
-                  <div className="text-[10px] text-slate-500">W/L</div>
+                  <div className="text-[10px] text-[var(--app-text-tertiary)]">W/L</div>
                 </div>
               </div>
             </div>
@@ -177,7 +177,7 @@ export default function PlayersPage() {
       </div>
 
       {filtered.length === 0 && (
-        <div className="text-center py-12 text-slate-400">
+        <div className="text-center py-12 text-[var(--app-text-secondary)]">
           <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
           <p className="text-sm">No players found</p>
         </div>

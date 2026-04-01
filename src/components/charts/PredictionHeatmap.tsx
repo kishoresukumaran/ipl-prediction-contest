@@ -14,7 +14,7 @@ export function PredictionHeatmap({ data }: { data: HeatmapData }) {
   const [selected, setSelected] = useState<{ pName: string; matchId: number; text: string } | null>(null);
 
   if (!data?.participants?.length || !data?.matches?.length) {
-    return <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">No data yet</div>;
+    return <div className="flex items-center justify-center h-[300px] text-[var(--app-text-secondary)] text-sm">No data yet</div>;
   }
 
   const sortedParticipants = [...data.participants].sort((a, b) => {
@@ -29,22 +29,22 @@ export function PredictionHeatmap({ data }: { data: HeatmapData }) {
       <div className="flex gap-2 mb-3">
         <button
           onClick={() => setSortBy('accuracy')}
-          className={`text-xs px-3 py-1 rounded-full transition-colors ${sortBy === 'accuracy' ? 'bg-amber-500 text-black' : 'bg-white/10 text-slate-300'}`}
+          className={`text-xs px-3 py-1 rounded-full transition-colors ${sortBy === 'accuracy' ? 'bg-amber-500 text-black' : 'bg-[var(--app-surface-alt)] text-[var(--app-text-secondary)]'}`}
         >
           By Accuracy
         </button>
         <button
           onClick={() => setSortBy('name')}
-          className={`text-xs px-3 py-1 rounded-full transition-colors ${sortBy === 'name' ? 'bg-amber-500 text-black' : 'bg-white/10 text-slate-300'}`}
+          className={`text-xs px-3 py-1 rounded-full transition-colors ${sortBy === 'name' ? 'bg-amber-500 text-black' : 'bg-[var(--app-surface-alt)] text-[var(--app-text-secondary)]'}`}
         >
           By Name
         </button>
       </div>
 
       {selected && (
-        <div className="bg-slate-800 border border-white/10 rounded-lg px-3 py-2 mb-3 flex items-center justify-between text-xs text-white">
+        <div className="bg-white/95 dark:bg-slate-800 border border-[var(--app-border)] rounded-lg px-3 py-2 mb-3 flex items-center justify-between text-xs text-[var(--app-text)]">
           <span>{selected.text}</span>
-          <button onClick={() => setSelected(null)} className="text-slate-400 hover:text-white ml-3">✕</button>
+          <button onClick={() => setSelected(null)} className="text-[var(--app-text-secondary)] hover:text-[var(--app-text)] ml-3">✕</button>
         </div>
       )}
 
@@ -54,7 +54,7 @@ export function PredictionHeatmap({ data }: { data: HeatmapData }) {
           <div className="flex items-center mb-1">
             <div className="w-20 shrink-0" />
             {data.matches.map(m => (
-              <div key={m.id} className="w-6 shrink-0 text-center text-[8px] text-slate-500">
+              <div key={m.id} className="w-6 shrink-0 text-center text-[8px] text-[var(--app-text-tertiary)]">
                 {m.id}
               </div>
             ))}
@@ -63,12 +63,12 @@ export function PredictionHeatmap({ data }: { data: HeatmapData }) {
           {/* Rows */}
           {sortedParticipants.map(p => (
             <div key={p.id} className="flex items-center mb-0.5">
-              <div className="w-20 shrink-0 text-[10px] text-slate-300 truncate pr-1">
+              <div className="w-20 shrink-0 text-[10px] text-[var(--app-text-secondary)] truncate pr-1">
                 {p.name}
               </div>
               {data.matches.map(m => {
                 const pred = data.predictions[p.id]?.[m.id];
-                let bgColor = 'bg-slate-800'; // no prediction
+                let bgColor = 'bg-slate-200 dark:bg-slate-800'; // no prediction
                 if (pred) {
                   if (pred.correct === true) bgColor = 'bg-emerald-500';
                   else if (pred.correct === false) bgColor = 'bg-red-500';
@@ -91,11 +91,11 @@ export function PredictionHeatmap({ data }: { data: HeatmapData }) {
           ))}
 
           {/* Legend */}
-          <div className="flex gap-4 mt-3 text-[10px] text-slate-400">
+          <div className="flex gap-4 mt-3 text-[10px] text-[var(--app-text-secondary)]">
             <span className="flex items-center gap-1"><span className="w-3 h-3 bg-emerald-500 rounded-sm" /> Correct</span>
             <span className="flex items-center gap-1"><span className="w-3 h-3 bg-red-500 rounded-sm" /> Wrong</span>
             <span className="flex items-center gap-1"><span className="w-3 h-3 bg-amber-500/50 rounded-sm" /> Pending</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-slate-800 rounded-sm" /> None</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-slate-200 dark:bg-slate-800 rounded-sm" /> None</span>
           </div>
         </div>
       </div>

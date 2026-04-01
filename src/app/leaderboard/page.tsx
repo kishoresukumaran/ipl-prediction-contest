@@ -47,7 +47,7 @@ function RankBadge({ rank }: { rank: number }) {
     );
   }
   return (
-    <span className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold text-slate-400">
+    <span className="w-8 h-8 rounded-full bg-[var(--app-surface-alt)] flex items-center justify-center text-sm font-bold text-[var(--app-text-secondary)]">
       {rank}
     </span>
   );
@@ -106,11 +106,11 @@ function PodiumCard({ players, rank }: { players: LeaderboardEntry[]; rank: numb
           ))}
         </div>
         {players.length > 1 && <div className="mb-1"><RankBadge rank={rank} /></div>}
-        <h3 className="text-sm font-bold text-white truncate">
+        <h3 className="text-sm font-bold text-[var(--app-text)] truncate">
           {players.map(p => p.participantName).join(', ')}
         </h3>
         <div className="text-lg font-extrabold text-amber-400 mt-1">{first.totalPoints}</div>
-        <div className="text-[10px] text-slate-400">{first.accuracy.toFixed(1)}% accuracy</div>
+        <div className="text-[10px] text-[var(--app-text-secondary)]">{first.accuracy.toFixed(1)}% accuracy</div>
       </div>
     </div>
   );
@@ -129,20 +129,20 @@ function PointsBreakdownRow({ player }: { player: LeaderboardEntry }) {
   ].filter((s) => s.value > 0);
 
   return (
-    <div className="px-4 py-3 bg-white/[0.02] border-t border-white/5">
-      <div className="text-xs text-slate-400 mb-2 font-medium">Points Breakdown</div>
+    <div className="px-4 py-3 bg-[var(--app-surface)] border-t border-[var(--app-border)]">
+      <div className="text-xs text-[var(--app-text-secondary)] mb-2 font-medium">Points Breakdown</div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {segments.map((seg) => (
           <div key={seg.label} className="flex items-center gap-2">
             <span className={`w-2 h-2 rounded-full ${seg.color}`} />
-            <span className="text-xs text-slate-400">{seg.label}</span>
-            <span className="text-xs font-bold text-white ml-auto">{seg.value}</span>
+            <span className="text-xs text-[var(--app-text-secondary)]">{seg.label}</span>
+            <span className="text-xs font-bold text-[var(--app-text)] ml-auto">{seg.value}</span>
           </div>
         ))}
       </div>
       {/* Points bar */}
       {player.totalPoints > 0 && (
-        <div className="mt-2 flex h-2 rounded-full overflow-hidden bg-white/5">
+        <div className="mt-2 flex h-2 rounded-full overflow-hidden bg-[var(--app-surface)]">
           {segments.map((seg) => (
             <div
               key={seg.label}
@@ -232,9 +232,9 @@ export default function LeaderboardPage() {
       {/* Header */}
       <div className="flex items-center gap-3">
         <Trophy className="h-7 w-7 text-amber-400" />
-        <h1 className="text-2xl font-extrabold text-white">Leaderboard</h1>
+        <h1 className="text-2xl font-extrabold text-[var(--app-text)]">Leaderboard</h1>
         {data && (
-          <span className="text-xs text-slate-400 ml-auto">
+          <span className="text-xs text-[var(--app-text-secondary)] ml-auto">
             {data.completedMatches}/{data.totalMatches} matches
           </span>
         )}
@@ -252,25 +252,25 @@ export default function LeaderboardPage() {
       )}
 
       {/* Table */}
-      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden">
+      <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl overflow-hidden">
         {/* Table Header */}
-        <div className="grid grid-cols-[40px_1fr_60px_50px_50px_50px] sm:grid-cols-[40px_1fr_70px_60px_60px_60px_60px] items-center px-3 py-2 bg-white/5 border-b border-white/10 text-[10px] sm:text-xs font-medium text-slate-400">
-          <button onClick={() => handleSort('rank')} className="text-left hover:text-white transition-colors">
+        <div className="grid grid-cols-[40px_1fr_60px_50px_50px_50px] sm:grid-cols-[40px_1fr_70px_60px_60px_60px_60px] items-center px-3 py-2 bg-[var(--app-surface)] border-b border-[var(--app-border)] text-[10px] sm:text-xs font-medium text-[var(--app-text-secondary)]">
+          <button onClick={() => handleSort('rank')} className="text-left hover:text-[var(--app-text)] transition-colors">
             #
           </button>
-          <button onClick={() => handleSort('name')} className="text-left hover:text-white transition-colors">
+          <button onClick={() => handleSort('name')} className="text-left hover:text-[var(--app-text)] transition-colors">
             Player
           </button>
-          <button onClick={() => handleSort('totalPoints')} className="text-right hover:text-white transition-colors">
+          <button onClick={() => handleSort('totalPoints')} className="text-right hover:text-[var(--app-text)] transition-colors">
             Points
           </button>
-          <button onClick={() => handleSort('correctPredictions')} className="text-right hover:text-white transition-colors hidden sm:block">
+          <button onClick={() => handleSort('correctPredictions')} className="text-right hover:text-[var(--app-text)] transition-colors hidden sm:block">
             W/L
           </button>
-          <button onClick={() => handleSort('accuracy')} className="text-right hover:text-white transition-colors">
+          <button onClick={() => handleSort('accuracy')} className="text-right hover:text-[var(--app-text)] transition-colors">
             Acc%
           </button>
-          <button onClick={() => handleSort('currentStreak')} className="text-right hover:text-white transition-colors">
+          <button onClick={() => handleSort('currentStreak')} className="text-right hover:text-[var(--app-text)] transition-colors">
             Strk
           </button>
           <div className="text-right hidden sm:block">Last 5</div>
@@ -283,7 +283,7 @@ export default function LeaderboardPage() {
               onClick={() =>
                 setExpandedId(expandedId === player.participantId ? null : player.participantId)
               }
-              className="w-full grid grid-cols-[40px_1fr_60px_50px_50px_50px] sm:grid-cols-[40px_1fr_70px_60px_60px_60px_60px] items-center px-3 py-2.5 hover:bg-white/5 transition-all border-b border-white/5 text-left"
+              className="w-full grid grid-cols-[40px_1fr_60px_50px_50px_50px] sm:grid-cols-[40px_1fr_70px_60px_60px_60px_60px] items-center px-3 py-2.5 hover:bg-[var(--app-surface)] transition-all border-b border-[var(--app-border)] text-left"
             >
               <div>
                 <RankBadge rank={player.rank || 0} />
@@ -295,19 +295,19 @@ export default function LeaderboardPage() {
                 >
                   {player.participantName.charAt(0)}
                 </div>
-                <span className="text-sm font-medium text-white truncate">
+                <span className="text-sm font-medium text-[var(--app-text)] truncate">
                   {player.participantName}
                 </span>
                 {expandedId === player.participantId ? (
-                  <ChevronUp className="h-3 w-3 text-slate-500 shrink-0" />
+                  <ChevronUp className="h-3 w-3 text-[var(--app-text-tertiary)] shrink-0" />
                 ) : (
-                  <ChevronDown className="h-3 w-3 text-slate-500 shrink-0" />
+                  <ChevronDown className="h-3 w-3 text-[var(--app-text-tertiary)] shrink-0" />
                 )}
               </div>
               <div className="text-right text-sm font-bold text-amber-400">
                 {player.totalPoints}
               </div>
-              <div className="text-right text-xs text-slate-300 hidden sm:block">
+              <div className="text-right text-xs text-[var(--app-text-secondary)] hidden sm:block">
                 {player.correctPredictions}/{player.totalPredictions}
               </div>
               <div className="text-right text-xs text-emerald-400">

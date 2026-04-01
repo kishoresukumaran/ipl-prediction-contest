@@ -183,7 +183,7 @@ export default function AdminPredictionsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <p className="text-slate-400">Loading...</p>
+        <p className="text-[var(--app-text-secondary)]">Loading...</p>
       </div>
     );
   }
@@ -191,22 +191,22 @@ export default function AdminPredictionsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Enter Predictions</h1>
-        <p className="text-slate-400 mt-1">Select a match and enter predictions for all participants</p>
+        <h1 className="text-2xl font-bold text-[var(--app-text)]">Enter Predictions</h1>
+        <p className="text-[var(--app-text-secondary)] mt-1">Select a match and enter predictions for all participants</p>
         <p className="text-xs text-amber-400/70 mt-1">Times are in your local timezone (as shown in WhatsApp)</p>
       </div>
 
       {/* Match Selector */}
-      <Card className="bg-slate-800/60 border-slate-700">
+      <Card className="bg-[var(--admin-surface)] border-[var(--admin-border)]">
         <CardContent className="pt-6">
-          <Label className="text-slate-300 mb-2 block">Select Match</Label>
+          <Label className="text-[var(--app-text-secondary)] mb-2 block">Select Match</Label>
           <select
             value={selectedMatchId ?? ''}
             onChange={(e) => {
               const val = e.target.value;
               if (val) loadPredictions(parseInt(val, 10));
             }}
-            className="w-full h-12 px-3 rounded-md bg-slate-700 border border-slate-600 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="w-full h-12 px-3 rounded-md bg-[var(--admin-input-bg)] border border-[var(--admin-border)] text-[var(--app-text)] text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
           >
             <option value="">-- Select a match --</option>
             {matches.map((m) => (
@@ -222,17 +222,17 @@ export default function AdminPredictionsPage() {
       {/* Predictions Grid */}
       {selectedMatch && (
         <>
-          <Card className="bg-slate-800/60 border-slate-700">
+          <Card className="bg-[var(--admin-surface)] border-[var(--admin-border)]">
             <CardHeader className="pb-2">
-              <CardTitle className="text-white flex items-center gap-3">
+              <CardTitle className="text-[var(--app-text)] flex items-center gap-3">
                 <span style={{ color: homeTeam?.color }} className="font-bold">
                   {selectedMatch.home_team}
                 </span>
-                <span className="text-slate-500">vs</span>
+                <span className="text-[var(--app-text-tertiary)]">vs</span>
                 <span style={{ color: awayTeam?.color }} className="font-bold">
                   {selectedMatch.away_team}
                 </span>
-                <Badge variant="outline" className="border-slate-600 text-slate-400 ml-auto">
+                <Badge variant="outline" className="border-[var(--admin-border)] text-[var(--app-text-secondary)] ml-auto">
                   {selectedMatch.match_date}
                 </Badge>
               </CardTitle>
@@ -247,7 +247,7 @@ export default function AdminPredictionsPage() {
               return (
                 <Card
                   key={participant.id}
-                  className="bg-slate-800/50 border-slate-700"
+                  className="bg-[var(--admin-surface)]/50 border-[var(--admin-border)]"
                 >
                   <CardContent className="py-3 px-4">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -259,7 +259,7 @@ export default function AdminPredictionsPage() {
                         >
                           {participant.name.charAt(0)}
                         </div>
-                        <span className="text-white text-sm font-medium truncate">
+                        <span className="text-[var(--app-text)] text-sm font-medium truncate">
                           {participant.name}
                         </span>
                       </div>
@@ -314,7 +314,7 @@ export default function AdminPredictionsPage() {
                           type="datetime-local"
                           value={pred?.prediction_time || ''}
                           onChange={(e) => handleTimeChange(participant.id, e.target.value)}
-                          className="bg-slate-700 border-slate-600 text-white h-10 text-sm [color-scheme:dark]"
+                          className="bg-[var(--admin-input-bg)] border-[var(--admin-border)] text-[var(--app-text)] h-10 text-sm [color-scheme:dark]"
                           title="Enter time as shown in your WhatsApp (your local timezone)"
                         />
                       </div>
@@ -325,7 +325,7 @@ export default function AdminPredictionsPage() {
             })}
           </div>
 
-          <Separator className="bg-slate-700" />
+          <Separator className="bg-[var(--admin-border)]" />
 
           {/* Bonus Question Responses */}
           {bonusQuestion && (
@@ -338,8 +338,8 @@ export default function AdminPredictionsPage() {
 
               <div className="grid gap-2">
                 {PARTICIPANTS.map((participant) => (
-                  <div key={participant.id} className="flex items-center gap-3 bg-slate-800/40 rounded-lg px-3 py-2">
-                    <span className="text-sm text-slate-300 w-24 truncate">{participant.name}</span>
+                  <div key={participant.id} className="flex items-center gap-3 bg-[var(--admin-surface)]/40 rounded-lg px-3 py-2">
+                    <span className="text-sm text-[var(--app-text-secondary)] w-24 truncate">{participant.name}</span>
                     <div className="flex gap-1 flex-wrap">
                       {(bonusQuestion.options || []).map((opt: string) => (
                         <Button
@@ -347,7 +347,7 @@ export default function AdminPredictionsPage() {
                           size="sm"
                           variant={bonusResponses[participant.id] === opt ? 'default' : 'outline'}
                           onClick={() => setBonusResponses(prev => ({ ...prev, [participant.id]: prev[participant.id] === opt ? '' : opt }))}
-                          className={`h-8 text-xs ${bonusResponses[participant.id] === opt ? 'bg-amber-600 text-white' : 'border-slate-600 text-slate-300 hover:bg-slate-700'}`}
+                          className={`h-8 text-xs ${bonusResponses[participant.id] === opt ? 'bg-amber-600 text-white' : 'border-[var(--admin-border)] text-[var(--app-text-secondary)] hover:bg-[var(--admin-input-bg)]'}`}
                         >
                           {opt}
                         </Button>
@@ -363,11 +363,11 @@ export default function AdminPredictionsPage() {
             </div>
           )}
 
-          <Separator className="bg-slate-700" />
+          <Separator className="bg-[var(--admin-border)]" />
 
           {/* Save All Button */}
           <div className="sticky bottom-4 z-10">
-            <Card className="bg-slate-900/95 border-slate-600 backdrop-blur">
+            <Card className="bg-[var(--admin-header-bg)] border-[var(--admin-border)] backdrop-blur">
               <CardContent className="py-4 flex items-center justify-between">
                 <div>
                   {saveMessage && (

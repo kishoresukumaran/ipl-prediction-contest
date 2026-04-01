@@ -2,8 +2,10 @@
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { PlayerPointsBreakdown } from '@/lib/types';
+import { useChartTheme } from '@/hooks/useChartTheme';
 
 export function BonusBreakdownChart({ data }: { data: PlayerPointsBreakdown[] }) {
+  const chartTheme = useChartTheme();
   if (!data?.length) return <EmptyState />;
 
   const chartData = data
@@ -25,11 +27,11 @@ export function BonusBreakdownChart({ data }: { data: PlayerPointsBreakdown[] })
     <div className="w-full" style={{ height: Math.max(500, chartData.length * 28) }}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-          <XAxis type="number" stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} />
-          <YAxis dataKey="name" type="category" width={90} stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} interval={0} />
-          <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }} />
-          <Legend wrapperStyle={{ fontSize: 11, color: '#94a3b8' }} />
+          <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+          <XAxis type="number" stroke={chartTheme.axis} tick={{ fontSize: 11 }} />
+          <YAxis dataKey="name" type="category" width={90} stroke={chartTheme.axis} tick={{ fontSize: 11 }} interval={0} />
+          <Tooltip contentStyle={{ backgroundColor: chartTheme.tooltipBg, border: `1px solid ${chartTheme.tooltipBorder}`, borderRadius: '8px', color: chartTheme.tooltipText }} />
+          <Legend wrapperStyle={{ fontSize: 11, color: chartTheme.label }} />
           <Bar dataKey="Base" stackId="a" fill="#60a5fa" />
           <Bar dataKey="Power" stackId="a" fill="#f59e0b" />
           <Bar dataKey="Underdog" stackId="a" fill="#34d399" />
@@ -45,5 +47,5 @@ export function BonusBreakdownChart({ data }: { data: PlayerPointsBreakdown[] })
 }
 
 function EmptyState() {
-  return <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">No data yet</div>;
+  return <div className="flex items-center justify-center h-[300px] text-[var(--app-text-secondary)] text-sm">No data yet</div>;
 }

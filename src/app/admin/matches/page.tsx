@@ -154,7 +154,7 @@ export default function AdminMatchesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <p className="text-slate-400">Loading matches...</p>
+        <p className="text-[var(--app-text-secondary)]">Loading matches...</p>
       </div>
     );
   }
@@ -162,8 +162,8 @@ export default function AdminMatchesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Match Management</h1>
-        <p className="text-slate-400 mt-1">Set winners, power matches, underdogs, and bonus questions</p>
+        <h1 className="text-2xl font-bold text-[var(--app-text)]">Match Management</h1>
+        <p className="text-[var(--app-text-secondary)] mt-1">Set winners, power matches, underdogs, and bonus questions</p>
       </div>
 
       <div className="space-y-3">
@@ -176,15 +176,15 @@ export default function AdminMatchesPage() {
           return (
             <Card
               key={match.id}
-              className={`border-slate-700 transition-all ${
-                match.is_completed ? 'bg-slate-800/40 border-green-900/50' : 'bg-slate-800/60'
+              className={`border-[var(--admin-border)] transition-all ${
+                match.is_completed ? 'bg-[var(--admin-surface)]/40 border-green-900/50' : 'bg-[var(--admin-surface)]'
               }`}
             >
               <CardHeader className="cursor-pointer pb-2" onClick={() => handleExpand(match)}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="text-slate-500 text-sm font-mono">#{match.id}</span>
-                    <CardTitle className="text-base text-white">
+                    <span className="text-[var(--app-text-tertiary)] text-sm font-mono">#{match.id}</span>
+                    <CardTitle className="text-base text-[var(--app-text)]">
                       <span style={{ color: homeTeam?.color }}>{match.home_team}</span>
                       {' vs '}
                       <span style={{ color: awayTeam?.color }}>{match.away_team}</span>
@@ -197,24 +197,24 @@ export default function AdminMatchesPage() {
                     {match.is_completed && (
                       <Badge className="bg-green-600/20 text-green-400 border-green-600/30">{match.winner}</Badge>
                     )}
-                    <span className="text-slate-500 text-sm">{match.match_date} {match.start_time}</span>
-                    <span className="text-slate-500">{isExpanded ? '▲' : '▼'}</span>
+                    <span className="text-[var(--app-text-tertiary)] text-sm">{match.match_date} {match.start_time}</span>
+                    <span className="text-[var(--app-text-tertiary)]">{isExpanded ? '▲' : '▼'}</span>
                   </div>
                 </div>
               </CardHeader>
 
               {isExpanded && (
                 <CardContent className="pt-0 space-y-4">
-                  <Separator className="bg-slate-700" />
+                  <Separator className="bg-[var(--admin-border)]" />
 
                   {/* Winner Selection */}
                   <div className="space-y-2">
-                    <Label className="text-slate-300 text-sm font-medium">Winner</Label>
+                    <Label className="text-[var(--app-text-secondary)] text-sm font-medium">Winner</Label>
                     <div className="flex gap-2">
                       <Button
                         variant={editWinner === match.home_team ? 'default' : 'outline'}
                         onClick={() => setEditWinner(match.home_team)}
-                        className={editWinner === match.home_team ? 'text-white font-semibold' : 'border-slate-600 text-slate-300 hover:bg-slate-700'}
+                        className={editWinner === match.home_team ? 'text-white font-semibold' : 'border-[var(--admin-border)] text-[var(--app-text-secondary)] hover:bg-[var(--admin-input-bg)]'}
                         style={editWinner === match.home_team ? { backgroundColor: homeTeam?.color, color: homeTeam?.textColor } : {}}
                       >
                         {match.home_team}
@@ -222,12 +222,12 @@ export default function AdminMatchesPage() {
                       <Button
                         variant={editWinner === match.away_team ? 'default' : 'outline'}
                         onClick={() => setEditWinner(match.away_team)}
-                        className={editWinner === match.away_team ? 'text-white font-semibold' : 'border-slate-600 text-slate-300 hover:bg-slate-700'}
+                        className={editWinner === match.away_team ? 'text-white font-semibold' : 'border-[var(--admin-border)] text-[var(--app-text-secondary)] hover:bg-[var(--admin-input-bg)]'}
                         style={editWinner === match.away_team ? { backgroundColor: awayTeam?.color, color: awayTeam?.textColor } : {}}
                       >
                         {match.away_team}
                       </Button>
-                      <Button variant="outline" onClick={() => setEditWinner(null)} className={editWinner === null ? 'border-orange-500 text-orange-400 bg-orange-500/10' : 'border-slate-600 text-slate-400 hover:bg-slate-700'}>
+                      <Button variant="outline" onClick={() => setEditWinner(null)} className={editWinner === null ? 'border-orange-500 text-orange-400 bg-orange-500/10' : 'border-[var(--admin-border)] text-[var(--app-text-secondary)] hover:bg-[var(--admin-input-bg)]'}>
                         Clear
                       </Button>
                     </div>
@@ -236,23 +236,23 @@ export default function AdminMatchesPage() {
                   {/* Power Match Toggle */}
                   <div className="flex items-center gap-3">
                     <Switch id={`power-${match.id}`} checked={editPowerMatch} onCheckedChange={setEditPowerMatch} />
-                    <Label htmlFor={`power-${match.id}`} className="text-slate-300 cursor-pointer">Power Match (4 pts)</Label>
+                    <Label htmlFor={`power-${match.id}`} className="text-[var(--app-text-secondary)] cursor-pointer">Power Match (4 pts)</Label>
                   </div>
 
                   {/* Underdog Selection */}
                   <div className="space-y-2">
-                    <Label className="text-slate-300 text-sm font-medium">Underdog Team</Label>
+                    <Label className="text-[var(--app-text-secondary)] text-sm font-medium">Underdog Team</Label>
                     <div className="flex gap-2">
-                      <Button size="sm" variant={editUnderdog === match.home_team ? 'default' : 'outline'} onClick={() => setEditUnderdog(match.home_team)} className={editUnderdog === match.home_team ? 'bg-purple-600 text-white' : 'border-slate-600 text-slate-300 hover:bg-slate-700'}>{match.home_team}</Button>
-                      <Button size="sm" variant={editUnderdog === match.away_team ? 'default' : 'outline'} onClick={() => setEditUnderdog(match.away_team)} className={editUnderdog === match.away_team ? 'bg-purple-600 text-white' : 'border-slate-600 text-slate-300 hover:bg-slate-700'}>{match.away_team}</Button>
-                      <Button size="sm" variant="outline" onClick={() => setEditUnderdog(null)} className={editUnderdog === null ? 'border-orange-500 text-orange-400 bg-orange-500/10' : 'border-slate-600 text-slate-400 hover:bg-slate-700'}>None</Button>
+                      <Button size="sm" variant={editUnderdog === match.home_team ? 'default' : 'outline'} onClick={() => setEditUnderdog(match.home_team)} className={editUnderdog === match.home_team ? 'bg-purple-600 text-white' : 'border-[var(--admin-border)] text-[var(--app-text-secondary)] hover:bg-[var(--admin-input-bg)]'}>{match.home_team}</Button>
+                      <Button size="sm" variant={editUnderdog === match.away_team ? 'default' : 'outline'} onClick={() => setEditUnderdog(match.away_team)} className={editUnderdog === match.away_team ? 'bg-purple-600 text-white' : 'border-[var(--admin-border)] text-[var(--app-text-secondary)] hover:bg-[var(--admin-input-bg)]'}>{match.away_team}</Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditUnderdog(null)} className={editUnderdog === null ? 'border-orange-500 text-orange-400 bg-orange-500/10' : 'border-[var(--admin-border)] text-[var(--app-text-secondary)] hover:bg-[var(--admin-input-bg)]'}>None</Button>
                     </div>
                   </div>
 
                   {/* Completed Toggle */}
                   <div className="flex items-center gap-3">
                     <Switch id={`completed-${match.id}`} checked={editCompleted} onCheckedChange={setEditCompleted} />
-                    <Label htmlFor={`completed-${match.id}`} className="text-slate-300 cursor-pointer">Mark as Completed</Label>
+                    <Label htmlFor={`completed-${match.id}`} className="text-[var(--app-text-secondary)] cursor-pointer">Mark as Completed</Label>
                   </div>
 
                   {/* Save Match Button */}
@@ -260,10 +260,10 @@ export default function AdminMatchesPage() {
                     <Button onClick={() => handleSave(match.id)} disabled={saving === match.id} className="bg-green-600 hover:bg-green-700 text-white">
                       {saving === match.id ? 'Saving...' : 'Save Match'}
                     </Button>
-                    <Button variant="outline" onClick={() => setExpandedId(null)} className="border-slate-600 text-slate-300 hover:bg-slate-700">Cancel</Button>
+                    <Button variant="outline" onClick={() => setExpandedId(null)} className="border-[var(--admin-border)] text-[var(--app-text-secondary)] hover:bg-[var(--admin-input-bg)]">Cancel</Button>
                   </div>
 
-                  <Separator className="bg-slate-700" />
+                  <Separator className="bg-[var(--admin-border)]" />
 
                   {/* Bonus Question Section */}
                   <div className="space-y-3">
@@ -278,7 +278,7 @@ export default function AdminMatchesPage() {
                       )}
                       {hasBonusQ && !showBonusForm && (
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => setShowBonusForm(true)} className="border-slate-600 text-slate-300 hover:bg-slate-700">Edit</Button>
+                          <Button size="sm" variant="outline" onClick={() => setShowBonusForm(true)} className="border-[var(--admin-border)] text-[var(--app-text-secondary)] hover:bg-[var(--admin-input-bg)]">Edit</Button>
                           <Button size="sm" variant="outline" onClick={() => handleDeleteBonus(match.id)} className="border-red-500/30 text-red-400 hover:bg-red-500/10">Remove</Button>
                         </div>
                       )}
@@ -289,27 +289,27 @@ export default function AdminMatchesPage() {
                         <p className="text-amber-300 font-medium">{bonusQuestions[match.id]!.question}</p>
                         <div className="flex flex-wrap gap-2 mt-2">
                           {(bonusQuestions[match.id]!.options || []).map((opt: string, i: number) => (
-                            <span key={i} className={`px-2 py-1 rounded text-xs ${opt === bonusQuestions[match.id]!.correct_answer ? 'bg-green-500/20 text-green-400 ring-1 ring-green-500/50' : 'bg-white/5 text-slate-300'}`}>
+                            <span key={i} className={`px-2 py-1 rounded text-xs ${opt === bonusQuestions[match.id]!.correct_answer ? 'bg-green-500/20 text-green-400 ring-1 ring-green-500/50' : 'bg-[var(--admin-surface-alt)] text-[var(--app-text-secondary)]'}`}>
                               {opt} {opt === bonusQuestions[match.id]!.correct_answer && '✓'}
                             </span>
                           ))}
                         </div>
-                        <p className="text-xs text-slate-500 mt-1">+{bonusQuestions[match.id]!.points} point(s)</p>
+                        <p className="text-xs text-[var(--app-text-tertiary)] mt-1">+{bonusQuestions[match.id]!.points} point(s)</p>
                       </div>
                     )}
 
                     {showBonusForm && (
-                      <div className="bg-slate-700/50 rounded-lg p-4 space-y-3">
+                      <div className="bg-[var(--admin-input-bg)]/50 rounded-lg p-4 space-y-3">
                         <div>
-                          <Label className="text-slate-300 text-xs">Question</Label>
-                          <Input value={bonusQuestion} onChange={e => setBonusQuestion(e.target.value)} placeholder="e.g. Which team will hit more sixes?" className="bg-slate-700 border-slate-600 text-white mt-1" />
+                          <Label className="text-[var(--app-text-secondary)] text-xs">Question</Label>
+                          <Input value={bonusQuestion} onChange={e => setBonusQuestion(e.target.value)} placeholder="e.g. Which team will hit more sixes?" className="bg-[var(--admin-input-bg)] border-[var(--admin-border)] text-[var(--app-text)] mt-1" />
                         </div>
 
                         <div>
-                          <Label className="text-slate-300 text-xs">Options</Label>
+                          <Label className="text-[var(--app-text-secondary)] text-xs">Options</Label>
                           {bonusOptions.map((opt, i) => (
                             <div key={i} className="flex gap-2 mt-1">
-                              <Input value={opt} onChange={e => { const newOpts = [...bonusOptions]; newOpts[i] = e.target.value; setBonusOptions(newOpts); }} placeholder={`Option ${i + 1}`} className="bg-slate-700 border-slate-600 text-white" />
+                              <Input value={opt} onChange={e => { const newOpts = [...bonusOptions]; newOpts[i] = e.target.value; setBonusOptions(newOpts); }} placeholder={`Option ${i + 1}`} className="bg-[var(--admin-input-bg)] border-[var(--admin-border)] text-[var(--app-text)]" />
                               {bonusOptions.length > 2 && (
                                 <Button size="sm" variant="ghost" onClick={() => setBonusOptions(bonusOptions.filter((_, j) => j !== i))} className="text-red-400 hover:bg-red-500/10 px-2">
                                   <X className="h-4 w-4" />
@@ -317,35 +317,35 @@ export default function AdminMatchesPage() {
                               )}
                             </div>
                           ))}
-                          <Button size="sm" variant="ghost" onClick={() => setBonusOptions([...bonusOptions, ''])} className="text-slate-400 hover:text-white mt-1">
+                          <Button size="sm" variant="ghost" onClick={() => setBonusOptions([...bonusOptions, ''])} className="text-[var(--app-text-secondary)] hover:text-[var(--app-text)] mt-1">
                             <Plus className="h-3 w-3 mr-1" /> Add Option
                           </Button>
                         </div>
 
                         <div>
-                          <Label className="text-slate-300 text-xs">Correct Answer</Label>
+                          <Label className="text-[var(--app-text-secondary)] text-xs">Correct Answer</Label>
                           <div className="flex flex-wrap gap-2 mt-1">
                             {bonusOptions.filter(o => o.trim()).map((opt, i) => (
                               <Button key={i} size="sm" variant={bonusCorrectAnswer === opt ? 'default' : 'outline'}
                                 onClick={() => setBonusCorrectAnswer(opt)}
-                                className={bonusCorrectAnswer === opt ? 'bg-green-600 text-white' : 'border-slate-600 text-slate-300 hover:bg-slate-700'}>
+                                className={bonusCorrectAnswer === opt ? 'bg-green-600 text-white' : 'border-[var(--admin-border)] text-[var(--app-text-secondary)] hover:bg-[var(--admin-input-bg)]'}>
                                 {opt}
                               </Button>
                             ))}
-                            <Button size="sm" variant="outline" onClick={() => setBonusCorrectAnswer('')} className="border-slate-600 text-slate-400 hover:bg-slate-700">Clear</Button>
+                            <Button size="sm" variant="outline" onClick={() => setBonusCorrectAnswer('')} className="border-[var(--admin-border)] text-[var(--app-text-secondary)] hover:bg-[var(--admin-input-bg)]">Clear</Button>
                           </div>
                         </div>
 
                         <div>
-                          <Label className="text-slate-300 text-xs">Points for correct answer</Label>
-                          <Input type="number" min={1} max={10} value={bonusPoints} onChange={e => setBonusPointsVal(Number(e.target.value))} className="bg-slate-700 border-slate-600 text-white mt-1 w-24" />
+                          <Label className="text-[var(--app-text-secondary)] text-xs">Points for correct answer</Label>
+                          <Input type="number" min={1} max={10} value={bonusPoints} onChange={e => setBonusPointsVal(Number(e.target.value))} className="bg-[var(--admin-input-bg)] border-[var(--admin-border)] text-[var(--app-text)] mt-1 w-24" />
                         </div>
 
                         <div className="flex gap-2">
                           <Button size="sm" onClick={() => handleSaveBonus(match.id)} disabled={savingBonus || !bonusQuestion.trim()} className="bg-amber-600 hover:bg-amber-700 text-white">
                             {savingBonus ? 'Saving...' : 'Save Bonus Question'}
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => setShowBonusForm(false)} className="border-slate-600 text-slate-300">Cancel</Button>
+                          <Button size="sm" variant="outline" onClick={() => setShowBonusForm(false)} className="border-[var(--admin-border)] text-[var(--app-text-secondary)]">Cancel</Button>
                         </div>
                       </div>
                     )}

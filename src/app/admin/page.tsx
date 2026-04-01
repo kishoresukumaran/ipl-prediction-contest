@@ -65,42 +65,42 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
-        <p className="text-slate-400 mt-1">Manage the IPL Prediction Contest</p>
+        <h1 className="text-3xl font-bold text-[var(--app-text)]">Admin Dashboard</h1>
+        <p className="text-[var(--app-text-secondary)] mt-1">Manage the IPL Prediction Contest</p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-slate-800/60 border-slate-700">
+        <Card className="bg-[var(--admin-surface)] border-[var(--admin-border)]">
           <CardContent className="pt-6 text-center">
-            <p className="text-3xl font-bold text-white">
+            <p className="text-3xl font-bold text-[var(--app-text)]">
               {loading ? '...' : stats.completedMatches}
             </p>
-            <p className="text-sm text-slate-400 mt-1">Matches Completed</p>
+            <p className="text-sm text-[var(--app-text-secondary)] mt-1">Matches Completed</p>
           </CardContent>
         </Card>
-        <Card className="bg-slate-800/60 border-slate-700">
+        <Card className="bg-[var(--admin-surface)] border-[var(--admin-border)]">
           <CardContent className="pt-6 text-center">
-            <p className="text-3xl font-bold text-white">
+            <p className="text-3xl font-bold text-[var(--app-text)]">
               {loading ? '...' : stats.totalMatches}
             </p>
-            <p className="text-sm text-slate-400 mt-1">Total Matches</p>
+            <p className="text-sm text-[var(--app-text-secondary)] mt-1">Total Matches</p>
           </CardContent>
         </Card>
-        <Card className="bg-slate-800/60 border-slate-700">
+        <Card className="bg-[var(--admin-surface)] border-[var(--admin-border)]">
           <CardContent className="pt-6 text-center">
-            <p className="text-3xl font-bold text-white">
+            <p className="text-3xl font-bold text-[var(--app-text)]">
               {loading ? '...' : stats.totalPredictions}
             </p>
-            <p className="text-sm text-slate-400 mt-1">Predictions Entered</p>
+            <p className="text-sm text-[var(--app-text-secondary)] mt-1">Predictions Entered</p>
           </CardContent>
         </Card>
-        <Card className="bg-slate-800/60 border-slate-700">
+        <Card className="bg-[var(--admin-surface)] border-[var(--admin-border)]">
           <CardContent className="pt-6 text-center">
-            <p className="text-3xl font-bold text-white">
+            <p className="text-3xl font-bold text-[var(--app-text)]">
               {loading ? '...' : stats.totalJokers}
             </p>
-            <p className="text-sm text-slate-400 mt-1">Jokers Used</p>
+            <p className="text-sm text-[var(--app-text-secondary)] mt-1">Jokers Used</p>
           </CardContent>
         </Card>
       </div>
@@ -109,15 +109,15 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {adminLinks.map((link) => (
           <Link key={link.href} href={link.href}>
-            <Card className="bg-slate-800/60 border-slate-700 hover:bg-slate-700/60 hover:border-slate-600 transition-all cursor-pointer h-full">
+            <Card className="bg-[var(--admin-surface)] border-[var(--admin-border)] hover:bg-[var(--admin-input-bg)]/60 hover:border-[var(--admin-border)] transition-all cursor-pointer h-full">
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg text-white flex items-center gap-2">
+                <CardTitle className="text-lg text-[var(--app-text)] flex items-center gap-2">
                   <span className="text-2xl">{link.icon}</span>
                   {link.label}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-slate-400">{link.description}</p>
+                <p className="text-sm text-[var(--app-text-secondary)]">{link.description}</p>
               </CardContent>
             </Card>
           </Link>
@@ -125,18 +125,18 @@ export default function AdminDashboard() {
       </div>
 
       {/* Quick Info */}
-      <Card className="bg-slate-800/60 border-slate-700">
+      <Card className="bg-[var(--admin-surface)] border-[var(--admin-border)]">
         <CardHeader>
-          <CardTitle className="text-white text-lg">Quick Info</CardTitle>
+          <CardTitle className="text-[var(--app-text)] text-lg">Quick Info</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="border-green-500 text-green-400">29</Badge>
-            <span className="text-slate-300 text-sm">Participants registered</span>
+            <span className="text-[var(--app-text-secondary)] text-sm">Participants registered</span>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="border-blue-500 text-blue-400">10</Badge>
-            <span className="text-slate-300 text-sm">IPL teams</span>
+            <span className="text-[var(--app-text-secondary)] text-sm">IPL teams</span>
           </div>
         </CardContent>
       </Card>

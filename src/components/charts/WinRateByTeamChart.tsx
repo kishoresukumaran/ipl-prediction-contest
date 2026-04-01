@@ -16,7 +16,7 @@ export function WinRateByTeamChart({ data }: { data: WinRateData }) {
       <table className="min-w-[600px] text-xs">
         <thead>
           <tr>
-            <th className="text-left py-2 px-1 text-slate-400 sticky left-0 bg-slate-900/90 z-10">Player</th>
+            <th className="text-left py-2 px-1 text-[var(--app-text-secondary)] sticky left-0 z-10 bg-white/95 dark:bg-slate-900/90 backdrop-blur-sm">Player</th>
             {data.teams.map(team => (
               <th key={team} className="text-center py-2 px-1">
                 <span
@@ -31,12 +31,12 @@ export function WinRateByTeamChart({ data }: { data: WinRateData }) {
         </thead>
         <tbody>
           {data.participants.map(p => (
-            <tr key={p.id} className="border-t border-white/5">
-              <td className="py-1.5 px-1 text-slate-300 sticky left-0 bg-slate-900/90 z-10 font-medium">{p.name}</td>
+            <tr key={p.id} className="border-t border-[var(--app-border)]">
+              <td className="py-1.5 px-1 text-[var(--app-text-secondary)] sticky left-0 z-10 font-medium bg-white/95 dark:bg-slate-900/90 backdrop-blur-sm">{p.name}</td>
               {data.teams.map(team => {
                 const cell = data.data[p.id]?.[team];
                 if (!cell || cell.total === 0) {
-                  return <td key={team} className="text-center py-1.5 px-1 text-slate-700">-</td>;
+                  return <td key={team} className="text-center py-1.5 px-1 text-[var(--app-text-tertiary)]">-</td>;
                 }
                 return (
                   <td key={team} className="text-center py-1.5 px-1">
@@ -69,5 +69,5 @@ function getHeatColor(rate: number): string {
 }
 
 function EmptyState() {
-  return <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">No data yet</div>;
+  return <div className="flex items-center justify-center h-[300px] text-[var(--app-text-secondary)] text-sm">No data yet</div>;
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { useChartTheme } from '@/hooks/useChartTheme';
 
 interface StreakData {
   name: string;
@@ -10,6 +11,7 @@ interface StreakData {
 }
 
 export function StreakChart({ data }: { data: StreakData[] }) {
+  const chartTheme = useChartTheme();
   if (!data?.length) return <EmptyState />;
 
   const sorted = [...data].sort((a, b) => b.longestStreak - a.longestStreak);
@@ -18,15 +20,15 @@ export function StreakChart({ data }: { data: StreakData[] }) {
     <div className="w-full" style={{ height: Math.max(500, sorted.length * 28) }}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={sorted} layout="vertical" margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-          <XAxis type="number" stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} />
-          <YAxis dataKey="name" type="category" width={90} stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} interval={0} />
+          <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+          <XAxis type="number" stroke={chartTheme.axis} tick={{ fontSize: 11 }} />
+          <YAxis dataKey="name" type="category" width={90} stroke={chartTheme.axis} tick={{ fontSize: 11 }} interval={0} />
           <Tooltip
             content={({ payload }) => {
               if (!payload?.length) return null;
               const d = payload[0].payload as StreakData;
               return (
-                <div className="bg-slate-800 border border-white/10 rounded-lg p-2.5 text-xs text-white shadow-xl">
+                <div className="bg-white dark:bg-slate-800 border border-[var(--app-border)] rounded-lg p-2.5 text-xs text-[var(--app-text)] shadow-xl">
                   <p className="font-bold">{d.name}</p>
                   <p className="text-amber-400">Longest streak: {d.longestStreak}</p>
                   <p className="text-emerald-400">Current streak: {d.currentStreak}</p>
@@ -47,5 +49,5 @@ export function StreakChart({ data }: { data: StreakData[] }) {
 }
 
 function EmptyState() {
-  return <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">No streak data yet</div>;
+  return <div className="flex items-center justify-center h-[300px] text-[var(--app-text-secondary)] text-sm">No streak data yet</div>;
 }

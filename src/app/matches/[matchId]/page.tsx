@@ -69,7 +69,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
   if (!match) {
     return (
       <div className="px-4 py-6 max-w-2xl mx-auto text-center">
-        <p className="text-slate-400">Match not found</p>
+        <p className="text-[var(--app-text-secondary)]">Match not found</p>
         <Link href="/matches" className="text-indigo-400 hover:text-indigo-300 text-sm mt-2 inline-block">
           Back to matches
         </Link>
@@ -134,16 +134,16 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
       {/* Back Button */}
       <Link
         href="/matches"
-        className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm text-[var(--app-text-secondary)] hover:text-[var(--app-text)] transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         All Matches
       </Link>
 
       {/* Match Header */}
-      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-5">
+      <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
-          <span className="text-xs text-slate-500 font-mono">Match #{match.id}</span>
+          <span className="text-xs text-[var(--app-text-tertiary)] font-mono">Match #{match.id}</span>
           <div className="flex gap-2">
             {match.is_power_match && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-400 text-[10px] font-bold">
@@ -164,12 +164,12 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
         <div className="flex items-center justify-center gap-4 sm:gap-6 mb-4">
           <div className="text-center flex-1">
             <TeamBadge team={match.home_team} size="lg" />
-            <div className="text-xs text-slate-400 mt-2">{homeTeamConfig?.name}</div>
+            <div className="text-xs text-[var(--app-text-secondary)] mt-2">{homeTeamConfig?.name}</div>
           </div>
-          <div className="text-slate-500 font-bold text-lg">vs</div>
+          <div className="text-[var(--app-text-tertiary)] font-bold text-lg">vs</div>
           <div className="text-center flex-1">
             <TeamBadge team={match.away_team} size="lg" />
-            <div className="text-xs text-slate-400 mt-2">{awayTeamConfig?.name}</div>
+            <div className="text-xs text-[var(--app-text-secondary)] mt-2">{awayTeamConfig?.name}</div>
           </div>
         </div>
 
@@ -184,7 +184,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
         )}
 
         {/* Match Info */}
-        <div className="flex items-center justify-center gap-4 text-xs text-slate-400">
+        <div className="flex items-center justify-center gap-4 text-xs text-[var(--app-text-secondary)]">
           <span className="inline-flex items-center gap-1">
             <Calendar className="h-3 w-3" />
             {new Date(match.match_date + 'T00:00:00').toLocaleDateString('en-US', {
@@ -199,7 +199,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
             {matchTimeToIrish(match.match_date, match.start_time)}
           </span>
         </div>
-        <div className="text-center mt-2 text-xs text-slate-500 inline-flex items-center gap-1 justify-center w-full">
+        <div className="text-center mt-2 text-xs text-[var(--app-text-tertiary)] inline-flex items-center gap-1 justify-center w-full">
           <MapPin className="h-3 w-3" />
           {match.venue}
         </div>
@@ -207,8 +207,8 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
 
       {/* Prediction Consensus Bar */}
       {totalPicks > 0 && (
-        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4">
-          <h2 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+        <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4">
+          <h2 className="text-sm font-semibold text-[var(--app-text-secondary)] mb-3 flex items-center gap-2">
             <Users className="h-4 w-4 text-indigo-400" />
             Prediction Consensus
           </h2>
@@ -216,12 +216,12 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <TeamBadge team={match.home_team} />
-              <span className="text-sm font-bold text-white">{homePct.toFixed(0)}%</span>
-              <span className="text-xs text-slate-500">({homePicks})</span>
+              <span className="text-sm font-bold text-[var(--app-text)]">{homePct.toFixed(0)}%</span>
+              <span className="text-xs text-[var(--app-text-tertiary)]">({homePicks})</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500">({awayPicks})</span>
-              <span className="text-sm font-bold text-white">{awayPct.toFixed(0)}%</span>
+              <span className="text-xs text-[var(--app-text-tertiary)]">({awayPicks})</span>
+              <span className="text-sm font-bold text-[var(--app-text)]">{awayPct.toFixed(0)}%</span>
               <TeamBadge team={match.away_team} />
             </div>
           </div>
@@ -244,8 +244,8 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
           </div>
 
           {match.is_completed && (
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5">
-              <span className="text-xs text-slate-400">Group Accuracy</span>
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-[var(--app-border)]">
+              <span className="text-xs text-[var(--app-text-secondary)]">Group Accuracy</span>
               <span className="text-sm font-bold text-emerald-400">{accuracy.toFixed(0)}%</span>
             </div>
           )}
@@ -255,25 +255,25 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
       {/* Stats Cards */}
       {match.is_completed && (
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-3 text-center">
-            <div className="text-lg font-bold text-white">{totalPicks}</div>
-            <div className="text-[10px] text-slate-400">Predictions</div>
+          <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-3 text-center">
+            <div className="text-lg font-bold text-[var(--app-text)]">{totalPicks}</div>
+            <div className="text-[10px] text-[var(--app-text-secondary)]">Predictions</div>
           </div>
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-3 text-center">
+          <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-3 text-center">
             <div className="text-lg font-bold text-emerald-400">{correctPicks}</div>
-            <div className="text-[10px] text-slate-400">Correct</div>
+            <div className="text-[10px] text-[var(--app-text-secondary)]">Correct</div>
           </div>
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-3 text-center">
+          <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-3 text-center">
             <div className="text-lg font-bold text-amber-400">{accuracy.toFixed(0)}%</div>
-            <div className="text-[10px] text-slate-400">Accuracy</div>
+            <div className="text-[10px] text-[var(--app-text-secondary)]">Accuracy</div>
           </div>
         </div>
       )}
 
       {/* Prediction Grid */}
-      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-          <h2 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+      <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--app-border)]">
+          <h2 className="text-sm font-semibold text-[var(--app-text-secondary)] flex items-center gap-2">
             <Users className="h-4 w-4 text-indigo-400" />
             All Predictions ({totalPicks}/{PARTICIPANTS.length})
           </h2>
@@ -285,7 +285,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
                 className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${
                   sortBy === s
                     ? 'bg-indigo-500/30 text-indigo-300'
-                    : 'text-slate-500 hover:text-slate-300'
+                    : 'text-[var(--app-text-tertiary)] hover:text-[var(--app-text)]'
                 }`}
               >
                 {s === 'name' ? 'Name' : s === 'prediction_time' ? 'Time' : 'Result'}
@@ -294,10 +294,10 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
           </div>
         </div>
 
-        <div className="divide-y divide-white/5">
+        <div className="divide-y divide-[var(--app-border)]">
           {sortedPredictions.map((pred) => (
             <Link key={pred.id} href={`/players/${pred.id}`}>
-              <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-all">
+              <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-[var(--app-surface)] transition-all">
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
                   style={{ backgroundColor: pred.avatar_color }}
@@ -305,9 +305,9 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
                   {pred.name.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className="text-sm font-medium text-white block truncate">{pred.name}</span>
+                  <span className="text-sm font-medium text-[var(--app-text)] block truncate">{pred.name}</span>
                   {pred.predictionTime && (
-                    <span className="text-[10px] text-slate-500">
+                    <span className="text-[10px] text-[var(--app-text-tertiary)]">
                       {new Date(pred.predictionTime).toLocaleString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -321,7 +321,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
                   {pred.predictedTeam ? (
                     <TeamBadge team={pred.predictedTeam} />
                   ) : (
-                    <span className="text-xs text-slate-600 italic">No pick</span>
+                    <span className="text-xs text-[var(--app-text-tertiary)] italic">No pick</span>
                   )}
                   {match.is_completed && match.winner && pred.predictedTeam && (
                     pred.isCorrect ? (

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { PARTICIPANTS } from '@/lib/constants';
+import { useChartTheme } from '@/hooks/useChartTheme';
 
 interface PointsRaceData {
   matchId: number;
@@ -11,6 +12,7 @@ interface PointsRaceData {
 }
 
 export function PointsRaceChart({ data }: { data: PointsRaceData[] }) {
+  const chartTheme = useChartTheme();
   const [highlighted, setHighlighted] = useState<string | null>(null);
 
   if (!data?.length) return <EmptyState message="No match data yet" />;
@@ -28,9 +30,9 @@ export function PointsRaceChart({ data }: { data: PointsRaceData[] }) {
       <div className="w-full h-[400px]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-            <XAxis dataKey="matchId" stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} label={{ value: 'Match #', position: 'bottom', fill: 'rgba(255,255,255,0.5)', fontSize: 11 }} />
-            <YAxis stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} />
+            <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+            <XAxis dataKey="matchId" stroke={chartTheme.axis} tick={{ fontSize: 11 }} label={{ value: 'Match #', position: 'bottom', fill: chartTheme.label, fontSize: 11 }} />
+            <YAxis stroke={chartTheme.axis} tick={{ fontSize: 11 }} />
             <Tooltip
               content={({ label, payload }) => {
                 if (!payload?.length) return null;
@@ -40,7 +42,7 @@ export function PointsRaceChart({ data }: { data: PointsRaceData[] }) {
                   ? sorted.filter(p => p.dataKey === highlighted)
                   : sorted;
                 return (
-                  <div className="bg-slate-800 border border-white/10 rounded-lg p-2.5 text-xs text-white shadow-xl">
+                  <div className="bg-white dark:bg-slate-800 border border-[var(--app-border)] rounded-lg p-2.5 text-xs text-[var(--app-text)] shadow-xl">
                     <p className="font-bold mb-1.5">Match #{label}</p>
                     <div className="grid grid-cols-2 gap-x-4">
                       {items.map(item => (
@@ -83,12 +85,12 @@ export function PointsRaceChart({ data }: { data: PointsRaceData[] }) {
               onMouseLeave={() => setHighlighted(null)}
               onClick={() => setHighlighted(prev => prev === p.id ? null : p.id)}
               className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded transition-all ${
-                highlighted === p.id ? 'bg-white/10 scale-105' : highlighted ? 'opacity-40' : ''
+                highlighted === p.id ? 'bg-[var(--app-surface-alt)] scale-105' : highlighted ? 'opacity-40' : ''
               }`}
             >
               <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: p.avatar_color }} />
-              <span className="text-slate-300">{p.name}</span>
-              <span className="text-slate-500 font-mono">{pts}</span>
+              <span className="text-[var(--app-text-secondary)]">{p.name}</span>
+              <span className="text-[var(--app-text-tertiary)] font-mono">{pts}</span>
             </button>
           );
         })}
@@ -99,7 +101,7 @@ export function PointsRaceChart({ data }: { data: PointsRaceData[] }) {
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">
+    <div className="flex items-center justify-center h-[300px] text-[var(--app-text-secondary)] text-sm">
       {message}
     </div>
   );
