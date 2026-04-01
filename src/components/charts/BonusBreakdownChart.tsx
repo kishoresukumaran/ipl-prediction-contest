@@ -4,8 +4,13 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { PlayerPointsBreakdown } from '@/lib/types';
 import { useChartTheme } from '@/hooks/useChartTheme';
 
-function SegmentLabel(props: { x?: number; y?: number; width?: number; height?: number; value?: number }) {
-  const { x = 0, y = 0, width = 0, height = 0, value } = props;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function SegmentLabel(props: any) {
+  const x = Number(props.x) || 0;
+  const y = Number(props.y) || 0;
+  const width = Number(props.width) || 0;
+  const height = Number(props.height) || 0;
+  const value = props.value as number | undefined;
   if (!value || width < 20) return null;
   return (
     <text
