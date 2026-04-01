@@ -47,7 +47,6 @@ export function BonusBreakdownChart({ data }: { data: PlayerPointsBreakdown[] })
 
   const chartData = data
     .sort((a, b) => b.totalPoints - a.totalPoints)
-    .slice(0, 20)
     .map(p => ({
       name: p.participantName,
       Base: p.basePoints,
