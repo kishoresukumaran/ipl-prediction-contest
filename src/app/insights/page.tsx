@@ -173,19 +173,19 @@ export default function InsightsPage() {
         )}
 
         {activeTab === 'h2h' && (
-          <ChartCard title="Head-to-Head Comparison" subtitle="Compare two players across all dimensions">
+          <ChartCard title="Head-to-Head Comparison" subtitle="Pick two rivals and settle the argument once and for all. Friendship may not survive this.">
             <HeadToHeadChart leaderboard={data.leaderboard} />
           </ChartCard>
         )}
 
         {activeTab === 'matches' && (
-          <ChartCard title="Hardest Matches to Predict" subtitle="Matches with lowest group accuracy">
+          <ChartCard title="Hardest Matches to Predict" subtitle="The matches that made everyone look clueless. Don't worry, even experts got these wrong... probably.">
             <MatchDifficultyChart data={data.matchDifficulty} />
           </ChartCard>
         )}
 
         {activeTab === 'timing' && (
-          <ChartCard title="Early Bird Rankings" subtitle="Who predicts earliest before the match?">
+          <ChartCard title="Early Bird Rankings" subtitle="Some predict days ahead like psychics. Others wait till the toss and panic-vote. No judgement... okay, maybe a little.">
             <PredictionTimingChart data={data.predictionTimings} />
           </ChartCard>
         )}
