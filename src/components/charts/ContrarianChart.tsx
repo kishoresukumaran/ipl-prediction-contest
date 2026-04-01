@@ -39,8 +39,8 @@ export function ContrarianChart({ data }: { data: ContrarianData[] }) {
                 );
               }}
             />
-            <ReferenceLine y={50} stroke="rgba(255,255,255,0.2)" strokeDasharray="5 5" />
-            <ReferenceLine x={50} stroke="rgba(255,255,255,0.2)" strokeDasharray="5 5" />
+            <ReferenceLine y={50} stroke={chartTheme.axis} strokeDasharray="5 5" />
+            <ReferenceLine x={50} stroke={chartTheme.axis} strokeDasharray="5 5" />
             <Scatter data={data} fill="#8884d8">
               {data.map((entry, i) => (
                 <circle key={i} fill={entry.color} r={6} />

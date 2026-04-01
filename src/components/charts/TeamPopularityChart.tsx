@@ -43,10 +43,16 @@ export function TeamPopularityChart({ data }: { data: TeamPopData[] }) {
           />
           <Bar dataKey="correct" stackId="a" name="Correct" radius={[0, 0, 0, 0]}>
             {sorted.map((entry) => (
-              <Cell key={entry.team} fill={TEAMS[entry.team]?.color || '#666'} fillOpacity={0.9} />
+              <Cell
+                key={entry.team}
+                fill={TEAMS[entry.team]?.color || '#666'}
+                fillOpacity={chartTheme.isDark ? 0.9 : 1}
+                stroke={!chartTheme.isDark ? 'rgba(0,0,0,0.15)' : 'none'}
+                strokeWidth={!chartTheme.isDark ? 0.5 : 0}
+              />
             ))}
           </Bar>
-          <Bar dataKey="wrong" stackId="a" name="Wrong" fill="rgba(255,255,255,0.15)" radius={[0, 4, 4, 0]} />
+          <Bar dataKey="wrong" stackId="a" name="Wrong" fill={chartTheme.barWrong} radius={[0, 4, 4, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

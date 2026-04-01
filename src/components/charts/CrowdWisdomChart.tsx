@@ -47,7 +47,7 @@ export function CrowdWisdomChart({ data }: { data: CrowdData[] }) {
                 );
               }}
             />
-            <ReferenceLine y={50} stroke="rgba(255,255,255,0.3)" strokeDasharray="5 5" label={{ value: '50%', fill: chartTheme.label, fontSize: 10 }} />
+            <ReferenceLine y={50} stroke={chartTheme.axis} strokeDasharray="5 5" label={{ value: '50%', fill: chartTheme.label, fontSize: 10 }} />
             <Area
               type="monotone"
               dataKey="runningAccuracy"
