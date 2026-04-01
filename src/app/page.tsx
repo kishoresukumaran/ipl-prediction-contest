@@ -156,8 +156,8 @@ export default function Home() {
     }) || [];
   const recentResults = completedMatches.slice(0, 3);
 
-  const top5 = leaderboardData?.leaderboard?.slice(0, 5) || [];
-  const leader = leaderboardData?.leaderboard?.[0] || null;
+  const leaders = leaderboardData?.leaderboard?.filter(p => p.rank === 1) || [];
+  const top5 = leaderboardData?.leaderboard?.filter(p => (p.rank || 0) <= 5) || [];
 
   const totalMatches = leaderboardData?.totalMatches || 0;
   const completedCount = leaderboardData?.completedMatches || 0;
@@ -386,7 +386,7 @@ export default function Home() {
       )}
 
       {/* Current Leader Spotlight */}
-      {!loading && leader && (
+      {!loading && leaders.length === 1 && (
         <div className="bg-gradient-to-br from-amber-500/15 to-yellow-600/10 backdrop-blur-sm border border-amber-400/30 rounded-xl p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
             <Trophy className="h-4 w-4 text-amber-500 dark:text-amber-400" />
@@ -395,28 +395,67 @@ export default function Home() {
           <div className="flex items-center gap-4">
             <div
               className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold shrink-0 ring-2 ring-amber-400/50"
-              style={{ backgroundColor: leader.avatarColor }}
+              style={{ backgroundColor: leaders[0].avatarColor }}
             >
-              {leader.participantName.charAt(0)}
+              {leaders[0].participantName.charAt(0)}
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-bold text-[var(--app-text)] truncate">{leader.participantName}</h3>
+              <h3 className="text-lg font-bold text-[var(--app-text)] truncate">{leaders[0].participantName}</h3>
               <div className="grid grid-cols-3 gap-2 mt-2">
                 <div className="text-center">
-                  <div className="text-lg font-bold text-amber-400">{leader.totalPoints}</div>
+                  <div className="text-lg font-bold text-amber-400">{leaders[0].totalPoints}</div>
                   <div className="text-[10px] text-[var(--app-text-secondary)]">Points</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold text-emerald-400">
-                    {leader.accuracy.toFixed(0)}%
+                    {leaders[0].accuracy.toFixed(0)}%
                   </div>
                   <div className="text-[10px] text-[var(--app-text-secondary)]">Accuracy</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold text-purple-400">{leader.currentStreak}</div>
+                  <div className="text-lg font-bold text-purple-400">{leaders[0].currentStreak}</div>
                   <div className="text-[10px] text-[var(--app-text-secondary)]">Streak</div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tied Leaders Spotlight */}
+      {!loading && leaders.length > 1 && (
+        <div className="bg-gradient-to-br from-amber-500/15 to-yellow-600/10 backdrop-blur-sm border border-amber-400/30 rounded-xl p-4 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <Trophy className="h-4 w-4 text-amber-500 dark:text-amber-400" />
+            <span className="text-xs font-medium text-amber-600 dark:text-amber-300">
+              Current Leaders — {leaders.length}-way tie!
+            </span>
+          </div>
+          <div className="flex justify-center -space-x-3 mb-3">
+            {leaders.map((l) => (
+              <Link key={l.participantId} href={`/players/${l.participantId}`}>
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold ring-2 ring-amber-400/50 ring-offset-2 ring-offset-[var(--app-bg)] hover:scale-110 transition-transform"
+                  style={{ backgroundColor: l.avatarColor }}
+                >
+                  {l.participantName.charAt(0)}
+                </div>
+              </Link>
+            ))}
+          </div>
+          <h3 className="text-center text-lg font-bold text-[var(--app-text)]">
+            {leaders.map(l => l.participantName).join(' & ')}
+          </h3>
+          <div className="flex justify-center gap-6 mt-3">
+            <div className="text-center">
+              <div className="text-xl font-bold text-amber-400">{leaders[0].totalPoints}</div>
+              <div className="text-[10px] text-[var(--app-text-secondary)]">Points each</div>
+            </div>
+            <div className="text-center">
+              <div className="text-xl font-bold text-emerald-400">
+                {leaders[0].accuracy.toFixed(0)}%
+              </div>
+              <div className="text-[10px] text-[var(--app-text-secondary)]">Accuracy</div>
             </div>
           </div>
         </div>
@@ -438,40 +477,43 @@ export default function Home() {
             </Link>
           </div>
           <div className="space-y-2">
-            {top5.map((player, idx) => (
-              <Link key={player.participantId} href={`/players/${player.participantId}`}>
-                <div className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-[var(--app-surface)] transition-all">
-                  <span
-                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                      idx === 0
-                        ? 'bg-amber-400 text-black'
-                        : idx === 1
-                        ? 'bg-slate-300 text-black'
-                        : idx === 2
-                        ? 'bg-amber-700 text-white'
-                        : 'bg-[var(--app-surface-alt)] text-[var(--app-text-secondary)]'
-                    }`}
-                  >
-                    {idx + 1}
-                  </span>
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
-                    style={{ backgroundColor: player.avatarColor }}
-                  >
-                    {player.participantName.charAt(0)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium text-[var(--app-text)] truncate block">
-                      {player.participantName}
+            {top5.map((player) => {
+              const rank = player.rank || 0;
+              return (
+                <Link key={player.participantId} href={`/players/${player.participantId}`}>
+                  <div className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-[var(--app-surface)] transition-all">
+                    <span
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                        rank === 1
+                          ? 'bg-amber-400 text-black'
+                          : rank === 2
+                          ? 'bg-slate-300 text-black'
+                          : rank === 3
+                          ? 'bg-amber-700 text-white'
+                          : 'bg-[var(--app-surface-alt)] text-[var(--app-text-secondary)]'
+                      }`}
+                    >
+                      {rank}
                     </span>
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
+                      style={{ backgroundColor: player.avatarColor }}
+                    >
+                      {player.participantName.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium text-[var(--app-text)] truncate block">
+                        {player.participantName}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-sm font-bold text-amber-400">{player.totalPoints}</span>
+                      <span className="text-xs text-[var(--app-text-tertiary)] ml-1">pts</span>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-sm font-bold text-amber-400">{player.totalPoints}</span>
-                    <span className="text-xs text-[var(--app-text-tertiary)] ml-1">pts</span>
-                  </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}

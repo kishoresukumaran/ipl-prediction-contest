@@ -201,7 +201,7 @@ export default function InsightsPage() {
               <PredictionTimingChart data={data.predictionTimings} />
             </ChartCard>
             <ChartCard title="The Last-Minute Panicker" subtitle="These legends vote like they're defusing a bomb. Average vote time dangerously close to match start.">
-              <LastMinutePanicker data={data.predictionTimings} />
+              <LastMinutePanicker data={data.predictionTimings} matches={data.matches} predictions={data.predictions} />
             </ChartCard>
             <ChartCard title="The Copycat" subtitle="Voted right after someone else and picked the exact same team? Suspicious. Very suspicious. We're watching you.">
               <CopycatChart data={data.copycats} />
