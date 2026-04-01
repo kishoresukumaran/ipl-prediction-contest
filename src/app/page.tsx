@@ -20,28 +20,45 @@ interface LeaderboardResponse {
 
 function CountdownTimer({ targetDate }: { targetDate: string }) {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [isLive, setIsLive] = useState(false);
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    const tick = () => {
       const now = new Date().getTime();
       const target = new Date(targetDate).getTime();
       const diff = target - now;
 
       if (diff <= 0) {
+        setIsLive(true);
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         return;
       }
 
+      setIsLive(false);
       setTimeLeft({
         days: Math.floor(diff / (1000 * 60 * 60 * 24)),
         hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
         minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
         seconds: Math.floor((diff % (1000 * 60)) / 1000),
       });
-    }, 1000);
+    };
 
+    tick();
+    const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
   }, [targetDate]);
+
+  if (isLive) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-2">
+        <span className="relative flex h-2.5 w-2.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+        </span>
+        <span className="text-sm font-bold text-red-400 tracking-wide uppercase">Match in progress</span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex gap-3 justify-center">
