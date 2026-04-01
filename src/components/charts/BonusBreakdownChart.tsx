@@ -1,8 +1,19 @@
 'use client';
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList } from 'recharts';
 import { PlayerPointsBreakdown } from '@/lib/types';
 import { useChartTheme } from '@/hooks/useChartTheme';
+
+const CATEGORIES = [
+  { key: 'Base', fill: '#60a5fa' },
+  { key: 'Power', fill: '#f59e0b' },
+  { key: 'Underdog', fill: '#34d399' },
+  { key: 'Joker', fill: '#a78bfa' },
+  { key: 'Double Header', fill: '#fb7185' },
+  { key: 'Streak', fill: '#38bdf8' },
+  { key: 'Trivia', fill: '#4ade80' },
+  { key: 'Bonus', fill: '#fbbf24' },
+] as const;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function SegmentLabel(props: any) {
@@ -10,7 +21,7 @@ function SegmentLabel(props: any) {
   const y = Number(props.y) || 0;
   const width = Number(props.width) || 0;
   const height = Number(props.height) || 0;
-  const value = props.value as number | undefined;
+  const value = Number(props.value) || 0;
   if (!value || width < 20) return null;
   return (
     <text
@@ -58,14 +69,11 @@ export function BonusBreakdownChart({ data }: { data: PlayerPointsBreakdown[] })
           <YAxis dataKey="name" type="category" width={90} stroke={chartTheme.axis} tick={{ fontSize: 11 }} interval={0} />
           <Tooltip contentStyle={{ backgroundColor: chartTheme.tooltipBg, border: `1px solid ${chartTheme.tooltipBorder}`, borderRadius: '8px', color: chartTheme.tooltipText }} />
           <Legend wrapperStyle={{ fontSize: 11, color: chartTheme.label }} />
-          <Bar dataKey="Base" stackId="a" fill="#60a5fa" label={SegmentLabel} />
-          <Bar dataKey="Power" stackId="a" fill="#f59e0b" label={SegmentLabel} />
-          <Bar dataKey="Underdog" stackId="a" fill="#34d399" label={SegmentLabel} />
-          <Bar dataKey="Joker" stackId="a" fill="#a78bfa" label={SegmentLabel} />
-          <Bar dataKey="Double Header" stackId="a" fill="#fb7185" label={SegmentLabel} />
-          <Bar dataKey="Streak" stackId="a" fill="#38bdf8" label={SegmentLabel} />
-          <Bar dataKey="Trivia" stackId="a" fill="#4ade80" label={SegmentLabel} />
-          <Bar dataKey="Bonus" stackId="a" fill="#fbbf24" label={SegmentLabel} />
+          {CATEGORIES.map(cat => (
+            <Bar key={cat.key} dataKey={cat.key} stackId="a" fill={cat.fill}>
+              <LabelList dataKey={cat.key} position="center" content={SegmentLabel} />
+            </Bar>
+          ))}
         </BarChart>
       </ResponsiveContainer>
     </div>
