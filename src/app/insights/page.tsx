@@ -111,7 +111,7 @@ export default function InsightsPage() {
         {activeTab === 'leaderboard' && (
           <>
             <ChartCard title="Points Race" subtitle="Cumulative points over matches">
-              <PointsRaceChart data={data.pointsRace} />
+              <PointsRaceChart data={data.pointsRace} matches={data.matches} />
             </ChartCard>
             <ChartCard title="Points Gap Analysis" subtitle="How far behind the leader?">
               <PointsGapChart data={data.leaderboard} />

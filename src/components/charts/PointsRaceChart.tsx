@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { X } from 'lucide-react';
-import { PARTICIPANTS } from '@/lib/constants';
+import { PARTICIPANTS, TEAMS } from '@/lib/constants';
 import { useChartTheme } from '@/hooks/useChartTheme';
 
 interface PointsRaceData {
@@ -12,7 +12,14 @@ interface PointsRaceData {
   [playerId: string]: number | string;
 }
 
-export function PointsRaceChart({ data }: { data: PointsRaceData[] }) {
+interface MatchInfo {
+  id: number;
+  home_team: string;
+  away_team: string;
+  winner: string | null;
+}
+
+export function PointsRaceChart({ data, matches }: { data: PointsRaceData[]; matches?: MatchInfo[] }) {
   const chartTheme = useChartTheme();
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -96,13 +103,36 @@ export function PointsRaceChart({ data }: { data: PointsRaceData[] }) {
             <Tooltip
               content={({ label, payload }) => {
                 if (!payload?.length) return null;
+                const matchInfo = matches?.find(m => m.id === Number(label));
                 const sorted = [...payload].sort((a, b) => (b.value as number || 0) - (a.value as number || 0));
                 const items = hasSelection
                   ? sorted.filter(p => selected.has(p.dataKey as string))
                   : sorted;
                 return (
-                  <div className="bg-white dark:bg-slate-800 border border-[var(--app-border)] rounded-lg p-2.5 text-xs text-[var(--app-text)] shadow-xl">
-                    <p className="font-bold mb-1.5">Match #{label}</p>
+                  <div className="bg-white dark:bg-slate-800 border border-[var(--app-border)] rounded-lg p-2.5 text-xs text-[var(--app-text)] shadow-xl max-w-[220px]">
+                    <div className="mb-2 pb-1.5 border-b border-[var(--app-border)]">
+                      <p className="font-bold">Match #{label}</p>
+                      {matchInfo && (
+                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                          <span
+                            className="px-1.5 py-0.5 rounded text-[10px] font-bold"
+                            style={{ backgroundColor: TEAMS[matchInfo.home_team]?.color || '#666', color: TEAMS[matchInfo.home_team]?.textColor || '#fff' }}
+                          >
+                            {matchInfo.home_team}
+                          </span>
+                          <span className="text-[var(--app-text-tertiary)]">vs</span>
+                          <span
+                            className="px-1.5 py-0.5 rounded text-[10px] font-bold"
+                            style={{ backgroundColor: TEAMS[matchInfo.away_team]?.color || '#666', color: TEAMS[matchInfo.away_team]?.textColor || '#fff' }}
+                          >
+                            {matchInfo.away_team}
+                          </span>
+                          {matchInfo.winner && (
+                            <span className="text-emerald-400 font-semibold text-[10px]">· {matchInfo.winner} won</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                     <div className="grid grid-cols-2 gap-x-4">
                       {items.map(item => (
                         <div key={item.dataKey as string} className="flex items-center gap-1.5 py-0.5">
