@@ -36,25 +36,25 @@ function TeamBadge({ team }: { team: string }) {
 function MatchCard({ match, isDoubleHeader }: { match: Match; isDoubleHeader: boolean }) {
   return (
     <Link href={`/matches/${match.id}`}>
-      <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4 hover:bg-[var(--app-surface-hover)] hover:border-[var(--app-border-strong)] transition-all group">
+      <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4 hover:bg-[var(--app-surface-hover)] hover:border-[var(--app-border-strong)] transition-all group shadow-sm">
         {/* Top row: Match number + badges + date */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <span className="text-xs text-[var(--app-text-tertiary)] font-mono">#{match.id}</span>
             {match.is_power_match && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400 text-[10px] font-bold">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-500/20 text-amber-600 dark:text-yellow-400 text-[10px] font-bold">
                 <Zap className="h-2.5 w-2.5" />
                 POWER
               </span>
             )}
             {match.underdog_team && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 text-[10px] font-bold">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-600 dark:text-purple-400 text-[10px] font-bold">
                 <Award className="h-2.5 w-2.5" />
                 UNDERDOG: {match.underdog_team}
               </span>
             )}
             {isDoubleHeader && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 text-[10px] font-bold">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-700 dark:text-cyan-400 text-[10px] font-bold">
                 <Layers className="h-2.5 w-2.5" />
                 DH
               </span>
@@ -71,7 +71,7 @@ function MatchCard({ match, isDoubleHeader }: { match: Match; isDoubleHeader: bo
             <TeamBadge team={match.away_team} />
           </div>
           {match.is_completed && match.winner && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-bold">
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
               <Trophy className="h-3 w-3" />
               {match.winner}
             </span>
@@ -161,7 +161,7 @@ export default function MatchesPage() {
     <div className="px-4 py-6 max-w-2xl mx-auto space-y-4">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Calendar className="h-7 w-7 text-indigo-400" />
+        <Calendar className="h-7 w-7 text-indigo-500" />
         <h1 className="text-2xl font-extrabold text-[var(--app-text)]">Match Center</h1>
       </div>
 
@@ -173,14 +173,14 @@ export default function MatchesPage() {
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
               activeTab === tab.id
-                ? 'bg-indigo-500/30 text-indigo-300 border border-indigo-400/30'
+                ? 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border border-indigo-500/40 font-semibold'
                 : 'bg-[var(--app-surface)] text-[var(--app-text-secondary)] border border-[var(--app-border)] hover:bg-[var(--app-surface-alt)]'
             }`}
           >
             {tab.label}
             <span
-              className={`px-1.5 py-0.5 rounded-full text-[10px] ${
-                activeTab === tab.id ? 'bg-indigo-500/30' : 'bg-[var(--app-surface-alt)]'
+              className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                activeTab === tab.id ? 'bg-indigo-500/25 text-indigo-600 dark:text-indigo-300' : 'bg-[var(--app-surface-alt)] text-[var(--app-text-tertiary)]'
               }`}
             >
               {tab.count}

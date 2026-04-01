@@ -201,8 +201,8 @@ export default function Home() {
           <div className="bg-gradient-to-br from-indigo-500/20 to-purple-600/20 backdrop-blur-sm border border-indigo-400/30 rounded-xl p-4 hover:border-indigo-400/50 transition-all shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-indigo-500" />
-                <span className="text-xs font-medium text-indigo-500">Next Match</span>
+                <Calendar className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
+                <span className="text-xs font-medium text-indigo-500 dark:text-indigo-300">Next Match</span>
               </div>
               <span className="text-xs text-[var(--app-text-secondary)]">
                 Match #{nextMatch.id}
@@ -255,8 +255,8 @@ export default function Home() {
         <div className="bg-gradient-to-br from-indigo-500/20 to-purple-600/20 backdrop-blur-sm border border-indigo-400/30 rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-indigo-500" />
-              <span className="text-xs font-medium text-indigo-500">Double Header Day</span>
+              <Calendar className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
+              <span className="text-xs font-medium text-indigo-500 dark:text-indigo-300">Double Header Day</span>
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 text-[10px] font-bold">
                 <Layers className="h-2.5 w-2.5" />
                 2 GAMES
@@ -370,8 +370,8 @@ export default function Home() {
       {!loading && leader && (
         <div className="bg-gradient-to-br from-amber-500/15 to-yellow-600/10 backdrop-blur-sm border border-amber-400/30 rounded-xl p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
-            <Trophy className="h-4 w-4 text-amber-500" />
-            <span className="text-xs font-medium text-amber-600">Current Leader</span>
+            <Trophy className="h-4 w-4 text-amber-500 dark:text-amber-400" />
+            <span className="text-xs font-medium text-amber-600 dark:text-amber-300">Current Leader</span>
           </div>
           <div className="flex items-center gap-4">
             <div
