@@ -53,11 +53,14 @@ export async function GET() {
     // Bonus question accuracy per player
     const bonusAccuracy = buildBonusAccuracy(bonusQuestions, bonusResponses);
 
+    // Wall of Shame data
+    const wallOfShame = buildWallOfShame(completedMatches, predictions, jokers);
+
     return NextResponse.json({
       leaderboard, matches, predictions, pointsRace, teamPopularity,
       accuracyByPlayer, predictionTimings, weeklyPoints, crowdWisdom,
       contrarianData, matchDifficulty, formData, winRateByTeam,
-      doubleHeaderData, heatmapData, streakData, bonusAccuracy,
+      doubleHeaderData, heatmapData, streakData, bonusAccuracy, wallOfShame,
     });
   } catch (error) {
     console.error('Insights API error:', error);
@@ -286,4 +289,81 @@ function buildBonusAccuracy(bonusQuestions: any[], bonusResponses: any[]) {
       color: p.avatar_color,
     };
   });
+}
+
+function buildWallOfShame(matches: Match[], predictions: Prediction[], jokers: any[]) {
+  // 1. Wasted Jokers
+  const wastedJokers: { name: string; matchId: number; homeTeam: string; awayTeam: string; picked: string; winner: string; color: string }[] = [];
+  jokers.forEach((j: any) => {
+    if (!j.match_id) return;
+    const match = matches.find(m => m.id === j.match_id);
+    if (!match || !match.is_completed) return;
+    const pred = predictions.find(p => p.match_id === j.match_id && p.participant_id === j.participant_id);
+    if (!pred) return;
+    if (pred.predicted_team !== match.winner) {
+      const participant = PARTICIPANTS.find(p => p.id === j.participant_id);
+      wastedJokers.push({
+        name: participant?.name || j.participant_id,
+        matchId: match.id,
+        homeTeam: match.home_team,
+        awayTeam: match.away_team,
+        picked: pred.predicted_team,
+        winner: match.winner!,
+        color: participant?.avatar_color || '#666',
+      });
+    }
+  });
+
+  // 2. The Jinxer - lowest success when picking the crowd favorite
+  const jinxers = PARTICIPANTS.map(p => {
+    let pickedFavorite = 0;
+    let favoriteWon = 0;
+    matches.forEach(match => {
+      const matchPreds = predictions.filter(pr => pr.match_id === match.id);
+      const playerPred = matchPreds.find(pr => pr.participant_id === p.id);
+      if (!playerPred) return;
+      const homePicks = matchPreds.filter(pr => pr.predicted_team === match.home_team).length;
+      const awayPicks = matchPreds.filter(pr => pr.predicted_team === match.away_team).length;
+      const favorite = homePicks >= awayPicks ? match.home_team : match.away_team;
+      if (playerPred.predicted_team === favorite) {
+        pickedFavorite++;
+        if (match.winner === favorite) favoriteWon++;
+      }
+    });
+    return {
+      name: p.name,
+      pickedFavorite,
+      favoriteWon,
+      favoriteLost: pickedFavorite - favoriteWon,
+      jinxRate: pickedFavorite > 0 ? ((pickedFavorite - favoriteWon) / pickedFavorite) * 100 : 0,
+      color: p.avatar_color,
+    };
+  }).filter(j => j.pickedFavorite > 0).sort((a, b) => b.jinxRate - a.jinxRate);
+
+  // 3. Zero-Streak Club - current and longest losing streaks
+  const losingStreaks = PARTICIPANTS.map(p => {
+    let currentLosing = 0;
+    let longestLosing = 0;
+    const sortedMatches = [...matches].sort((a, b) => {
+      const d = a.match_date.localeCompare(b.match_date);
+      return d !== 0 ? d : a.start_time.localeCompare(b.start_time);
+    });
+    sortedMatches.forEach(match => {
+      const pred = predictions.find(pr => pr.match_id === match.id && pr.participant_id === p.id);
+      if (!pred || pred.predicted_team !== match.winner) {
+        currentLosing++;
+      } else {
+        currentLosing = 0;
+      }
+      if (currentLosing > longestLosing) longestLosing = currentLosing;
+    });
+    return {
+      name: p.name,
+      currentLosingStreak: currentLosing,
+      longestLosingStreak: longestLosing,
+      color: p.avatar_color,
+    };
+  }).sort((a, b) => b.currentLosingStreak - a.currentLosingStreak);
+
+  return { wastedJokers, jinxers, losingStreaks };
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { BarChart3, TrendingUp, Users, Zap, Target, Clock, Trophy, Flame } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, Zap, Target, Clock, Trophy, Flame, Skull } from 'lucide-react';
 import { PlayerPointsBreakdown, Match, Prediction } from '@/lib/types';
 import { TEAMS, PARTICIPANTS } from '@/lib/constants';
 
@@ -24,6 +24,7 @@ const FormChart = dynamic(() => import('@/components/charts/FormChart').then(m =
 const WinRateByTeamChart = dynamic(() => import('@/components/charts/WinRateByTeamChart').then(m => ({ default: m.WinRateByTeamChart })), { ssr: false });
 const PointsGapChart = dynamic(() => import('@/components/charts/PointsGapChart').then(m => ({ default: m.PointsGapChart })), { ssr: false });
 const BonusQuestionAccuracyChart = dynamic(() => import('@/components/charts/BonusQuestionAccuracyChart').then(m => ({ default: m.BonusQuestionAccuracyChart })), { ssr: false });
+const WallOfShame = dynamic(() => import('@/components/charts/WallOfShame').then(m => ({ default: m.WallOfShame })), { ssr: false });
 
 interface InsightsAPIData {
   leaderboard: PlayerPointsBreakdown[];
@@ -43,6 +44,11 @@ interface InsightsAPIData {
   heatmapData: { participants: { id: string; name: string }[]; matches: { id: number; home_team: string; away_team: string }[]; predictions: Record<string, Record<number, { predicted: string; correct: boolean | null }>> };
   streakData: { name: string; longestStreak: number; currentStreak: number; color: string }[];
   bonusAccuracy: { name: string; correct: number; total: number; accuracy: number; points: number; color: string }[];
+  wallOfShame: {
+    wastedJokers: { name: string; matchId: number; homeTeam: string; awayTeam: string; picked: string; winner: string; color: string }[];
+    jinxers: { name: string; pickedFavorite: number; favoriteWon: number; favoriteLost: number; jinxRate: number; color: string }[];
+    losingStreaks: { name: string; currentLosingStreak: number; longestLosingStreak: number; color: string }[];
+  };
 }
 
 const TABS = [
@@ -54,6 +60,7 @@ const TABS = [
   { id: 'h2h', label: 'Head to Head', icon: TrendingUp },
   { id: 'matches', label: 'Match Analysis', icon: BarChart3 },
   { id: 'timing', label: 'Timing', icon: Clock },
+  { id: 'shame', label: 'Wall of Shame', icon: Skull },
 ];
 
 export default function InsightsPage() {
@@ -181,6 +188,10 @@ export default function InsightsPage() {
           <ChartCard title="Early Bird Rankings" subtitle="Who predicts earliest before the match?">
             <PredictionTimingChart data={data.predictionTimings} />
           </ChartCard>
+        )}
+
+        {activeTab === 'shame' && (
+          <WallOfShame data={data.wallOfShame} />
         )}
       </div>
     </div>
