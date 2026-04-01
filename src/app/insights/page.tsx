@@ -116,7 +116,7 @@ export default function InsightsPage() {
             <ChartCard title="Points Source Breakdown" subtitle="Where do points come from?">
               <BonusBreakdownChart data={data.leaderboard} />
             </ChartCard>
-            <ChartCard title="Weekly Points" subtitle="Points earned each week">
+            <ChartCard title="Weekly Points" subtitle="Points earned each week (weeks run Sunday to Saturday)">
               <WeeklyPointsChart data={data.weeklyPoints} />
             </ChartCard>
           </>
