@@ -16,6 +16,10 @@ export function TeamPopularityChart({ data }: { data: TeamPopData[] }) {
   const sorted = [...data].sort((a, b) => b.total - a.total);
 
   return (
+    <div>
+      <p className="text-xs text-slate-400 mb-3">
+        <span className="text-emerald-400">Correct</span> = picked this team and they won | <span className="text-slate-300">Wrong</span> = picked this team but they lost
+      </p>
     <div className="w-full h-[400px]">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={sorted} layout="vertical" margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
@@ -34,6 +38,7 @@ export function TeamPopularityChart({ data }: { data: TeamPopData[] }) {
           <Bar dataKey="wrong" stackId="a" name="Wrong" fill="rgba(255,255,255,0.15)" radius={[0, 4, 4, 0]} />
         </BarChart>
       </ResponsiveContainer>
+    </div>
     </div>
   );
 }
