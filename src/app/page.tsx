@@ -18,9 +18,11 @@ interface LeaderboardResponse {
   completedMatches: number;
 }
 
+const MATCH_DURATION_MS = 4 * 60 * 60 * 1000; // 4 hours
+
 function CountdownTimer({ targetDate }: { targetDate: string }) {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  const [isLive, setIsLive] = useState(false);
+  const [phase, setPhase] = useState<'countdown' | 'live' | 'awaiting'>('countdown');
 
   useEffect(() => {
     const tick = () => {
@@ -29,12 +31,17 @@ function CountdownTimer({ targetDate }: { targetDate: string }) {
       const diff = target - now;
 
       if (diff <= 0) {
-        setIsLive(true);
+        const elapsed = -diff;
+        if (elapsed < MATCH_DURATION_MS) {
+          setPhase('live');
+        } else {
+          setPhase('awaiting');
+        }
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         return;
       }
 
-      setIsLive(false);
+      setPhase('countdown');
       setTimeLeft({
         days: Math.floor(diff / (1000 * 60 * 60 * 24)),
         hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
@@ -48,14 +55,26 @@ function CountdownTimer({ targetDate }: { targetDate: string }) {
     return () => clearInterval(timer);
   }, [targetDate]);
 
-  if (isLive) {
+  if (phase === 'live') {
     return (
       <div className="flex items-center justify-center gap-2 py-2">
         <span className="relative flex h-2.5 w-2.5">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
         </span>
-        <span className="text-sm font-bold text-red-400 tracking-wide uppercase">Match in progress</span>
+        <span className="text-sm font-bold text-red-500 dark:text-red-400 tracking-wide uppercase">Match in progress</span>
+      </div>
+    );
+  }
+
+  if (phase === 'awaiting') {
+    return (
+      <div className="flex items-center justify-center gap-2 py-2">
+        <span className="relative flex h-2.5 w-2.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-60" />
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500" />
+        </span>
+        <span className="text-sm font-medium text-amber-600 dark:text-amber-400 tracking-wide">Results being updated…</span>
       </div>
     );
   }
