@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { X } from 'lucide-react';
 import { PARTICIPANTS } from '@/lib/constants';
 import { useChartTheme } from '@/hooks/useChartTheme';
 
@@ -17,7 +18,6 @@ export function PointsRaceChart({ data }: { data: PointsRaceData[] }) {
 
   if (!data?.length) return <EmptyState message="No match data yet" />;
 
-  // Get the latest match data to sort players by points (highest first)
   const latestMatch = data[data.length - 1];
   const sortedParticipants = [...PARTICIPANTS].sort((a, b) => {
     const aPoints = (latestMatch?.[a.id] as number) || 0;
@@ -25,9 +25,42 @@ export function PointsRaceChart({ data }: { data: PointsRaceData[] }) {
     return bPoints - aPoints;
   });
 
+  const highlightedPlayer = highlighted
+    ? sortedParticipants.find(p => p.id === highlighted)
+    : null;
+
   return (
     <div>
-      <div className="w-full h-[400px]">
+      {/* Selection hint / active selection banner */}
+      <div className="mb-3 min-h-[28px]">
+        {highlighted && highlightedPlayer ? (
+          <div
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border"
+            style={{
+              backgroundColor: highlightedPlayer.avatar_color + '22',
+              borderColor: highlightedPlayer.avatar_color + '66',
+            }}
+          >
+            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: highlightedPlayer.avatar_color }} />
+            <span style={{ color: highlightedPlayer.avatar_color }}>{highlightedPlayer.name}</span>
+            <span className="text-[var(--app-text-tertiary)]">·</span>
+            <span className="font-bold" style={{ color: highlightedPlayer.avatar_color }}>
+              {(latestMatch?.[highlighted] as number) || 0} pts
+            </span>
+            <button
+              onClick={() => setHighlighted(null)}
+              className="ml-1 text-[var(--app-text-tertiary)] hover:text-[var(--app-text)] active:scale-90"
+              aria-label="Clear selection"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ) : (
+          <p className="text-[10px] text-[var(--app-text-tertiary)]">Tap a name below to isolate their line</p>
+        )}
+      </div>
+
+      <div className="w-full h-[360px]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
@@ -37,7 +70,6 @@ export function PointsRaceChart({ data }: { data: PointsRaceData[] }) {
               content={({ label, payload }) => {
                 if (!payload?.length) return null;
                 const sorted = [...payload].sort((a, b) => (b.value as number || 0) - (a.value as number || 0));
-                // If a player is highlighted, show only them; otherwise top 5
                 const items = highlighted
                   ? sorted.filter(p => p.dataKey === highlighted)
                   : sorted;
@@ -65,7 +97,7 @@ export function PointsRaceChart({ data }: { data: PointsRaceData[] }) {
                 name={p.name}
                 stroke={p.avatar_color}
                 strokeWidth={highlighted === p.id ? 4 : highlighted ? 1 : 2}
-                strokeOpacity={highlighted ? (highlighted === p.id ? 1 : 0.2) : 0.8}
+                strokeOpacity={highlighted ? (highlighted === p.id ? 1 : 0.15) : 0.8}
                 dot={false}
                 connectNulls
               />
@@ -74,19 +106,24 @@ export function PointsRaceChart({ data }: { data: PointsRaceData[] }) {
         </ResponsiveContainer>
       </div>
 
-      {/* Player legend */}
-      <div className="flex flex-wrap gap-x-3 gap-y-1.5 mt-3">
+      {/* Player legend — larger tap targets, ranked order */}
+      <div className="flex flex-wrap gap-2 mt-4">
         {sortedParticipants.map((p) => {
           const pts = (latestMatch?.[p.id] as number) || 0;
+          const isActive = highlighted === p.id;
+          const isDimmed = highlighted !== null && !isActive;
           return (
             <button
               key={p.id}
-              onMouseEnter={() => setHighlighted(p.id)}
-              onMouseLeave={() => setHighlighted(null)}
               onClick={() => setHighlighted(prev => prev === p.id ? null : p.id)}
-              className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded transition-all ${
-                highlighted === p.id ? 'bg-[var(--app-surface-alt)] scale-105' : highlighted ? 'opacity-40' : ''
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all active:scale-95 ${
+                isActive
+                  ? 'border-[var(--app-border-strong)] bg-[var(--app-surface-alt)]'
+                  : isDimmed
+                  ? 'border-transparent opacity-35'
+                  : 'border-transparent hover:bg-[var(--app-surface)]'
               }`}
+              style={isActive ? { borderColor: p.avatar_color + '88' } : {}}
             >
               <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: p.avatar_color }} />
               <span className="text-[var(--app-text-secondary)]">{p.name}</span>
