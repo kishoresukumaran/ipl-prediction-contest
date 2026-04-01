@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { calculateAllPlayerPoints } from '@/lib/scoring';
-import { PARTICIPANTS } from '@/lib/constants';
+import { PARTICIPANTS, TEAMS, getMatchPoints } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,12 +82,39 @@ export async function GET() {
         };
       });
 
+      // The Hater: which team they bet against the most
+      const betAgainst: Record<string, number> = {};
+      completedMatches.forEach(match => {
+        const pred = playerPreds.find(p => p.match_id === match.id);
+        if (!pred) return;
+        // They bet against the team they didn't pick
+        const against = pred.predicted_team === match.home_team ? match.away_team : match.home_team;
+        betAgainst[against] = (betAgainst[against] || 0) + 1;
+      });
+      const hatedTeams = Object.entries(betAgainst)
+        .sort((a, b) => b[1] - a[1])
+        .map(([team, count]) => ({ team, count }));
+
+      // Most Profitable Team: which team earned them the most points when picked
+      const teamProfit: Record<string, number> = {};
+      completedMatches.forEach(match => {
+        const pred = playerPreds.find(p => p.match_id === match.id);
+        if (!pred || pred.predicted_team !== match.winner) return;
+        const pts = getMatchPoints(match.match_type, match.is_power_match);
+        teamProfit[pred.predicted_team] = (teamProfit[pred.predicted_team] || 0) + pts;
+      });
+      const profitableTeams = Object.entries(teamProfit)
+        .sort((a, b) => b[1] - a[1])
+        .map(([team, points]) => ({ team, points }));
+
       return {
         ...player,
         avatarColor: participant?.avatar_color || '#666',
         jokerMatchId: playerJoker?.match_id || null,
         jokerUsed: !!playerJoker?.match_id,
         teamAffinity,
+        hatedTeams,
+        profitableTeams,
         predictionHistory,
       };
     });

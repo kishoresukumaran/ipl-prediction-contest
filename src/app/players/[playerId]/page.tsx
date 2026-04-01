@@ -35,6 +35,8 @@ interface PlayerData extends PlayerPointsBreakdown {
   jokerMatchId: number | null;
   jokerUsed: boolean;
   teamAffinity: { team: string; count: number }[];
+  hatedTeams: { team: string; count: number }[];
+  profitableTeams: { team: string; points: number }[];
   predictionHistory: PredictionHistoryItem[];
 }
 
@@ -234,10 +236,10 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
       {/* Team Affinity */}
       {topTeams.length > 0 && (
         <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4">
-          <h2 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
-            <Award className="h-4 w-4 text-purple-400" />
-            Team Affinity
+          <h2 className="text-sm font-semibold text-slate-300 mb-1 flex items-center gap-2">
+            <span className="text-base">😍</span> The Fanboy
           </h2>
+          <p className="text-[10px] text-slate-500 mb-3">Teams they pick the most</p>
           <div className="space-y-2">
             {topTeams.map((ta) => {
               const maxCount = topTeams[0]?.count || 1;
@@ -259,6 +261,54 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* The Hater - most bet against */}
+      {player.hatedTeams?.length > 0 && (
+        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4">
+          <h2 className="text-sm font-semibold text-slate-300 mb-1 flex items-center gap-2">
+            <span className="text-base">😤</span> The Hater
+          </h2>
+          <p className="text-[10px] text-slate-500 mb-3">Teams they bet against the most</p>
+          <div className="space-y-2">
+            {player.hatedTeams.slice(0, 5).map((ht) => {
+              const maxCount = player.hatedTeams[0]?.count || 1;
+              return (
+                <div key={ht.team} className="flex items-center gap-3">
+                  <TeamBadge team={ht.team} />
+                  <div className="flex-1">
+                    <div className="flex h-2 rounded-full overflow-hidden bg-white/5">
+                      <div className="rounded-full bg-red-500/70 transition-all" style={{ width: `${(ht.count / maxCount) * 100}%` }} />
+                    </div>
+                  </div>
+                  <span className="text-xs text-red-400 w-8 text-right">{ht.count}x</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Most Profitable Team */}
+      {player.profitableTeams?.length > 0 && (
+        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4">
+          <h2 className="text-sm font-semibold text-slate-300 mb-1 flex items-center gap-2">
+            <span className="text-base">💰</span> Most Profitable Team
+          </h2>
+          <p className="text-[10px] text-slate-500 mb-3">Which team earned them the most points</p>
+          <div className="space-y-2">
+            {player.profitableTeams.slice(0, 5).map((pt, i) => (
+              <div key={pt.team} className="flex items-center gap-3">
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                  i === 0 ? 'bg-amber-400 text-black' : 'bg-white/10 text-slate-400'
+                }`}>{i + 1}</span>
+                <TeamBadge team={pt.team} />
+                <span className="text-sm text-white flex-1">{TEAMS[pt.team]?.name}</span>
+                <span className="text-sm font-bold text-amber-400">+{pt.points} pts</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
