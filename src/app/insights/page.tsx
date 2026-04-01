@@ -27,6 +27,7 @@ const BonusQuestionAccuracyChart = dynamic(() => import('@/components/charts/Bon
 const WallOfShame = dynamic(() => import('@/components/charts/WallOfShame').then(m => ({ default: m.WallOfShame })), { ssr: false });
 const LastMinutePanicker = dynamic(() => import('@/components/charts/LastMinutePanicker').then(m => ({ default: m.LastMinutePanicker })), { ssr: false });
 const CopycatChart = dynamic(() => import('@/components/charts/CopycatChart').then(m => ({ default: m.CopycatChart })), { ssr: false });
+const PointsMatrixChart = dynamic(() => import('@/components/charts/PointsMatrixChart').then(m => ({ default: m.PointsMatrixChart })), { ssr: false });
 
 interface InsightsAPIData {
   leaderboard: PlayerPointsBreakdown[];
@@ -52,6 +53,10 @@ interface InsightsAPIData {
     losingStreaks: { name: string; currentLosingStreak: number; longestLosingStreak: number; color: string }[];
   };
   copycats: { copier: string; copierName: string; copierColor: string; target: string; targetName: string; targetColor: string; count: number; matches: number; instances: { matchId: number; homeTeam: string; awayTeam: string; team: string; targetTime: string; copierTime: string; gapMinutes: number }[] }[];
+  pointsMatrix: {
+    matches: { id: number; home_team: string; away_team: string; match_type: string; is_power_match: boolean }[];
+    matrix: Record<string, Record<number, number>>;
+  };
 }
 
 const TABS = [
@@ -112,6 +117,9 @@ export default function InsightsPage() {
           <>
             <ChartCard title="Points Race" subtitle="Cumulative points over matches">
               <PointsRaceChart data={data.pointsRace} matches={data.matches} />
+            </ChartCard>
+            <ChartCard title="Points Matrix" subtitle="Every point earned, match by match. The spreadsheet your inner nerd has been waiting for.">
+              <PointsMatrixChart data={data.pointsMatrix} leaderboard={data.leaderboard} />
             </ChartCard>
             <ChartCard title="Points Gap Analysis" subtitle="How far behind the leader?">
               <PointsGapChart data={data.leaderboard} />

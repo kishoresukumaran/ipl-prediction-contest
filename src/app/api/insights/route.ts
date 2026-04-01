@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { calculateAllPlayerPoints } from '@/lib/scoring';
-import { PARTICIPANTS, TEAMS } from '@/lib/constants';
+import { PARTICIPANTS, TEAMS, POINTS_CONFIG, getMatchPoints } from '@/lib/constants';
 import { Match, Prediction } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -59,11 +59,15 @@ export async function GET() {
     // Copycat data
     const copycats = buildCopycats(completedMatches, predictions);
 
+    // Points matrix
+    const pointsMatrix = buildPointsMatrix(completedMatches, predictions, jokers, bonusQuestions, bonusResponses);
+
     return NextResponse.json({
       leaderboard, matches, predictions, pointsRace, teamPopularity,
       accuracyByPlayer, predictionTimings, weeklyPoints, crowdWisdom,
       contrarianData, matchDifficulty, formData, winRateByTeam,
       doubleHeaderData, heatmapData, streakData, bonusAccuracy, wallOfShame, copycats,
+      pointsMatrix,
     });
   } catch (error) {
     console.error('Insights API error:', error);
@@ -440,4 +444,116 @@ function buildCopycats(matches: Match[], predictions: Prediction[]) {
     .filter(p => p.count >= 1)
     .sort((a, b) => b.count - a.count)
     .slice(0, 15);
+}
+
+function buildPointsMatrix(
+  matches: Match[],
+  predictions: Prediction[],
+  jokers: any[],
+  bonusQuestions: any[],
+  bonusResponses: any[]
+) {
+  const sorted = [...matches].sort((a, b) => {
+    const d = a.match_date.localeCompare(b.match_date);
+    return d !== 0 ? d : a.start_time.localeCompare(b.start_time);
+  });
+
+  const matchCountByDate: Record<string, number> = {};
+  sorted.forEach(m => {
+    matchCountByDate[m.match_date] = (matchCountByDate[m.match_date] || 0) + 1;
+  });
+
+  const matrix: Record<string, Record<number, number>> = {};
+
+  for (const p of PARTICIPANTS) {
+    matrix[p.id] = {};
+    const playerPreds = predictions.filter(pr => pr.participant_id === p.id);
+    const playerJoker = jokers.find((j: any) => j.participant_id === p.id);
+    const playerBonusResponses = bonusResponses.filter((b: any) => b.participant_id === p.id);
+
+    let currentStreak = 0;
+    let streakStart: number | null = null;
+    const correctByDate: Record<string, number[]> = {};
+
+    for (const match of sorted) {
+      let matchPoints = 0;
+      const pred = playerPreds.find(pr => pr.match_id === match.id);
+
+      if (!pred) {
+        if (currentStreak >= POINTS_CONFIG.minStreak) {
+          matrix[p.id][match.id] = (matrix[p.id][match.id] || 0) + currentStreak;
+        }
+        currentStreak = 0;
+        streakStart = null;
+        matrix[p.id][match.id] = matrix[p.id][match.id] || 0;
+        continue;
+      }
+
+      const isCorrect = pred.predicted_team === match.winner;
+
+      if (isCorrect) {
+        matchPoints += getMatchPoints(match.match_type, match.is_power_match);
+
+        if (match.underdog_team && pred.predicted_team === match.underdog_team) {
+          matchPoints += POINTS_CONFIG.underdogBonus;
+        }
+
+        if (playerJoker && playerJoker.match_id === match.id) {
+          matchPoints += POINTS_CONFIG.jokerBonus;
+        }
+
+        if (!correctByDate[match.match_date]) correctByDate[match.match_date] = [];
+        correctByDate[match.match_date].push(match.id);
+
+        currentStreak++;
+        if (currentStreak === 1) streakStart = match.id;
+      } else {
+        if (currentStreak >= POINTS_CONFIG.minStreak) {
+          matchPoints += currentStreak;
+        }
+        currentStreak = 0;
+        streakStart = null;
+      }
+
+      // Bonus question points for this match
+      const matchBonusQs = bonusQuestions.filter((q: any) => q.match_id === match.id);
+      for (const bq of matchBonusQs) {
+        const resp = playerBonusResponses.find((r: any) => r.bonus_question_id === bq.id);
+        if (resp && resp.is_correct) {
+          matchPoints += bq.points || 1;
+        }
+      }
+
+      matrix[p.id][match.id] = matchPoints;
+    }
+
+    // Ongoing streak at the end — attribute to last match
+    if (currentStreak >= POINTS_CONFIG.minStreak && sorted.length > 0) {
+      const lastMatch = sorted[sorted.length - 1];
+      matrix[p.id][lastMatch.id] = (matrix[p.id][lastMatch.id] || 0) + currentStreak;
+    }
+
+    // Double header bonus — attribute to 2nd match of the DH day
+    for (const [date, correctIds] of Object.entries(correctByDate)) {
+      const totalOnDay = matchCountByDate[date] || 0;
+      if (totalOnDay >= 2 && correctIds.length >= 2) {
+        const dayMatches = sorted.filter(m => m.match_date === date);
+        const secondMatch = dayMatches[dayMatches.length - 1];
+        if (secondMatch) {
+          matrix[p.id][secondMatch.id] = (matrix[p.id][secondMatch.id] || 0) + POINTS_CONFIG.doubleHeaderBonus;
+        }
+      }
+    }
+  }
+
+  return {
+    matches: sorted.map(m => ({
+      id: m.id,
+      home_team: m.home_team,
+      away_team: m.away_team,
+      match_type: m.match_type,
+      is_power_match: m.is_power_match,
+    })),
+    matrix,
+  };
 }
