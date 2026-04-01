@@ -4,6 +4,27 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { PlayerPointsBreakdown } from '@/lib/types';
 import { useChartTheme } from '@/hooks/useChartTheme';
 
+function SegmentLabel(props: { x?: number; y?: number; width?: number; height?: number; value?: number }) {
+  const { x = 0, y = 0, width = 0, height = 0, value } = props;
+  if (!value || width < 20) return null;
+  return (
+    <text
+      x={x + width / 2}
+      y={y + height / 2}
+      textAnchor="middle"
+      dominantBaseline="central"
+      fontSize={10}
+      fontWeight="bold"
+      fill="#fff"
+      stroke="rgba(0,0,0,0.45)"
+      strokeWidth={2.5}
+      paintOrder="stroke"
+    >
+      {value}
+    </text>
+  );
+}
+
 export function BonusBreakdownChart({ data }: { data: PlayerPointsBreakdown[] }) {
   const chartTheme = useChartTheme();
   if (!data?.length) return <EmptyState />;
@@ -32,14 +53,14 @@ export function BonusBreakdownChart({ data }: { data: PlayerPointsBreakdown[] })
           <YAxis dataKey="name" type="category" width={90} stroke={chartTheme.axis} tick={{ fontSize: 11 }} interval={0} />
           <Tooltip contentStyle={{ backgroundColor: chartTheme.tooltipBg, border: `1px solid ${chartTheme.tooltipBorder}`, borderRadius: '8px', color: chartTheme.tooltipText }} />
           <Legend wrapperStyle={{ fontSize: 11, color: chartTheme.label }} />
-          <Bar dataKey="Base" stackId="a" fill="#60a5fa" />
-          <Bar dataKey="Power" stackId="a" fill="#f59e0b" />
-          <Bar dataKey="Underdog" stackId="a" fill="#34d399" />
-          <Bar dataKey="Joker" stackId="a" fill="#a78bfa" />
-          <Bar dataKey="Double Header" stackId="a" fill="#fb7185" />
-          <Bar dataKey="Streak" stackId="a" fill="#38bdf8" />
-          <Bar dataKey="Trivia" stackId="a" fill="#4ade80" />
-          <Bar dataKey="Bonus" stackId="a" fill="#fbbf24" />
+          <Bar dataKey="Base" stackId="a" fill="#60a5fa" label={SegmentLabel} />
+          <Bar dataKey="Power" stackId="a" fill="#f59e0b" label={SegmentLabel} />
+          <Bar dataKey="Underdog" stackId="a" fill="#34d399" label={SegmentLabel} />
+          <Bar dataKey="Joker" stackId="a" fill="#a78bfa" label={SegmentLabel} />
+          <Bar dataKey="Double Header" stackId="a" fill="#fb7185" label={SegmentLabel} />
+          <Bar dataKey="Streak" stackId="a" fill="#38bdf8" label={SegmentLabel} />
+          <Bar dataKey="Trivia" stackId="a" fill="#4ade80" label={SegmentLabel} />
+          <Bar dataKey="Bonus" stackId="a" fill="#fbbf24" label={SegmentLabel} />
         </BarChart>
       </ResponsiveContainer>
     </div>
