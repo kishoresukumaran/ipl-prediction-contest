@@ -239,7 +239,7 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
           <h2 className="text-sm font-semibold text-slate-300 mb-1 flex items-center gap-2">
             <span className="text-base">😍</span> The Fanboy
           </h2>
-          <p className="text-[10px] text-slate-500 mb-3">Teams they pick the most</p>
+          <p className="text-[10px] text-slate-500 mb-3">Teams you pick the most</p>
           <div className="space-y-2">
             {topTeams.map((ta) => {
               const maxCount = topTeams[0]?.count || 1;
@@ -271,7 +271,7 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
           <h2 className="text-sm font-semibold text-slate-300 mb-1 flex items-center gap-2">
             <span className="text-base">😤</span> The Hater
           </h2>
-          <p className="text-[10px] text-slate-500 mb-3">Teams they bet against the most</p>
+          <p className="text-[10px] text-slate-500 mb-3">Teams you bet against the most</p>
           <div className="space-y-2">
             {player.hatedTeams.slice(0, 5).map((ht) => {
               const maxCount = player.hatedTeams[0]?.count || 1;
@@ -297,7 +297,7 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
           <h2 className="text-sm font-semibold text-slate-300 mb-1 flex items-center gap-2">
             <span className="text-base">💰</span> Most Profitable Team
           </h2>
-          <p className="text-[10px] text-slate-500 mb-3">Which team earned them the most points</p>
+          <p className="text-[10px] text-slate-500 mb-3">Which team earned you the most points</p>
           <div className="space-y-2">
             {player.profitableTeams.slice(0, 5).map((pt, i) => (
               <div key={pt.team} className="flex items-center gap-3">
