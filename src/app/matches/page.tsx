@@ -190,7 +190,7 @@ export default function MatchesPage() {
       </div>
 
       {/* Match List */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         {filtered.length === 0 ? (
           <div className="text-center py-12 text-[var(--app-text-secondary)]">
             <Calendar className="h-12 w-12 mx-auto mb-3 opacity-30" />
