@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { TEAMS, PARTICIPANTS } from '@/lib/constants';
 import { Match, Prediction, BonusQuestion } from '@/lib/types';
+import { toIrishDatetimeLocal } from '@/lib/utils';
 import { Gift } from 'lucide-react';
 
 interface PredictionEntry {
@@ -69,7 +70,7 @@ export default function AdminPredictionsPage() {
             participant_id: pred.participant_id,
             predicted_team: pred.predicted_team || '',
             prediction_time: pred.prediction_time
-              ? pred.prediction_time.slice(0, 16)
+              ? toIrishDatetimeLocal(pred.prediction_time)
               : '',
           };
         });

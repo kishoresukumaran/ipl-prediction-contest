@@ -27,3 +27,40 @@ export function matchTimeToIrish(matchDate: string, istTime: string): string {
 export function matchDateTimeUTC(matchDate: string, istTime: string): Date {
   return new Date(`${matchDate}T${istTime}:00+05:30`);
 }
+
+/**
+ * Convert a UTC/ISO timestamp to a datetime-local input value in Irish time.
+ * Returns "YYYY-MM-DDTHH:MM" formatted in Europe/Dublin timezone.
+ * Used by the admin predictions page for the datetime-local input.
+ */
+export function toIrishDatetimeLocal(isoString: string): string {
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return '';
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Dublin',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+  const get = (type: string) => parts.find(p => p.type === type)?.value || '';
+  return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`;
+}
+
+/**
+ * Format a UTC/ISO prediction timestamp for display in Irish time.
+ * Returns a human-readable string like "Mar 29, 2:15 PM".
+ */
+export function predictionTimeToIrish(isoString: string): string {
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return '';
+  return date.toLocaleString('en-US', {
+    timeZone: 'Europe/Dublin',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}

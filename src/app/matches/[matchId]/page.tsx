@@ -16,7 +16,7 @@ import {
   Users,
 } from 'lucide-react';
 import { TEAMS, PARTICIPANTS } from '@/lib/constants';
-import { matchTimeToIrish } from '@/lib/utils';
+import { matchTimeToIrish, predictionTimeToIrish } from '@/lib/utils';
 import { Match, Prediction } from '@/lib/types';
 
 interface MatchWithPredictions extends Match {
@@ -308,12 +308,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
                   <span className="text-sm font-medium text-[var(--app-text)] block truncate">{pred.name}</span>
                   {pred.predictionTime && (
                     <span className="text-[10px] text-[var(--app-text-tertiary)]">
-                      {new Date(pred.predictionTime).toLocaleString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                      })}
+                      {predictionTimeToIrish(pred.predictionTime)}
                     </span>
                   )}
                 </div>

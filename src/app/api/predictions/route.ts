@@ -41,8 +41,25 @@ export async function POST(request: NextRequest) {
         prediction_time: p.prediction_time || null,
       }));
 
+    const activeParticipantIds = upsertData.map((p: { participant_id: string }) => p.participant_id);
+
+    // Delete predictions for participants who were cleared
+    let deleteQuery = supabase
+      .from('predictions')
+      .delete()
+      .eq('match_id', match_id);
+
+    if (activeParticipantIds.length > 0) {
+      deleteQuery = deleteQuery.not('participant_id', 'in', `(${activeParticipantIds.join(',')})`);
+    }
+
+    const { error: deleteError } = await deleteQuery;
+    if (deleteError) {
+      return NextResponse.json({ error: deleteError.message }, { status: 500 });
+    }
+
     if (upsertData.length === 0) {
-      return NextResponse.json({ message: 'No predictions to save' });
+      return NextResponse.json({ message: 'Cleared all predictions for this match' });
     }
 
     const { data, error } = await supabase
