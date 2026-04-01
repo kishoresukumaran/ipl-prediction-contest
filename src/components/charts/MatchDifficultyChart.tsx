@@ -14,17 +14,19 @@ export function MatchDifficultyChart({ data }: { data: MatchDiffData[] }) {
   if (!data?.length) return <EmptyState />;
 
   const sorted = [...data].sort((a, b) => a.groupAccuracy - b.groupAccuracy).slice(0, 20);
+  const chartData = sorted.map(d => ({ ...d, label: `#${d.matchId} ${d.homeTeam} v ${d.awayTeam}` }));
 
   return (
-    <div className="w-full h-[400px]">
+    <div className="w-full h-[450px]">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={sorted} margin={{ top: 5, right: 20, left: -10, bottom: 30 }}>
+        <BarChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 70 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
           <XAxis
-            dataKey="matchId"
+            dataKey="label"
             stroke="rgba(255,255,255,0.5)"
-            tick={{ fontSize: 10 }}
-            label={{ value: 'Match #', position: 'bottom', fill: 'rgba(255,255,255,0.5)', fontSize: 11 }}
+            tick={{ fontSize: 10, angle: -45, textAnchor: 'end', fill: 'rgba(255,255,255,0.5)' }}
+            interval={0}
+            height={80}
           />
           <YAxis domain={[0, 100]} stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} unit="%" />
           <Tooltip
