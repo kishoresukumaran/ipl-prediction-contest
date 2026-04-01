@@ -28,11 +28,18 @@ export const PARTICIPANTS: Participant[] = [
   'Yal', 'Alphonse', 'Guhan', 'Jessinth', 'Kesh', 'Manikbasha',
   'Ranjith', 'Selva', 'Vamsi', 'Shahul', 'Venkat', 'Satish',
   'Azhar', 'Siva', 'Sriram',
-].map((name, i) => ({
-  id: name.toLowerCase(),
-  name,
-  avatar_color: AVATAR_COLORS[i],
-}));
+].map((name, i) => {
+  // Keep original IDs for renamed participants to match existing DB data
+  const ID_OVERRIDES: Record<string, string> = {
+    'Safeer': 'safer',
+    'Manikbasha': 'panicking',
+  };
+  return {
+    id: ID_OVERRIDES[name] || name.toLowerCase(),
+    name,
+    avatar_color: AVATAR_COLORS[i],
+  };
+});
 
 export const POINTS_CONFIG = {
   league: 2,
