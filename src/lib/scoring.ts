@@ -163,8 +163,15 @@ export function calculateAllPlayerPoints(
     return b.correctPredictions - a.correctPredictions;
   });
 
+  // Assign tied ranks: players with same points get same rank
   results.forEach((r, i) => {
-    r.rank = i + 1;
+    if (i === 0) {
+      r.rank = 1;
+    } else if (r.totalPoints === results[i - 1].totalPoints) {
+      r.rank = results[i - 1].rank;
+    } else {
+      r.rank = i + 1;
+    }
   });
 
   return results;

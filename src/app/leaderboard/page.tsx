@@ -73,7 +73,7 @@ function Last5Dots({ results }: { results: string[] }) {
   );
 }
 
-function PodiumCard({ player, rank }: { player: LeaderboardEntry; rank: number }) {
+function PodiumCard({ players, rank }: { players: LeaderboardEntry[]; rank: number }) {
   const heights: Record<number, string> = { 1: 'pb-8', 2: 'pb-4', 3: 'pb-2' };
   const gradients: Record<number, string> = {
     1: 'from-amber-400/20 to-yellow-500/10 border-amber-400/30',
@@ -81,28 +81,38 @@ function PodiumCard({ player, rank }: { player: LeaderboardEntry; rank: number }
     3: 'from-amber-700/15 to-amber-800/5 border-amber-700/20',
   };
   const order: Record<number, string> = { 1: 'order-2', 2: 'order-1', 3: 'order-3' };
+  const first = players[0];
 
   return (
-    <Link href={`/players/${player.participantId}`} className={`flex-1 ${order[rank]}`}>
+    <div className={`flex-1 ${order[rank]}`}>
       <div
-        className={`bg-gradient-to-b ${gradients[rank]} backdrop-blur-sm border rounded-xl p-3 text-center hover:scale-105 transition-transform ${heights[rank]}`}
+        className={`bg-gradient-to-b ${gradients[rank]} backdrop-blur-sm border rounded-xl p-3 text-center ${heights[rank]}`}
       >
-        <div className="relative inline-block mb-2">
-          <div
-            className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold mx-auto"
-            style={{ backgroundColor: player.avatarColor }}
-          >
-            {player.participantName.charAt(0)}
-          </div>
-          <div className="absolute -top-1 -right-1">
-            <RankBadge rank={rank} />
-          </div>
+        <div className="flex justify-center gap-1 mb-2">
+          {players.map(player => (
+            <Link key={player.participantId} href={`/players/${player.participantId}`}>
+              <div className="relative inline-block hover:scale-110 transition-transform">
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
+                  style={{ backgroundColor: player.avatarColor }}
+                >
+                  {player.participantName.charAt(0)}
+                </div>
+                {players.length === 1 && (
+                  <div className="absolute -top-1 -right-1"><RankBadge rank={rank} /></div>
+                )}
+              </div>
+            </Link>
+          ))}
         </div>
-        <h3 className="text-sm font-bold text-white truncate">{player.participantName}</h3>
-        <div className="text-lg font-extrabold text-amber-400 mt-1">{player.totalPoints}</div>
-        <div className="text-[10px] text-slate-400">{player.accuracy.toFixed(1)}% accuracy</div>
+        {players.length > 1 && <div className="mb-1"><RankBadge rank={rank} /></div>}
+        <h3 className="text-sm font-bold text-white truncate">
+          {players.map(p => p.participantName).join(', ')}
+        </h3>
+        <div className="text-lg font-extrabold text-amber-400 mt-1">{first.totalPoints}</div>
+        <div className="text-[10px] text-slate-400">{first.accuracy.toFixed(1)}% accuracy</div>
       </div>
-    </Link>
+    </div>
   );
 }
 
@@ -198,7 +208,16 @@ export default function LeaderboardPage() {
     return sortDir === 'asc' ? cmp : -cmp;
   });
 
-  const top3 = leaderboard.slice(0, 3);
+  // Group podium by rank (handles ties)
+  const podiumRanks: { rank: number; players: LeaderboardEntry[] }[] = [];
+  for (const player of leaderboard) {
+    const r = player.rank || 0;
+    if (r > 3) break;
+    const existing = podiumRanks.find(p => p.rank === r);
+    if (existing) existing.players.push(player);
+    else podiumRanks.push({ rank: r, players: [player] });
+  }
+  const hasPodium = podiumRanks.length > 0;
 
   if (loading) {
     return (
@@ -222,11 +241,13 @@ export default function LeaderboardPage() {
       </div>
 
       {/* Podium */}
-      {top3.length >= 3 && (
+      {hasPodium && (
         <div className="flex gap-3 items-end">
-          {top3.map((player, idx) => (
-            <PodiumCard key={player.participantId} player={player} rank={idx + 1} />
-          ))}
+          {[1, 2, 3].map(rank => {
+            const group = podiumRanks.find(p => p.rank === rank);
+            if (!group) return <div key={rank} className="flex-1" />;
+            return <PodiumCard key={rank} players={group.players} rank={rank} />;
+          })}
         </div>
       )}
 
