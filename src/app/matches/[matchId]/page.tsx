@@ -16,6 +16,7 @@ import {
   Users,
 } from 'lucide-react';
 import { TEAMS, PARTICIPANTS } from '@/lib/constants';
+import { matchTimeToIrish } from '@/lib/utils';
 import { Match, Prediction } from '@/lib/types';
 
 interface MatchWithPredictions extends Match {
@@ -195,7 +196,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
           </span>
           <span className="inline-flex items-center gap-1">
             <Clock className="h-3 w-3" />
-            {match.start_time}
+            {matchTimeToIrish(match.match_date, match.start_time)}
           </span>
         </div>
         <div className="text-center mt-2 text-xs text-slate-500 inline-flex items-center gap-1 justify-center w-full">

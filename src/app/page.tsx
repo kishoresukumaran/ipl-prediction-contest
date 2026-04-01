@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Trophy, Calendar, Clock, ChevronRight, TrendingUp, Zap, Star, Target } from 'lucide-react';
 import { TEAMS, PARTICIPANTS } from '@/lib/constants';
+import { matchTimeToIrish, matchDateTimeUTC } from '@/lib/utils';
 import { Match, PlayerPointsBreakdown } from '@/lib/types';
 
 interface LeaderboardEntry extends PlayerPointsBreakdown {
@@ -218,10 +219,11 @@ export default function Home() {
                 month: 'short',
                 day: 'numeric',
               })}{' '}
-              at {nextMatch.start_time}
+              at {matchTimeToIrish(nextMatch.match_date, nextMatch.start_time)}
+              <span className="text-slate-500 ml-1">(Irish Time)</span>
             </div>
 
-            <CountdownTimer targetDate={`${nextMatch.match_date}T${nextMatch.start_time}`} />
+            <CountdownTimer targetDate={matchDateTimeUTC(nextMatch.match_date, nextMatch.start_time).toISOString()} />
           </div>
         </Link>
       )}
@@ -264,7 +266,7 @@ export default function Home() {
                         {match.winner} won
                       </span>
                     ) : (
-                      <span className="text-xs text-slate-400">{match.start_time}</span>
+                      <span className="text-xs text-slate-400">{matchTimeToIrish(match.match_date, match.start_time)}</span>
                     )}
                     <ChevronRight className="h-4 w-4 text-slate-500" />
                   </div>

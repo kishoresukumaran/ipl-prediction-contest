@@ -13,6 +13,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { TEAMS } from '@/lib/constants';
+import { matchTimeToIrish } from '@/lib/utils';
 import { Match } from '@/lib/types';
 
 type FilterTab = 'all' | 'upcoming' | 'completed' | 'double';
@@ -87,7 +88,7 @@ function MatchCard({ match, isDoubleHeader }: { match: Match; isDoubleHeader: bo
               day: 'numeric',
             })}
           </span>
-          <span>{match.start_time}</span>
+          <span>{matchTimeToIrish(match.match_date, match.start_time)}</span>
           <span className="inline-flex items-center gap-1 truncate">
             <MapPin className="h-3 w-3 shrink-0" />
             <span className="truncate">{match.venue}</span>
