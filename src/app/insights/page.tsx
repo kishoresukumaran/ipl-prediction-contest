@@ -34,7 +34,7 @@ interface InsightsAPIData {
   accuracyByPlayer: { id: string; name: string; accuracy: number; correct: number; total: number }[];
   predictionTimings: { id: string; name: string; avgMinutesBefore: number }[];
   weeklyPoints: { week: string; [key: string]: number | string }[];
-  crowdWisdom: { matchId: number; majorityTeam: string; majorityPct: number; crowdCorrect: boolean; runningAccuracy: number }[];
+  crowdWisdom: { matchId: number; homeTeam: string; awayTeam: string; majorityTeam: string; majorityPct: number; crowdCorrect: boolean; runningAccuracy: number }[];
   contrarianData: { name: string; contrarianPct: number; contrarianAccuracy: number; color: string }[];
   matchDifficulty: { matchId: number; homeTeam: string; awayTeam: string; groupAccuracy: number; totalPredictions: number }[];
   formData: { matchId: number; [key: string]: number | string }[];
