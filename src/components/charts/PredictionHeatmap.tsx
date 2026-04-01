@@ -11,6 +11,7 @@ interface HeatmapData {
 
 export function PredictionHeatmap({ data }: { data: HeatmapData }) {
   const [sortBy, setSortBy] = useState<'name' | 'accuracy'>('accuracy');
+  const [selected, setSelected] = useState<{ pName: string; matchId: number; text: string } | null>(null);
 
   if (!data?.participants?.length || !data?.matches?.length) {
     return <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">No data yet</div>;
@@ -40,6 +41,13 @@ export function PredictionHeatmap({ data }: { data: HeatmapData }) {
         </button>
       </div>
 
+      {selected && (
+        <div className="bg-slate-800 border border-white/10 rounded-lg px-3 py-2 mb-3 flex items-center justify-between text-xs text-white">
+          <span>{selected.text}</span>
+          <button onClick={() => setSelected(null)} className="text-slate-400 hover:text-white ml-3">✕</button>
+        </div>
+      )}
+
       <div className="overflow-x-auto -mx-4 px-4">
         <div className="min-w-[600px]">
           {/* Match numbers header */}
@@ -66,11 +74,16 @@ export function PredictionHeatmap({ data }: { data: HeatmapData }) {
                   else if (pred.correct === false) bgColor = 'bg-red-500';
                   else bgColor = 'bg-amber-500/50'; // pending
                 }
+                const detail = pred
+                  ? `Picked ${pred.predicted}${pred.correct === true ? ' ✓' : pred.correct === false ? ' ✗' : ' (pending)'}`
+                  : 'No prediction';
+                const tipText = `${p.name} - Match #${m.id} (${m.home_team} v ${m.away_team}): ${detail}`;
                 return (
                   <div
                     key={m.id}
                     className={`w-6 h-5 shrink-0 ${bgColor} border border-slate-700/50 rounded-[2px] mx-[1px] transition-transform hover:scale-150 hover:z-10 cursor-pointer`}
-                    title={`${p.name} - Match #${m.id}: ${pred ? `Picked ${pred.predicted}${pred.correct === true ? ' ✓' : pred.correct === false ? ' ✗' : ' (pending)'}` : 'No prediction'}`}
+                    title={tipText}
+                    onClick={() => setSelected(selected?.pName === p.name && selected?.matchId === m.id ? null : { pName: p.name, matchId: m.id, text: tipText })}
                   />
                 );
               })}
