@@ -57,14 +57,14 @@ export function PointsMatrixChart({
   }
 
   return (
-    <div className="relative overflow-x-auto rounded-lg border border-[var(--app-border)]" style={{ maxHeight: '70vh' }}>
+    <div className="relative overflow-auto rounded-lg border border-[var(--app-border)]" style={{ maxHeight: '70vh' }}>
       <table className="border-collapse text-[11px] w-max min-w-full">
         <thead className="sticky top-0 z-20">
           <tr>
             {/* Top-left corner cell — player header */}
             <th
-              className="sticky left-0 z-30 bg-[var(--app-surface)] border-b border-r border-[var(--app-border)] px-2 py-1 text-left text-[var(--app-text-secondary)] font-semibold"
-              style={{ minWidth: 110, verticalAlign: 'bottom', height: 90 }}
+              className="sticky left-0 z-30 bg-[var(--app-surface)] border-b-2 border-r border-[var(--app-border)] px-2 text-left text-[var(--app-text-secondary)] font-semibold"
+              style={{ minWidth: 110, verticalAlign: 'bottom', height: 120, paddingBottom: 6 }}
             >
               Player
             </th>
@@ -73,23 +73,23 @@ export function PointsMatrixChart({
             {data.matches.map(m => (
               <th
                 key={m.id}
-                className="border-b border-[var(--app-border)] px-0 relative"
-                style={{ minWidth: 32, height: 90, verticalAlign: 'bottom' }}
+                className="bg-[var(--app-surface)] border-b-2 border-[var(--app-border)] px-0 relative overflow-visible"
+                style={{ minWidth: 34, height: 120 }}
               >
                 <div
-                  className="absolute bottom-1 left-1/2 origin-bottom-left text-[var(--app-text-secondary)] whitespace-nowrap"
-                  style={{ transform: 'rotate(-55deg)', fontSize: 9 }}
+                  className="absolute bottom-2 left-[50%] origin-bottom-left text-[var(--app-text-secondary)] whitespace-nowrap"
+                  style={{ transform: 'rotate(-55deg) translateX(-2px)', fontSize: 9, lineHeight: 1.2 }}
                 >
-                  <span className="font-bold text-[var(--app-text-tertiary)]">#{m.id}</span>{' '}
-                  <span>{m.home_team} v {m.away_team}</span>
+                  <span className="font-bold text-[var(--app-text)]">#{m.id}</span>{' '}
+                  <span className="text-[var(--app-text-tertiary)]">{m.home_team} v {m.away_team}</span>
                 </div>
               </th>
             ))}
 
             {/* Total column */}
             <th
-              className="sticky right-0 z-30 bg-[var(--app-surface)] border-b border-l border-[var(--app-border)] px-2 py-1 text-center text-amber-600 dark:text-amber-400 font-bold"
-              style={{ minWidth: 48, verticalAlign: 'bottom', height: 90 }}
+              className="sticky right-0 z-30 bg-[var(--app-surface)] border-b-2 border-l border-[var(--app-border)] px-2 text-center text-amber-600 dark:text-amber-400 font-bold"
+              style={{ minWidth: 48, verticalAlign: 'bottom', height: 120, paddingBottom: 6 }}
             >
               Total
             </th>
