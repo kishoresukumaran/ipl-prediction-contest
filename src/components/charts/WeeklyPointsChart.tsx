@@ -34,16 +34,16 @@ export function WeeklyPointsChart({ data }: { data: WeeklyData[] }) {
                   ? sorted.filter(p => p.dataKey === highlighted)
                   : sorted;
                 return (
-                  <div className="bg-slate-800 border border-white/10 rounded-lg text-xs text-white shadow-xl">
-                    <p className="font-bold p-2.5 pb-1.5">Week of {label}</p>
-                    <div className="max-h-[250px] overflow-y-auto px-2.5 pb-2.5">
-                    {items.map(item => (
-                      <div key={item.dataKey as string} className="flex items-center gap-2 py-0.5">
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                        <span style={{ color: item.color }}>{item.name}</span>
-                        <span className="ml-auto font-bold">{item.value}</span>
-                      </div>
-                    ))}
+                  <div className="bg-slate-800 border border-white/10 rounded-lg text-xs text-white shadow-xl p-2.5">
+                    <p className="font-bold mb-1.5">Week of {label}</p>
+                    <div className="grid grid-cols-2 gap-x-4">
+                      {items.map(item => (
+                        <div key={item.dataKey as string} className="flex items-center gap-1.5 py-0.5">
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                          <span className="truncate" style={{ color: item.color }}>{item.name}</span>
+                          <span className="ml-auto font-bold">{item.value}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 );

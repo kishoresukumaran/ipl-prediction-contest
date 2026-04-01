@@ -128,3 +128,15 @@
     @apply font-sans;
   }
 }
+
+/* Force visible thin scrollbar on tooltip lists */
+.tooltip-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.tooltip-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.tooltip-scroll::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
