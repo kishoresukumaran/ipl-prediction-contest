@@ -69,7 +69,7 @@ function CountdownTimer({ targetDate }: { targetDate: string }) {
         { value: timeLeft.seconds, label: 'Sec' },
       ].map((item) => (
         <div key={item.label} className="flex flex-col items-center">
-          <div className="bg-[var(--app-surface-alt)] backdrop-blur-sm rounded-lg px-3 py-2 min-w-[48px] text-center">
+          <div className="bg-indigo-500/20 rounded-lg px-3 py-2 min-w-[48px] text-center shadow-sm">
             <span className="text-xl font-bold text-amber-400 tabular-nums">
               {String(item.value).padStart(2, '0')}
             </span>
@@ -166,7 +166,7 @@ export default function Home() {
 
       {/* Tournament Progress */}
       {!loading && totalMatches > 0 && (
-        <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4">
+        <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs text-[var(--app-text-secondary)] font-medium">Tournament Progress</span>
             <span className="text-xs text-amber-400 font-bold">
@@ -198,11 +198,11 @@ export default function Home() {
       {/* Next Match Card */}
       {!loading && nextMatch && !isDoubleHeaderDay && (
         <Link href={`/matches/${nextMatch.id}`}>
-          <div className="bg-gradient-to-br from-indigo-500/20 to-purple-600/20 backdrop-blur-sm border border-indigo-400/20 rounded-xl p-4 hover:border-indigo-400/40 transition-all">
+          <div className="bg-gradient-to-br from-indigo-500/20 to-purple-600/20 backdrop-blur-sm border border-indigo-400/30 rounded-xl p-4 hover:border-indigo-400/50 transition-all shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-indigo-400" />
-                <span className="text-xs font-medium text-indigo-300">Next Match</span>
+                <Calendar className="h-4 w-4 text-indigo-500" />
+                <span className="text-xs font-medium text-indigo-500">Next Match</span>
               </div>
               <span className="text-xs text-[var(--app-text-secondary)]">
                 Match #{nextMatch.id}
@@ -252,11 +252,11 @@ export default function Home() {
 
       {/* Double Header Day Card */}
       {!loading && nextMatch && isDoubleHeaderDay && (
-        <div className="bg-gradient-to-br from-indigo-500/20 to-purple-600/20 backdrop-blur-sm border border-indigo-400/20 rounded-xl p-4">
+        <div className="bg-gradient-to-br from-indigo-500/20 to-purple-600/20 backdrop-blur-sm border border-indigo-400/30 rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-indigo-400" />
-              <span className="text-xs font-medium text-indigo-300">Double Header Day</span>
+              <Calendar className="h-4 w-4 text-indigo-500" />
+              <span className="text-xs font-medium text-indigo-500">Double Header Day</span>
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 text-[10px] font-bold">
                 <Layers className="h-2.5 w-2.5" />
                 2 GAMES
@@ -320,13 +320,13 @@ export default function Home() {
       {/* Today's Matches */}
       {!loading && todayMatches.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-[var(--app-text-secondary)] flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-[var(--app-text)] flex items-center gap-2">
             <Star className="h-4 w-4 text-amber-400" />
             Today&apos;s Matches
           </h2>
           {todayMatches.map((match) => (
             <Link key={match.id} href={`/matches/${match.id}`}>
-              <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-3 hover:bg-[var(--app-surface-alt)] transition-all">
+              <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-3 hover:bg-[var(--app-surface-alt)] transition-all shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span
@@ -368,10 +368,10 @@ export default function Home() {
 
       {/* Current Leader Spotlight */}
       {!loading && leader && (
-        <div className="bg-gradient-to-br from-amber-500/15 to-yellow-600/10 backdrop-blur-sm border border-amber-400/20 rounded-xl p-4">
+        <div className="bg-gradient-to-br from-amber-500/15 to-yellow-600/10 backdrop-blur-sm border border-amber-400/30 rounded-xl p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
-            <Trophy className="h-4 w-4 text-amber-400" />
-            <span className="text-xs font-medium text-amber-300">Current Leader</span>
+            <Trophy className="h-4 w-4 text-amber-500" />
+            <span className="text-xs font-medium text-amber-600">Current Leader</span>
           </div>
           <div className="flex items-center gap-4">
             <div
@@ -405,9 +405,9 @@ export default function Home() {
 
       {/* Mini Leaderboard */}
       {!loading && top5.length > 0 && (
-        <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4">
+        <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-[var(--app-text-secondary)] flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-[var(--app-text)] flex items-center gap-2">
               <Trophy className="h-4 w-4 text-amber-400" />
               Top 5 Standings
             </h2>
@@ -459,9 +459,9 @@ export default function Home() {
 
       {/* Recent Results */}
       {!loading && recentResults.length > 0 && (
-        <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4">
+        <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-[var(--app-text-secondary)] flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-[var(--app-text)] flex items-center gap-2">
               <Target className="h-4 w-4 text-emerald-400" />
               Recent Results
             </h2>
@@ -517,15 +517,15 @@ export default function Home() {
       {!loading && (
         <div className="grid grid-cols-2 gap-3">
           <Link href="/leaderboard">
-            <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4 text-center hover:bg-[var(--app-surface-alt)] transition-all">
-              <Trophy className="h-6 w-6 text-amber-400 mx-auto mb-2" />
-              <span className="text-sm font-medium text-[var(--app-text-secondary)]">Leaderboard</span>
+            <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4 text-center hover:bg-[var(--app-surface-alt)] transition-all shadow-sm active:scale-95">
+              <Trophy className="h-6 w-6 text-amber-500 mx-auto mb-2" />
+              <span className="text-sm font-semibold text-[var(--app-text)]">Leaderboard</span>
             </div>
           </Link>
           <Link href="/players">
-            <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4 text-center hover:bg-[var(--app-surface-alt)] transition-all">
-              <TrendingUp className="h-6 w-6 text-purple-400 mx-auto mb-2" />
-              <span className="text-sm font-medium text-[var(--app-text-secondary)]">Players</span>
+            <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4 text-center hover:bg-[var(--app-surface-alt)] transition-all shadow-sm active:scale-95">
+              <TrendingUp className="h-6 w-6 text-purple-500 mx-auto mb-2" />
+              <span className="text-sm font-semibold text-[var(--app-text)]">Players</span>
             </div>
           </Link>
         </div>
