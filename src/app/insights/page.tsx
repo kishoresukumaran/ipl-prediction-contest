@@ -51,7 +51,7 @@ interface InsightsAPIData {
     jinxers: { name: string; pickedFavorite: number; favoriteWon: number; favoriteLost: number; jinxRate: number; color: string }[];
     losingStreaks: { name: string; currentLosingStreak: number; longestLosingStreak: number; color: string }[];
   };
-  copycats: { copier: string; copierName: string; copierColor: string; target: string; targetName: string; targetColor: string; count: number; matches: number }[];
+  copycats: { copier: string; copierName: string; copierColor: string; target: string; targetName: string; targetColor: string; count: number; matches: number; instances: { matchId: number; homeTeam: string; awayTeam: string; team: string; targetTime: string; copierTime: string; gapMinutes: number }[] }[];
 }
 
 const TABS = [
