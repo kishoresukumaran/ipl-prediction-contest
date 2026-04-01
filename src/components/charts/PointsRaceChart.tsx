@@ -99,6 +99,7 @@ export function PointsRaceChart({ data }: { data: PointsRaceData[] }) {
                 strokeWidth={highlighted === p.id ? 4 : highlighted ? 1 : 2}
                 strokeOpacity={highlighted ? (highlighted === p.id ? 1 : 0.15) : 0.8}
                 dot={false}
+                activeDot={highlighted === null || highlighted === p.id ? { r: 4 } : false}
                 connectNulls
               />
             ))}
