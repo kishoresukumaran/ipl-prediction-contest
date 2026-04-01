@@ -24,8 +24,8 @@ const AVATAR_COLORS = [
 
 export const PARTICIPANTS: Participant[] = [
   'BK', 'Dharaneesh', 'Dinesh', 'Gerard', 'Haroon', 'Kerun', 'Kishore',
-  'Krish', 'Naina', 'Ramnath', 'Safer', 'Shakthi', 'Vijay', 'Jaya',
-  'Yal', 'Alphonse', 'Guhan', 'Jessinth', 'Kesh', 'Panicking',
+  'Krish', 'Naina', 'Ramnath', 'Safeer', 'Shakthi', 'Vijay', 'Jaya',
+  'Yal', 'Alphonse', 'Guhan', 'Jessinth', 'Kesh', 'Manikbasha',
   'Ranjith', 'Selva', 'Vamsi', 'Shahul', 'Venkat', 'Satish',
   'Azhar', 'Siva', 'Sriram',
 ].map((name, i) => ({
