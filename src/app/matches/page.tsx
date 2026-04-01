@@ -35,8 +35,8 @@ function TeamBadge({ team }: { team: string }) {
 
 function MatchCard({ match, isDoubleHeader }: { match: Match; isDoubleHeader: boolean }) {
   return (
-    <Link href={`/matches/${match.id}`}>
-      <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4 hover:bg-[var(--app-surface-hover)] hover:border-[var(--app-border-strong)] transition-all group shadow-sm">
+    <Link href={`/matches/${match.id}`} className="block">
+      <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border-strong)] rounded-xl p-4 hover:bg-[var(--app-surface-hover)] hover:border-[var(--app-border-strong)] transition-all group shadow-sm">
         {/* Top row: Match number + badges + date */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -190,7 +190,7 @@ export default function MatchesPage() {
       </div>
 
       {/* Match List */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {filtered.length === 0 ? (
           <div className="text-center py-12 text-[var(--app-text-secondary)]">
             <Calendar className="h-12 w-12 mx-auto mb-3 opacity-30" />
