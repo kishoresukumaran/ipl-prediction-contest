@@ -26,8 +26,17 @@ export function PointsGapChart({ data }: { data: PlayerPointsBreakdown[] }) {
           <XAxis type="number" stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} label={{ value: 'Points behind leader', position: 'bottom', fill: 'rgba(255,255,255,0.5)', fontSize: 11, offset: 0 }} />
           <YAxis dataKey="name" type="category" width={90} stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} interval={0} />
           <Tooltip
-            contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
-            formatter={(value) => [`${value} points behind`, 'Gap']}
+            content={({ payload }) => {
+              if (!payload?.length) return null;
+              const d = payload[0].payload as { name: string; gap: number; points: number };
+              return (
+                <div className="bg-slate-800 border border-white/10 rounded-lg p-2.5 text-xs text-white shadow-xl">
+                  <p className="font-bold">{d.name}</p>
+                  <p className="text-amber-400">{d.points} total points</p>
+                  <p className="text-slate-300">{d.gap} points behind leader</p>
+                </div>
+              );
+            }}
           />
           <Bar dataKey="gap" radius={[0, 6, 6, 0]}>
             {chartData.map((entry) => (
