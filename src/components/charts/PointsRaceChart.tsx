@@ -38,19 +38,19 @@ export function PointsRaceChart({ data }: { data: PointsRaceData[] }) {
                 // If a player is highlighted, show only them; otherwise top 5
                 const items = highlighted
                   ? sorted.filter(p => p.dataKey === highlighted)
-                  : sorted.slice(0, 5);
-                const remaining = highlighted ? 0 : sorted.length - 5;
+                  : sorted;
                 return (
                   <div className="bg-slate-800 border border-white/10 rounded-lg p-2.5 text-xs text-white shadow-xl">
                     <p className="font-bold mb-1.5">Match #{label}</p>
-                    {items.map(item => (
-                      <div key={item.dataKey as string} className="flex items-center gap-2 py-0.5">
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                        <span style={{ color: item.color }}>{item.name}</span>
-                        <span className="ml-auto font-bold">{item.value}</span>
-                      </div>
-                    ))}
-                    {remaining > 0 && <p className="text-slate-500 mt-1">+{remaining} more (hover legend to focus)</p>}
+                    <div className="grid grid-cols-2 gap-x-4">
+                      {items.map(item => (
+                        <div key={item.dataKey as string} className="flex items-center gap-1.5 py-0.5">
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                          <span className="truncate" style={{ color: item.color }}>{item.name}</span>
+                          <span className="ml-auto font-bold">{item.value}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 );
               }}
