@@ -56,6 +56,10 @@ export function PointsMatrixChart({
     );
   }
 
+  const headerBg = 'bg-[#f0ecf6] dark:bg-[#1a1040]';
+  const stickyColBg = 'bg-[#eeeaf4] dark:bg-[#1a1040]';
+  const stickyColBgAlt = 'bg-[#e8e3ef] dark:bg-[#1e1348]';
+
   return (
     <div className="relative overflow-auto rounded-lg border border-[var(--app-border)]" style={{ maxHeight: '70vh' }}>
       <table className="border-collapse text-[11px] w-max min-w-full">
@@ -63,8 +67,8 @@ export function PointsMatrixChart({
           <tr>
             {/* Top-left corner cell — player header */}
             <th
-              className="sticky left-0 z-30 bg-[var(--app-surface)] border-b-2 border-r border-[var(--app-border)] px-2 text-left text-[var(--app-text-secondary)] font-semibold"
-              style={{ minWidth: 110, verticalAlign: 'bottom', height: 120, paddingBottom: 6 }}
+              className={`sticky left-0 z-30 ${headerBg} border-b-2 border-r border-[var(--app-border)] px-2 text-left text-[var(--app-text-secondary)] font-semibold`}
+              style={{ minWidth: 110, verticalAlign: 'bottom', height: 90, paddingBottom: 6 }}
             >
               Player
             </th>
@@ -73,11 +77,11 @@ export function PointsMatrixChart({
             {data.matches.map(m => (
               <th
                 key={m.id}
-                className="bg-[var(--app-surface)] border-b-2 border-[var(--app-border)] px-0 relative overflow-visible"
-                style={{ minWidth: 34, height: 120 }}
+                className={`${headerBg} border-b-2 border-[var(--app-border)] px-0 relative overflow-visible`}
+                style={{ minWidth: 34, height: 90 }}
               >
                 <div
-                  className="absolute bottom-2 left-[50%] origin-bottom-left text-[var(--app-text-secondary)] whitespace-nowrap"
+                  className="absolute bottom-2 left-[50%] origin-bottom-left whitespace-nowrap"
                   style={{ transform: 'rotate(-55deg) translateX(-2px)', fontSize: 9, lineHeight: 1.2 }}
                 >
                   <span className="font-bold text-[var(--app-text)]">#{m.id}</span>{' '}
@@ -88,8 +92,8 @@ export function PointsMatrixChart({
 
             {/* Total column */}
             <th
-              className="sticky right-0 z-30 bg-[var(--app-surface)] border-b-2 border-l border-[var(--app-border)] px-2 text-center text-amber-600 dark:text-amber-400 font-bold"
-              style={{ minWidth: 48, verticalAlign: 'bottom', height: 120, paddingBottom: 6 }}
+              className={`sticky right-0 z-30 ${headerBg} border-b-2 border-l border-[var(--app-border)] px-2 text-center text-amber-600 dark:text-amber-400 font-bold`}
+              style={{ minWidth: 48, verticalAlign: 'bottom', height: 90, paddingBottom: 6 }}
             >
               Total
             </th>
@@ -98,11 +102,12 @@ export function PointsMatrixChart({
 
         <tbody>
           {sortedPlayers.map((player, rowIdx) => {
-            const rowBg = rowIdx % 2 === 0 ? '' : 'bg-[var(--app-surface-alt)]';
+            const isAlt = rowIdx % 2 !== 0;
+            const rowBg = isAlt ? 'bg-[var(--app-surface-alt)]' : '';
             return (
               <tr key={player.id} className={`${rowBg} hover:bg-[var(--app-surface-hover)] transition-colors`}>
                 {/* Sticky player name column */}
-                <td className={`sticky left-0 z-10 border-r border-[var(--app-border)] px-2 py-1.5 whitespace-nowrap ${rowBg || 'bg-[var(--app-surface)]'}`}>
+                <td className={`sticky left-0 z-10 border-r border-[var(--app-border)] px-2 py-1.5 whitespace-nowrap ${isAlt ? stickyColBgAlt : stickyColBg}`}>
                   <div className="flex items-center gap-1.5">
                     <span
                       className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
@@ -134,7 +139,7 @@ export function PointsMatrixChart({
                 })}
 
                 {/* Sticky total column */}
-                <td className={`sticky right-0 z-10 border-l border-[var(--app-border)] px-2 py-1.5 text-center font-bold text-amber-600 dark:text-amber-400 ${rowBg || 'bg-[var(--app-surface)]'}`}>
+                <td className={`sticky right-0 z-10 border-l border-[var(--app-border)] px-2 py-1.5 text-center font-bold text-amber-600 dark:text-amber-400 ${isAlt ? stickyColBgAlt : stickyColBg}`}>
                   {player.total}
                 </td>
               </tr>
