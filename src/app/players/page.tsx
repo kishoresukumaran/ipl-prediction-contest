@@ -166,7 +166,7 @@ export default function PlayersPage() {
                 </div>
                 <div className="text-center bg-white/5 rounded-lg py-1.5">
                   <div className="text-sm font-bold text-purple-400">
-                    {player.correctPredictions}/{player.totalPredictions}
+                    {player.correctPredictions}/{player.totalPredictions - player.correctPredictions}
                   </div>
                   <div className="text-[10px] text-slate-500">W/L</div>
                 </div>
