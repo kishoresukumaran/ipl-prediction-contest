@@ -56,11 +56,14 @@ export async function GET() {
     // Wall of Shame data
     const wallOfShame = buildWallOfShame(completedMatches, predictions, jokers);
 
+    // Copycat data
+    const copycats = buildCopycats(completedMatches, predictions);
+
     return NextResponse.json({
       leaderboard, matches, predictions, pointsRace, teamPopularity,
       accuracyByPlayer, predictionTimings, weeklyPoints, crowdWisdom,
       contrarianData, matchDifficulty, formData, winRateByTeam,
-      doubleHeaderData, heatmapData, streakData, bonusAccuracy, wallOfShame,
+      doubleHeaderData, heatmapData, streakData, bonusAccuracy, wallOfShame, copycats,
     });
   } catch (error) {
     console.error('Insights API error:', error);
@@ -366,4 +369,56 @@ function buildWallOfShame(matches: Match[], predictions: Prediction[], jokers: a
   }).sort((a, b) => b.currentLosingStreak - a.currentLosingStreak);
 
   return { wastedJokers, jinxers, losingStreaks };
+}
+
+function buildCopycats(matches: Match[], predictions: Prediction[]) {
+  // For each pair (A, B): count times B voted after A (within 60 min) and picked the same team
+  const pairCounts: Record<string, { copier: string; copierName: string; copierColor: string; target: string; targetName: string; targetColor: string; count: number; matches: number }> = {};
+
+  matches.forEach(match => {
+    const matchPreds = predictions
+      .filter(p => p.match_id === match.id && p.prediction_time)
+      .sort((a, b) => new Date(a.prediction_time!).getTime() - new Date(b.prediction_time!).getTime());
+
+    for (let i = 0; i < matchPreds.length; i++) {
+      for (let j = i + 1; j < matchPreds.length; j++) {
+        const earlier = matchPreds[i];
+        const later = matchPreds[j];
+        const timeDiff = (new Date(later.prediction_time!).getTime() - new Date(earlier.prediction_time!).getTime()) / 60000;
+
+        // Within 60 minutes and same team pick
+        if (timeDiff <= 60 && earlier.predicted_team === later.predicted_team) {
+          const key = `${later.participant_id}→${earlier.participant_id}`;
+          if (!pairCounts[key]) {
+            const copier = PARTICIPANTS.find(p => p.id === later.participant_id);
+            const target = PARTICIPANTS.find(p => p.id === earlier.participant_id);
+            pairCounts[key] = {
+              copier: later.participant_id,
+              copierName: copier?.name || later.participant_id,
+              copierColor: copier?.avatar_color || '#666',
+              target: earlier.participant_id,
+              targetName: target?.name || earlier.participant_id,
+              targetColor: target?.avatar_color || '#666',
+              count: 0,
+              matches: 0,
+            };
+          }
+          pairCounts[key].count++;
+        }
+      }
+    }
+  });
+
+  // Calculate total matches each pair could have copied
+  Object.values(pairCounts).forEach(pair => {
+    pair.matches = matches.filter(m =>
+      predictions.some(p => p.match_id === m.id && p.participant_id === pair.copier && p.prediction_time) &&
+      predictions.some(p => p.match_id === m.id && p.participant_id === pair.target && p.prediction_time)
+    ).length;
+  });
+
+  return Object.values(pairCounts)
+    .filter(p => p.count >= 1)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 15);
 }

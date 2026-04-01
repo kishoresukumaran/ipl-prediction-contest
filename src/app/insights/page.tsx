@@ -25,6 +25,8 @@ const WinRateByTeamChart = dynamic(() => import('@/components/charts/WinRateByTe
 const PointsGapChart = dynamic(() => import('@/components/charts/PointsGapChart').then(m => ({ default: m.PointsGapChart })), { ssr: false });
 const BonusQuestionAccuracyChart = dynamic(() => import('@/components/charts/BonusQuestionAccuracyChart').then(m => ({ default: m.BonusQuestionAccuracyChart })), { ssr: false });
 const WallOfShame = dynamic(() => import('@/components/charts/WallOfShame').then(m => ({ default: m.WallOfShame })), { ssr: false });
+const LastMinutePanicker = dynamic(() => import('@/components/charts/LastMinutePanicker').then(m => ({ default: m.LastMinutePanicker })), { ssr: false });
+const CopycatChart = dynamic(() => import('@/components/charts/CopycatChart').then(m => ({ default: m.CopycatChart })), { ssr: false });
 
 interface InsightsAPIData {
   leaderboard: PlayerPointsBreakdown[];
@@ -49,6 +51,7 @@ interface InsightsAPIData {
     jinxers: { name: string; pickedFavorite: number; favoriteWon: number; favoriteLost: number; jinxRate: number; color: string }[];
     losingStreaks: { name: string; currentLosingStreak: number; longestLosingStreak: number; color: string }[];
   };
+  copycats: { copier: string; copierName: string; copierColor: string; target: string; targetName: string; targetColor: string; count: number; matches: number }[];
 }
 
 const TABS = [
@@ -185,9 +188,17 @@ export default function InsightsPage() {
         )}
 
         {activeTab === 'timing' && (
-          <ChartCard title="Early Bird Rankings" subtitle="Some predict days ahead like psychics. Others wait till the toss and panic-vote. No judgement... okay, maybe a little.">
-            <PredictionTimingChart data={data.predictionTimings} />
-          </ChartCard>
+          <>
+            <ChartCard title="Early Bird Rankings" subtitle="Some predict days ahead like psychics. Others wait till the toss and panic-vote. No judgement... okay, maybe a little.">
+              <PredictionTimingChart data={data.predictionTimings} />
+            </ChartCard>
+            <ChartCard title="The Last-Minute Panicker" subtitle="These legends vote like they're defusing a bomb. Average vote time dangerously close to match start.">
+              <LastMinutePanicker data={data.predictionTimings} />
+            </ChartCard>
+            <ChartCard title="The Copycat" subtitle="Voted right after someone else and picked the exact same team? Suspicious. Very suspicious. We're watching you.">
+              <CopycatChart data={data.copycats} />
+            </ChartCard>
+          </>
         )}
 
         {activeTab === 'shame' && (
