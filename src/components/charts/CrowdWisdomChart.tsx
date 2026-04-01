@@ -4,6 +4,8 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 interface CrowdData {
   matchId: number;
+  homeTeam: string;
+  awayTeam: string;
   majorityTeam: string;
   majorityPct: number;
   crowdCorrect: boolean;
@@ -28,9 +30,20 @@ export function CrowdWisdomChart({ data }: { data: CrowdData[] }) {
             <XAxis dataKey="matchId" stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} />
             <YAxis domain={[0, 100]} stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} unit="%" />
             <Tooltip
-              contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
-              formatter={(value) => [`${Number(value).toFixed(1)}%`, 'Crowd Accuracy']}
-              labelFormatter={(v) => `Match #${v}`}
+              content={({ payload }) => {
+                if (!payload?.length) return null;
+                const d = payload[0].payload as CrowdData;
+                return (
+                  <div className="bg-slate-800 border border-white/10 rounded-lg p-2.5 text-xs text-white shadow-xl">
+                    <p className="font-bold">Match #{d.matchId}: {d.homeTeam} vs {d.awayTeam}</p>
+                    <p className="text-emerald-400 mt-1">Crowd accuracy: {d.runningAccuracy.toFixed(1)}%</p>
+                    <p className="text-slate-300">Majority picked: {d.majorityTeam} ({d.majorityPct.toFixed(0)}%)</p>
+                    <p className={d.crowdCorrect ? 'text-emerald-400' : 'text-red-400'}>
+                      {d.crowdCorrect ? 'Crowd was right' : 'Crowd was wrong'}
+                    </p>
+                  </div>
+                );
+              }}
             />
             <ReferenceLine y={50} stroke="rgba(255,255,255,0.3)" strokeDasharray="5 5" label={{ value: '50%', fill: '#94a3b8', fontSize: 10 }} />
             <Area

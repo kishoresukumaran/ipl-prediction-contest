@@ -144,7 +144,7 @@ function buildCrowdWisdom(matches: Match[], predictions: Prediction[]) {
     const majorityPct = matchPreds.length > 0 ? (Math.max(homePicks, awayPicks) / matchPreds.length) * 100 : 0;
     const crowdCorrect = majorityTeam === match.winner;
     if (crowdCorrect) runningCorrect++;
-    return { matchId: match.id, majorityTeam, majorityPct, crowdCorrect, runningAccuracy: ((runningCorrect / (i + 1)) * 100) };
+    return { matchId: match.id, homeTeam: match.home_team, awayTeam: match.away_team, majorityTeam, majorityPct, crowdCorrect, runningAccuracy: ((runningCorrect / (i + 1)) * 100) };
   });
 }
 
