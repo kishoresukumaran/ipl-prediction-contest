@@ -24,7 +24,7 @@ export function TeamPopularityChart({ data }: { data: TeamPopData[] }) {
           <YAxis dataKey="team" type="category" width={50} stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} />
           <Tooltip
             contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
-            formatter={(value, name) => [value, name === 'correct' ? 'Correct' : 'Wrong']}
+            formatter={(value, name) => [value, String(name)]}
           />
           <Bar dataKey="correct" stackId="a" name="Correct" radius={[0, 0, 0, 0]}>
             {sorted.map((entry) => (
