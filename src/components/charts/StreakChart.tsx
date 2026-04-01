@@ -22,7 +22,17 @@ export function StreakChart({ data }: { data: StreakData[] }) {
           <XAxis type="number" stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} />
           <YAxis dataKey="name" type="category" width={90} stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} interval={0} />
           <Tooltip
-            contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+            content={({ payload }) => {
+              if (!payload?.length) return null;
+              const d = payload[0].payload as StreakData;
+              return (
+                <div className="bg-slate-800 border border-white/10 rounded-lg p-2.5 text-xs text-white shadow-xl">
+                  <p className="font-bold">{d.name}</p>
+                  <p className="text-amber-400">Longest streak: {d.longestStreak}</p>
+                  <p className="text-emerald-400">Current streak: {d.currentStreak}</p>
+                </div>
+              );
+            }}
           />
           <Bar dataKey="longestStreak" name="Longest Streak" radius={[0, 6, 6, 0]}>
             {sorted.map((entry) => (
