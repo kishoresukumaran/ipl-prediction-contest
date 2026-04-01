@@ -20,7 +20,7 @@ export function TeamPopularityChart({ data }: { data: TeamPopData[] }) {
   return (
     <div>
       <p className="text-xs text-[var(--app-text-secondary)] mb-3">
-        <span className="text-emerald-400">Correct</span> = picked this team and they won | <span className="text-[var(--app-text-secondary)]">Wrong</span> = picked this team but they lost
+        <span className="text-emerald-600 dark:text-emerald-400 font-medium">Solid</span> = correct picks &nbsp;·&nbsp; <span className="text-[var(--app-text-tertiary)] font-medium">Faded</span> = wrong picks
       </p>
     <div className="w-full h-[400px]">
       <ResponsiveContainer width="100%" height="100%">
@@ -44,15 +44,22 @@ export function TeamPopularityChart({ data }: { data: TeamPopData[] }) {
           <Bar dataKey="correct" stackId="a" name="Correct" radius={[0, 0, 0, 0]}>
             {sorted.map((entry) => (
               <Cell
-                key={entry.team}
+                key={`correct-${entry.team}`}
                 fill={TEAMS[entry.team]?.color || '#666'}
-                fillOpacity={chartTheme.isDark ? 0.9 : 1}
-                stroke={!chartTheme.isDark ? 'rgba(0,0,0,0.15)' : 'none'}
-                strokeWidth={!chartTheme.isDark ? 0.5 : 0}
+                fillOpacity={1}
               />
             ))}
           </Bar>
-          <Bar dataKey="wrong" stackId="a" name="Wrong" fill={chartTheme.barWrong} radius={[0, 4, 4, 0]} />
+          {/* Wrong bar uses same team color at reduced opacity so the team identity is always visible */}
+          <Bar dataKey="wrong" stackId="a" name="Wrong" radius={[0, 4, 4, 0]}>
+            {sorted.map((entry) => (
+              <Cell
+                key={`wrong-${entry.team}`}
+                fill={TEAMS[entry.team]?.color || '#888'}
+                fillOpacity={chartTheme.isDark ? 0.3 : 0.25}
+              />
+            ))}
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>
