@@ -1,0 +1,210 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import {
+  Calendar,
+  Zap,
+  Trophy,
+  MapPin,
+  ChevronRight,
+  Loader2,
+  Award,
+  Layers,
+} from 'lucide-react';
+import { TEAMS } from '@/lib/constants';
+import { Match } from '@/lib/types';
+
+type FilterTab = 'all' | 'upcoming' | 'completed' | 'double';
+
+function TeamBadge({ team }: { team: string }) {
+  const teamConfig = TEAMS[team];
+  return (
+    <span
+      className="px-2 py-1 rounded text-xs font-bold"
+      style={{
+        backgroundColor: teamConfig?.color || '#666',
+        color: teamConfig?.textColor || '#fff',
+      }}
+    >
+      {team}
+    </span>
+  );
+}
+
+function MatchCard({ match, isDoubleHeader }: { match: Match; isDoubleHeader: boolean }) {
+  return (
+    <Link href={`/matches/${match.id}`}>
+      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 hover:bg-white/[0.08] hover:border-white/20 transition-all group">
+        {/* Top row: Match number + badges + date */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-500 font-mono">#{match.id}</span>
+            {match.is_power_match && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400 text-[10px] font-bold">
+                <Zap className="h-2.5 w-2.5" />
+                POWER
+              </span>
+            )}
+            {match.underdog_team && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 text-[10px] font-bold">
+                <Award className="h-2.5 w-2.5" />
+                UNDERDOG: {match.underdog_team}
+              </span>
+            )}
+            {isDoubleHeader && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 text-[10px] font-bold">
+                <Layers className="h-2.5 w-2.5" />
+                DH
+              </span>
+            )}
+          </div>
+          <ChevronRight className="h-4 w-4 text-slate-600 group-hover:text-slate-400 transition-colors" />
+        </div>
+
+        {/* Teams */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <TeamBadge team={match.home_team} />
+            <span className="text-slate-500 text-sm font-medium">vs</span>
+            <TeamBadge team={match.away_team} />
+          </div>
+          {match.is_completed && match.winner && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-bold">
+              <Trophy className="h-3 w-3" />
+              {match.winner}
+            </span>
+          )}
+        </div>
+
+        {/* Bottom row: date, time, venue */}
+        <div className="flex items-center gap-4 text-xs text-slate-400">
+          <span className="inline-flex items-center gap-1">
+            <Calendar className="h-3 w-3" />
+            {new Date(match.match_date + 'T00:00:00').toLocaleDateString('en-US', {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric',
+            })}
+          </span>
+          <span>{match.start_time}</span>
+          <span className="inline-flex items-center gap-1 truncate">
+            <MapPin className="h-3 w-3 shrink-0" />
+            <span className="truncate">{match.venue}</span>
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+export default function MatchesPage() {
+  const [matches, setMatches] = useState<Match[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<FilterTab>('all');
+
+  useEffect(() => {
+    fetch('/api/matches')
+      .then((r) => r.json())
+      .then(setMatches)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Identify double header dates
+  const matchCountByDate: Record<string, number> = {};
+  matches?.forEach((m) => {
+    matchCountByDate[m.match_date] = (matchCountByDate[m.match_date] || 0) + 1;
+  });
+  const doubleHeaderDates = new Set(
+    Object.entries(matchCountByDate)
+      .filter(([, count]) => count >= 2)
+      .map(([date]) => date)
+  );
+
+  const filtered = matches
+    ? matches.filter((m) => {
+        switch (activeTab) {
+          case 'upcoming':
+            return !m.is_completed;
+          case 'completed':
+            return m.is_completed;
+          case 'double':
+            return doubleHeaderDates.has(m.match_date);
+          default:
+            return true;
+        }
+      })
+    : [];
+
+  const tabs: { id: FilterTab; label: string; count: number }[] = [
+    { id: 'all', label: 'All', count: matches?.length || 0 },
+    { id: 'upcoming', label: 'Upcoming', count: matches?.filter((m) => !m.is_completed).length || 0 },
+    { id: 'completed', label: 'Completed', count: matches?.filter((m) => m.is_completed).length || 0 },
+    {
+      id: 'double',
+      label: 'Double Headers',
+      count: matches?.filter((m) => doubleHeaderDates.has(m.match_date)).length || 0,
+    },
+  ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-amber-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-4 py-6 max-w-2xl mx-auto space-y-4">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <Calendar className="h-7 w-7 text-indigo-400" />
+        <h1 className="text-2xl font-extrabold text-white">Match Center</h1>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+              activeTab === tab.id
+                ? 'bg-indigo-500/30 text-indigo-300 border border-indigo-400/30'
+                : 'bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10'
+            }`}
+          >
+            {tab.label}
+            <span
+              className={`px-1.5 py-0.5 rounded-full text-[10px] ${
+                activeTab === tab.id ? 'bg-indigo-500/30' : 'bg-white/10'
+              }`}
+            >
+              {tab.count}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Match List */}
+      <div className="space-y-3">
+        {filtered.length === 0 ? (
+          <div className="text-center py-12 text-slate-400">
+            <Calendar className="h-12 w-12 mx-auto mb-3 opacity-30" />
+            <p className="text-sm">No matches found</p>
+          </div>
+        ) : (
+          filtered.map((match) => (
+            <MatchCard
+              key={match.id}
+              match={match}
+              isDoubleHeader={doubleHeaderDates.has(match.match_date)}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
+}

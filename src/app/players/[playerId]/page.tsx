@@ -1,0 +1,323 @@
+'use client';
+
+import { useState, useEffect, use } from 'react';
+import Link from 'next/link';
+import {
+  ArrowLeft,
+  Trophy,
+  Target,
+  TrendingUp,
+  Flame,
+  Zap,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  Award,
+  BarChart3,
+  Minus,
+} from 'lucide-react';
+import { TEAMS } from '@/lib/constants';
+import { PlayerPointsBreakdown } from '@/lib/types';
+
+interface PredictionHistoryItem {
+  matchId: number;
+  matchDate: string;
+  homeTeam: string;
+  awayTeam: string;
+  winner: string | null;
+  predictedTeam: string | null;
+  isCorrect: boolean;
+  predictionTime: string | null;
+}
+
+interface PlayerData extends PlayerPointsBreakdown {
+  avatarColor: string;
+  jokerMatchId: number | null;
+  jokerUsed: boolean;
+  teamAffinity: { team: string; count: number }[];
+  predictionHistory: PredictionHistoryItem[];
+}
+
+function TeamBadge({ team }: { team: string }) {
+  const teamConfig = TEAMS[team];
+  return (
+    <span
+      className="px-2 py-0.5 rounded text-xs font-bold"
+      style={{
+        backgroundColor: teamConfig?.color || '#666',
+        color: teamConfig?.textColor || '#fff',
+      }}
+    >
+      {team}
+    </span>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  color,
+  icon: Icon,
+}: {
+  label: string;
+  value: string | number;
+  color: string;
+  icon: React.ElementType;
+}) {
+  return (
+    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-3 text-center">
+      <Icon className={`h-4 w-4 mx-auto mb-1 ${color}`} />
+      <div className={`text-lg font-bold ${color}`}>{value}</div>
+      <div className="text-[10px] text-slate-400">{label}</div>
+    </div>
+  );
+}
+
+export default function PlayerProfilePage({ params }: { params: Promise<{ playerId: string }> }) {
+  const { playerId } = use(params);
+  const [player, setPlayer] = useState<PlayerData | null>(null);
+  const [allPlayers, setAllPlayers] = useState<PlayerData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/players')
+      .then((r) => r.json())
+      .then((players: PlayerData[]) => {
+        setAllPlayers(players);
+        const found = players.find((p: PlayerData) => p.participantId === playerId);
+        setPlayer(found || null);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [playerId]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-amber-400" />
+      </div>
+    );
+  }
+
+  if (!player) {
+    return (
+      <div className="px-4 py-6 max-w-2xl mx-auto text-center">
+        <p className="text-slate-400">Player not found</p>
+        <Link href="/players" className="text-indigo-400 hover:text-indigo-300 text-sm mt-2 inline-block">
+          Back to players
+        </Link>
+      </div>
+    );
+  }
+
+  const pointsSegments = [
+    { label: 'Base', value: player.basePoints, color: 'bg-blue-400', textColor: 'text-blue-400' },
+    { label: 'Power', value: player.powerMatchPoints, color: 'bg-yellow-400', textColor: 'text-yellow-400' },
+    { label: 'Underdog', value: player.underdogBonus, color: 'bg-purple-400', textColor: 'text-purple-400' },
+    { label: 'Joker', value: player.jokerBonus, color: 'bg-red-400', textColor: 'text-red-400' },
+    { label: 'Double Header', value: player.doubleHeaderBonus, color: 'bg-emerald-400', textColor: 'text-emerald-400' },
+    { label: 'Streak', value: player.streakBonus, color: 'bg-orange-400', textColor: 'text-orange-400' },
+    { label: 'Trivia', value: player.triviaPoints, color: 'bg-pink-400', textColor: 'text-pink-400' },
+    { label: 'Bonus', value: player.bonusPoints, color: 'bg-amber-400', textColor: 'text-amber-400' },
+  ];
+
+  const topTeams = player.teamAffinity.slice(0, 5);
+
+  return (
+    <div className="px-4 py-6 max-w-2xl mx-auto space-y-6">
+      {/* Back Button */}
+      <Link
+        href="/players"
+        className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        All Players
+      </Link>
+
+      {/* Player Header */}
+      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-5 text-center">
+        <div className="relative inline-block mb-3">
+          <div
+            className="w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold mx-auto ring-2 ring-white/20"
+            style={{ backgroundColor: player.avatarColor }}
+          >
+            {player.participantName.charAt(0)}
+          </div>
+          {player.rank && player.rank <= 3 && (
+            <div className="absolute -top-1 -right-1">
+              <span
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-extrabold shadow-lg ${
+                  player.rank === 1
+                    ? 'bg-gradient-to-br from-amber-300 to-amber-500 text-black'
+                    : player.rank === 2
+                    ? 'bg-gradient-to-br from-slate-200 to-slate-400 text-black'
+                    : 'bg-gradient-to-br from-amber-600 to-amber-800 text-white'
+                }`}
+              >
+                {player.rank}
+              </span>
+            </div>
+          )}
+        </div>
+        <h1 className="text-2xl font-extrabold text-white">{player.participantName}</h1>
+        <p className="text-sm text-slate-400 mt-1">
+          Rank #{player.rank} of {allPlayers.length}
+        </p>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+        <StatCard label="Total Points" value={player.totalPoints} color="text-amber-400" icon={Trophy} />
+        <StatCard
+          label="Correct/Total"
+          value={`${player.correctPredictions}/${player.totalPredictions}`}
+          color="text-emerald-400"
+          icon={Target}
+        />
+        <StatCard label="Accuracy" value={`${player.accuracy.toFixed(0)}%`} color="text-blue-400" icon={BarChart3} />
+        <StatCard label="Best Streak" value={player.longestStreak} color="text-orange-400" icon={Flame} />
+        <StatCard label="Current Streak" value={player.currentStreak} color="text-purple-400" icon={TrendingUp} />
+      </div>
+
+      {/* Points Breakdown */}
+      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4">
+        <h2 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+          <BarChart3 className="h-4 w-4 text-indigo-400" />
+          Points Breakdown
+        </h2>
+
+        {/* Points Bar */}
+        {player.totalPoints > 0 && (
+          <div className="flex h-4 rounded-full overflow-hidden bg-white/5 mb-3">
+            {pointsSegments
+              .filter((s) => s.value > 0)
+              .map((seg) => (
+                <div
+                  key={seg.label}
+                  className={`${seg.color} opacity-80 hover:opacity-100 transition-opacity relative group`}
+                  style={{ width: `${(seg.value / player.totalPoints) * 100}%` }}
+                  title={`${seg.label}: ${seg.value}`}
+                />
+              ))}
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {pointsSegments.map((seg) => (
+            <div key={seg.label} className="flex items-center gap-2 py-1">
+              <span className={`w-2.5 h-2.5 rounded-full ${seg.color}`} />
+              <span className="text-xs text-slate-400 flex-1">{seg.label}</span>
+              <span className={`text-xs font-bold ${seg.textColor}`}>{seg.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Joker Status */}
+      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4">
+        <h2 className="text-sm font-semibold text-slate-300 mb-2 flex items-center gap-2">
+          <Zap className="h-4 w-4 text-red-400" />
+          Joker Card
+        </h2>
+        {player.jokerUsed ? (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-emerald-400 font-medium">Used on Match #{player.jokerMatchId}</span>
+            {player.jokerBonus > 0 && (
+              <span className="text-xs text-amber-400 font-bold">+{player.jokerBonus} pts</span>
+            )}
+          </div>
+        ) : (
+          <span className="text-xs text-slate-500">Not yet played</span>
+        )}
+      </div>
+
+      {/* Team Affinity */}
+      {topTeams.length > 0 && (
+        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4">
+          <h2 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+            <Award className="h-4 w-4 text-purple-400" />
+            Team Affinity
+          </h2>
+          <div className="space-y-2">
+            {topTeams.map((ta) => {
+              const maxCount = topTeams[0]?.count || 1;
+              return (
+                <div key={ta.team} className="flex items-center gap-3">
+                  <TeamBadge team={ta.team} />
+                  <div className="flex-1">
+                    <div className="flex h-2 rounded-full overflow-hidden bg-white/5">
+                      <div
+                        className="rounded-full transition-all"
+                        style={{
+                          width: `${(ta.count / maxCount) * 100}%`,
+                          backgroundColor: TEAMS[ta.team]?.color || '#666',
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <span className="text-xs text-slate-400 w-8 text-right">{ta.count}x</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Prediction History */}
+      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-white/10">
+          <h2 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+            <Target className="h-4 w-4 text-emerald-400" />
+            Prediction History ({player.predictionHistory.length})
+          </h2>
+        </div>
+        <div className="max-h-[400px] overflow-y-auto divide-y divide-white/5">
+          {player.predictionHistory.length === 0 ? (
+            <div className="px-4 py-6 text-center text-slate-500 text-sm">No completed matches yet</div>
+          ) : (
+            [...player.predictionHistory].reverse().map((ph) => (
+              <Link key={ph.matchId} href={`/matches/${ph.matchId}`}>
+                <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-all">
+                  <div className="shrink-0">
+                    {ph.predictedTeam ? (
+                      ph.isCorrect ? (
+                        <CheckCircle className="h-5 w-5 text-emerald-400" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-red-400" />
+                      )
+                    ) : (
+                      <Minus className="h-5 w-5 text-slate-600" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-500">#{ph.matchId}</span>
+                      <TeamBadge team={ph.homeTeam} />
+                      <span className="text-slate-600 text-xs">vs</span>
+                      <TeamBadge team={ph.awayTeam} />
+                    </div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">
+                      {new Date(ph.matchDate + 'T00:00:00').toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    {ph.predictedTeam ? (
+                      <span className="text-xs text-slate-400">
+                        Picked: <TeamBadge team={ph.predictedTeam} />
+                      </span>
+                    ) : (
+                      <span className="text-xs text-slate-600 italic">No pick</span>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
