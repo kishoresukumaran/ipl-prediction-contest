@@ -1,5 +1,6 @@
 import { Match, Prediction, Joker, TriviaResponse, BonusResponse, BonusQuestion, PlayerPointsBreakdown, StreakInfo } from './types';
 import { POINTS_CONFIG, getMatchPoints } from './constants';
+import { isPredictionLate } from './utils';
 
 export interface ScoringData {
   matches: Match[];
@@ -53,8 +54,9 @@ export function calculatePlayerPoints(
 
   for (const match of completedMatches) {
     const prediction = playerPredictions.find(p => p.match_id === match.id);
+    const isLate = prediction && isPredictionLate(prediction.prediction_time, match.match_date, match.start_time);
 
-    if (!prediction) {
+    if (!prediction || isLate) {
       if (currentStreak >= POINTS_CONFIG.minStreak) {
         streakBonus += currentStreak;
         streaks.push({ start: streakStart!, end: match.id, length: currentStreak });

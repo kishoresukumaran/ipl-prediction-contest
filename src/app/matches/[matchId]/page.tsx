@@ -14,9 +14,10 @@ import {
   XCircle,
   Loader2,
   Users,
+  AlarmClock,
 } from 'lucide-react';
 import { TEAMS, PARTICIPANTS } from '@/lib/constants';
-import { matchTimeToIrish, predictionTimeToIrish } from '@/lib/utils';
+import { matchTimeToIrish, predictionTimeToIrish, isPredictionLate } from '@/lib/utils';
 import { Match, Prediction } from '@/lib/types';
 
 interface MatchWithPredictions extends Match {
@@ -81,23 +82,29 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
   const homeTeamConfig = TEAMS[match.home_team];
   const awayTeamConfig = TEAMS[match.away_team];
 
-  // Prediction consensus
-  const homePicks = predictions.filter((p) => p.predicted_team === match.home_team).length;
-  const awayPicks = predictions.filter((p) => p.predicted_team === match.away_team).length;
-  const totalPicks = predictions.length;
+  // Exclude late predictions from consensus and accuracy stats
+  const validPredictions = predictions.filter(
+    (p) => !isPredictionLate(p.prediction_time, match.match_date, match.start_time)
+  );
+
+  // Prediction consensus (only valid/on-time predictions)
+  const homePicks = validPredictions.filter((p) => p.predicted_team === match.home_team).length;
+  const awayPicks = validPredictions.filter((p) => p.predicted_team === match.away_team).length;
+  const totalPicks = validPredictions.length;
   const homePct = totalPicks > 0 ? (homePicks / totalPicks) * 100 : 50;
   const awayPct = totalPicks > 0 ? (awayPicks / totalPicks) * 100 : 50;
 
-  // Accuracy stats (only if completed)
+  // Accuracy stats (only if completed, only valid predictions)
   const correctPicks = match.is_completed && match.winner
-    ? predictions.filter((p) => p.predicted_team === match.winner).length
+    ? validPredictions.filter((p) => p.predicted_team === match.winner).length
     : 0;
   const accuracy = totalPicks > 0 && match.is_completed ? (correctPicks / totalPicks) * 100 : 0;
 
   // Enriched predictions with participant data
   const enrichedPredictions = PARTICIPANTS.map((participant) => {
     const pred = predictions.find((p) => p.participant_id === participant.id);
-    const isCorrect = match.is_completed && match.winner && pred
+    const isLate = pred ? isPredictionLate(pred.prediction_time, match.match_date, match.start_time) : false;
+    const isCorrect = match.is_completed && match.winner && pred && !isLate
       ? pred.predicted_team === match.winner
       : null;
     return {
@@ -105,6 +112,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
       predictedTeam: pred?.predicted_team || null,
       predictionTime: pred?.prediction_time || null,
       isCorrect,
+      isLate,
     };
   });
 
@@ -313,12 +321,18 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
                   )}
                 </div>
                 <div className="flex items-center gap-2">
+                  {pred.isLate && (
+                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 text-[9px] font-bold uppercase">
+                      <AlarmClock className="h-2.5 w-2.5" />
+                      Late
+                    </span>
+                  )}
                   {pred.predictedTeam ? (
                     <TeamBadge team={pred.predictedTeam} />
                   ) : (
                     <span className="text-xs text-[var(--app-text-tertiary)] italic">No pick</span>
                   )}
-                  {match.is_completed && match.winner && pred.predictedTeam && (
+                  {match.is_completed && match.winner && pred.predictedTeam && !pred.isLate && (
                     pred.isCorrect ? (
                       <CheckCircle className="h-4 w-4 text-emerald-400" />
                     ) : (

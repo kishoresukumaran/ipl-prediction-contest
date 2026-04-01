@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { calculateAllPlayerPoints } from '@/lib/scoring';
 import { PARTICIPANTS, TEAMS, POINTS_CONFIG, getMatchPoints } from '@/lib/constants';
 import { Match, Prediction } from '@/lib/types';
+import { isPredictionLate } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,12 +63,15 @@ export async function GET() {
     // Points matrix
     const pointsMatrix = buildPointsMatrix(completedMatches, predictions, jokers, bonusQuestions, bonusResponses);
 
+    // Late voters
+    const lateVoters = buildLateVoters(completedMatches, predictions);
+
     return NextResponse.json({
       leaderboard, matches, predictions, pointsRace, teamPopularity,
       accuracyByPlayer, predictionTimings, weeklyPoints, crowdWisdom,
       contrarianData, matchDifficulty, formData, winRateByTeam,
       doubleHeaderData, heatmapData, streakData, bonusAccuracy, wallOfShame, copycats,
-      pointsMatrix,
+      pointsMatrix, lateVoters,
     });
   } catch (error) {
     console.error('Insights API error:', error);
@@ -556,4 +560,45 @@ function buildPointsMatrix(
     })),
     matrix,
   };
+}
+
+function buildLateVoters(matches: Match[], predictions: Prediction[]) {
+  const byParticipant: Record<string, {
+    id: string;
+    name: string;
+    color: string;
+    lateCount: number;
+    matches: { matchId: number; homeTeam: string; awayTeam: string; matchDate: string; minutesLate: number }[];
+  }> = {};
+
+  matches.forEach(match => {
+    predictions
+      .filter(p => p.match_id === match.id && isPredictionLate(p.prediction_time, match.match_date, match.start_time))
+      .forEach(p => {
+        if (!byParticipant[p.participant_id]) {
+          const participant = PARTICIPANTS.find(pp => pp.id === p.participant_id);
+          byParticipant[p.participant_id] = {
+            id: p.participant_id,
+            name: participant?.name || p.participant_id,
+            color: participant?.avatar_color || '#666',
+            lateCount: 0,
+            matches: [],
+          };
+        }
+        const matchStart = new Date(`${match.match_date}T${match.start_time}:00+05:30`);
+        const predTime = new Date(p.prediction_time!);
+        const minutesLate = Math.round((predTime.getTime() - matchStart.getTime()) / 60000);
+
+        byParticipant[p.participant_id].lateCount++;
+        byParticipant[p.participant_id].matches.push({
+          matchId: match.id,
+          homeTeam: match.home_team,
+          awayTeam: match.away_team,
+          matchDate: match.match_date,
+          minutesLate,
+        });
+      });
+  });
+
+  return Object.values(byParticipant).sort((a, b) => b.lateCount - a.lateCount);
 }

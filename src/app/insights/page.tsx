@@ -27,6 +27,7 @@ const BonusQuestionAccuracyChart = dynamic(() => import('@/components/charts/Bon
 const WallOfShame = dynamic(() => import('@/components/charts/WallOfShame').then(m => ({ default: m.WallOfShame })), { ssr: false });
 const LastMinutePanicker = dynamic(() => import('@/components/charts/LastMinutePanicker').then(m => ({ default: m.LastMinutePanicker })), { ssr: false });
 const CopycatChart = dynamic(() => import('@/components/charts/CopycatChart').then(m => ({ default: m.CopycatChart })), { ssr: false });
+const LateVotersChart = dynamic(() => import('@/components/charts/LateVotersChart').then(m => ({ default: m.LateVotersChart })), { ssr: false });
 const PointsMatrixChart = dynamic(() => import('@/components/charts/PointsMatrixChart').then(m => ({ default: m.PointsMatrixChart })), { ssr: false });
 
 interface InsightsAPIData {
@@ -57,6 +58,7 @@ interface InsightsAPIData {
     matches: { id: number; home_team: string; away_team: string; match_type: string; is_power_match: boolean }[];
     matrix: Record<string, Record<number, number>>;
   };
+  lateVoters: { id: string; name: string; color: string; lateCount: number; matches: { matchId: number; homeTeam: string; awayTeam: string; matchDate: string; minutesLate: number }[] }[];
 }
 
 const TABS = [
@@ -205,6 +207,9 @@ export default function InsightsPage() {
             </ChartCard>
             <ChartCard title="The Copycat" subtitle="Voted right after someone else and picked the exact same team? Suspicious. Very suspicious. We're watching you.">
               <CopycatChart data={data.copycats} />
+            </ChartCard>
+            <ChartCard title="The Fashionably Late" subtitle="These folks showed up after the party started. Voted after match kickoff — prediction doesn't count. Better luck next time!">
+              <LateVotersChart data={data.lateVoters} />
             </ChartCard>
           </>
         )}
