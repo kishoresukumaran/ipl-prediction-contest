@@ -32,9 +32,28 @@ export function PointsRaceChart({ data }: { data: PointsRaceData[] }) {
             <XAxis dataKey="matchId" stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} label={{ value: 'Match #', position: 'bottom', fill: 'rgba(255,255,255,0.5)', fontSize: 11 }} />
             <YAxis stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} />
             <Tooltip
-              contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: 11, maxHeight: '200px', overflowY: 'auto' }}
-              labelFormatter={(v) => `Match #${v}`}
-              itemSorter={(item) => -(item.value as number || 0)}
+              content={({ label, payload }) => {
+                if (!payload?.length) return null;
+                const sorted = [...payload].sort((a, b) => (b.value as number || 0) - (a.value as number || 0));
+                // If a player is highlighted, show only them; otherwise top 5
+                const items = highlighted
+                  ? sorted.filter(p => p.dataKey === highlighted)
+                  : sorted.slice(0, 5);
+                const remaining = highlighted ? 0 : sorted.length - 5;
+                return (
+                  <div className="bg-slate-800 border border-white/10 rounded-lg p-2.5 text-xs text-white shadow-xl">
+                    <p className="font-bold mb-1.5">Match #{label}</p>
+                    {items.map(item => (
+                      <div key={item.dataKey as string} className="flex items-center gap-2 py-0.5">
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                        <span style={{ color: item.color }}>{item.name}</span>
+                        <span className="ml-auto font-bold">{item.value}</span>
+                      </div>
+                    ))}
+                    {remaining > 0 && <p className="text-slate-500 mt-1">+{remaining} more (hover legend to focus)</p>}
+                  </div>
+                );
+              }}
             />
             {sortedParticipants.map((p) => (
               <Line
