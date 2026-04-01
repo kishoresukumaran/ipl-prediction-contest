@@ -8,6 +8,18 @@ interface TimingData {
   avgMinutesBefore: number;
 }
 
+function formatDuration(minutes: number): string {
+  if (minutes < 60) return `${Math.round(minutes)}m`;
+  if (minutes < 1440) {
+    const hrs = Math.floor(minutes / 60);
+    const mins = Math.round(minutes % 60);
+    return mins > 0 ? `${hrs}h ${mins}m` : `${hrs}h`;
+  }
+  const days = Math.floor(minutes / 1440);
+  const hrs = Math.round((minutes % 1440) / 60);
+  return hrs > 0 ? `${days}d ${hrs}h` : `${days}d`;
+}
+
 export function PredictionTimingChart({ data }: { data: TimingData[] }) {
   if (!data?.length) return <EmptyState />;
 
@@ -15,24 +27,33 @@ export function PredictionTimingChart({ data }: { data: TimingData[] }) {
     .filter(d => d.avgMinutesBefore > 0)
     .sort((a, b) => b.avgMinutesBefore - a.avgMinutesBefore);
 
+  // Convert to hours for the axis to keep numbers readable
+  const chartData = sorted.map(d => ({
+    ...d,
+    avgHoursBefore: d.avgMinutesBefore / 60,
+  }));
+
   return (
     <div className="w-full h-[500px]">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={sorted} layout="vertical" margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+        <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
           <XAxis
             type="number"
             stroke="rgba(255,255,255,0.5)"
             tick={{ fontSize: 11 }}
-            label={{ value: 'Avg minutes before match', position: 'bottom', fill: 'rgba(255,255,255,0.5)', fontSize: 11 }}
+            label={{ value: 'Avg hours before match', position: 'bottom', fill: 'rgba(255,255,255,0.5)', fontSize: 11 }}
           />
           <YAxis dataKey="name" type="category" width={80} stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} />
           <Tooltip
             contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
-            formatter={(value) => [`${Math.round(Number(value))} min before`, 'Avg Timing']}
+            formatter={(_value, _name, props) => {
+              const mins = props.payload.avgMinutesBefore;
+              return [formatDuration(mins), 'Avg Timing'];
+            }}
           />
-          <Bar dataKey="avgMinutesBefore" name="Minutes Before" radius={[0, 6, 6, 0]}>
-            {sorted.map((entry, i) => (
+          <Bar dataKey="avgHoursBefore" name="Hours Before" radius={[0, 6, 6, 0]}>
+            {chartData.map((entry) => (
               <Cell
                 key={entry.id}
                 fill={entry.avgMinutesBefore > 120 ? '#22c55e' : entry.avgMinutesBefore > 30 ? '#eab308' : '#ef4444'}
