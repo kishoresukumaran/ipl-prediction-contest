@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Trophy, Calendar, Clock, ChevronRight, TrendingUp, Zap, Star, Target } from 'lucide-react';
+import { Trophy, Calendar, Clock, ChevronRight, TrendingUp, Zap, Star, Target, Layers } from 'lucide-react';
 import { TEAMS, PARTICIPANTS } from '@/lib/constants';
 import { matchTimeToIrish, matchDateTimeUTC } from '@/lib/utils';
 import { Match, PlayerPointsBreakdown } from '@/lib/types';
@@ -122,6 +122,11 @@ export default function Home() {
       return a.start_time.localeCompare(b.start_time);
     }) || [];
   const nextMatch = upcomingMatches[0] || null;
+  // Check if next match day is a double header
+  const nextMatchDayMatches = nextMatch
+    ? upcomingMatches.filter((m) => m.match_date === nextMatch.match_date)
+    : [];
+  const isDoubleHeaderDay = nextMatchDayMatches.length >= 2;
 
   const completedMatches = matches
     ?.filter((m) => m.is_completed && m.winner)
@@ -191,7 +196,7 @@ export default function Home() {
       )}
 
       {/* Next Match Card */}
-      {!loading && nextMatch && (
+      {!loading && nextMatch && !isDoubleHeaderDay && (
         <Link href={`/matches/${nextMatch.id}`}>
           <div className="bg-gradient-to-br from-indigo-500/20 to-purple-600/20 backdrop-blur-sm border border-indigo-400/20 rounded-xl p-4 hover:border-indigo-400/40 transition-all">
             <div className="flex items-center justify-between mb-3">
@@ -243,6 +248,73 @@ export default function Home() {
             <CountdownTimer targetDate={matchDateTimeUTC(nextMatch.match_date, nextMatch.start_time).toISOString()} />
           </div>
         </Link>
+      )}
+
+      {/* Double Header Day Card */}
+      {!loading && nextMatch && isDoubleHeaderDay && (
+        <div className="bg-gradient-to-br from-indigo-500/20 to-purple-600/20 backdrop-blur-sm border border-indigo-400/20 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-indigo-400" />
+              <span className="text-xs font-medium text-indigo-300">Double Header Day</span>
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 text-[10px] font-bold">
+                <Layers className="h-2.5 w-2.5" />
+                2 GAMES
+              </span>
+            </div>
+            <span className="text-xs text-[var(--app-text-secondary)]">
+              {new Date(nextMatch.match_date).toLocaleDateString('en-US', {
+                weekday: 'short', month: 'short', day: 'numeric',
+              })}
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            {nextMatchDayMatches.map((match, idx) => (
+              <Link key={match.id} href={`/matches/${match.id}`}>
+                <div className="bg-[var(--app-surface)] rounded-xl p-3 hover:bg-[var(--app-surface-hover)] transition-all">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] text-[var(--app-text-tertiary)] font-mono">
+                      Game {idx + 1} · #{match.id}
+                    </span>
+                    <div className="flex items-center gap-1 text-[10px] text-[var(--app-text-secondary)]">
+                      <Clock className="h-3 w-3" />
+                      {matchTimeToIrish(match.match_date, match.start_time)}
+                      <span className="text-[var(--app-text-tertiary)]">(Irish)</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="px-2.5 py-1 rounded-lg text-sm font-bold"
+                        style={{
+                          backgroundColor: TEAMS[match.home_team]?.color || '#666',
+                          color: TEAMS[match.home_team]?.textColor || '#fff',
+                        }}
+                      >
+                        {match.home_team}
+                      </span>
+                      <span className="text-[var(--app-text-secondary)] text-xs">vs</span>
+                      <span
+                        className="px-2.5 py-1 rounded-lg text-sm font-bold"
+                        style={{
+                          backgroundColor: TEAMS[match.away_team]?.color || '#666',
+                          color: TEAMS[match.away_team]?.textColor || '#fff',
+                        }}
+                      >
+                        {match.away_team}
+                      </span>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-[var(--app-text-tertiary)]" />
+                  </div>
+                  <div className="mt-2">
+                    <CountdownTimer targetDate={matchDateTimeUTC(match.match_date, match.start_time).toISOString()} />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Today's Matches */}
