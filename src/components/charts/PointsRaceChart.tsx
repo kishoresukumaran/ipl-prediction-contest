@@ -14,7 +14,7 @@ interface PointsRaceData {
 
 export function PointsRaceChart({ data }: { data: PointsRaceData[] }) {
   const chartTheme = useChartTheme();
-  const [highlighted, setHighlighted] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   if (!data?.length) return <EmptyState message="No match data yet" />;
 
@@ -25,38 +25,65 @@ export function PointsRaceChart({ data }: { data: PointsRaceData[] }) {
     return bPoints - aPoints;
   });
 
-  const highlightedPlayer = highlighted
-    ? sortedParticipants.find(p => p.id === highlighted)
-    : null;
+  const hasSelection = selected.size > 0;
+
+  const toggle = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const remove = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  };
+
+  const selectedPlayers = sortedParticipants.filter(p => selected.has(p.id));
 
   return (
     <div>
-      {/* Selection hint / active selection banner */}
-      <div className="mb-3 min-h-[28px]">
-        {highlighted && highlightedPlayer ? (
-          <div
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border"
-            style={{
-              backgroundColor: highlightedPlayer.avatar_color + '22',
-              borderColor: highlightedPlayer.avatar_color + '66',
-            }}
-          >
-            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: highlightedPlayer.avatar_color }} />
-            <span style={{ color: highlightedPlayer.avatar_color }}>{highlightedPlayer.name}</span>
-            <span className="text-[var(--app-text-tertiary)]">·</span>
-            <span className="font-bold" style={{ color: highlightedPlayer.avatar_color }}>
-              {(latestMatch?.[highlighted] as number) || 0} pts
-            </span>
+      {/* Active filter pills / hint */}
+      <div className="mb-3 min-h-[32px]">
+        {hasSelection ? (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {selectedPlayers.map(p => (
+              <div
+                key={p.id}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border"
+                style={{
+                  backgroundColor: p.avatar_color + '22',
+                  borderColor: p.avatar_color + '66',
+                }}
+              >
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.avatar_color }} />
+                <span style={{ color: p.avatar_color }}>{p.name}</span>
+                <span className="font-bold" style={{ color: p.avatar_color }}>
+                  {(latestMatch?.[p.id] as number) || 0}
+                </span>
+                <button
+                  onClick={() => remove(p.id)}
+                  className="ml-0.5 text-[var(--app-text-tertiary)] hover:text-[var(--app-text)] active:scale-90"
+                  aria-label={`Remove ${p.name}`}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
             <button
-              onClick={() => setHighlighted(null)}
-              className="ml-1 text-[var(--app-text-tertiary)] hover:text-[var(--app-text)] active:scale-90"
-              aria-label="Clear selection"
+              onClick={() => setSelected(new Set())}
+              className="text-[10px] text-[var(--app-text-tertiary)] hover:text-[var(--app-text)] px-2 py-1 rounded-full border border-[var(--app-border)] active:scale-95"
             >
-              <X className="h-3.5 w-3.5" />
+              Clear all
             </button>
           </div>
         ) : (
-          <p className="text-[10px] text-[var(--app-text-tertiary)]">Tap a name below to isolate their line</p>
+          <p className="text-[10px] text-[var(--app-text-tertiary)]">Tap names below to compare players</p>
         )}
       </div>
 
@@ -70,8 +97,8 @@ export function PointsRaceChart({ data }: { data: PointsRaceData[] }) {
               content={({ label, payload }) => {
                 if (!payload?.length) return null;
                 const sorted = [...payload].sort((a, b) => (b.value as number || 0) - (a.value as number || 0));
-                const items = highlighted
-                  ? sorted.filter(p => p.dataKey === highlighted)
+                const items = hasSelection
+                  ? sorted.filter(p => selected.has(p.dataKey as string))
                   : sorted;
                 return (
                   <div className="bg-white dark:bg-slate-800 border border-[var(--app-border)] rounded-lg p-2.5 text-xs text-[var(--app-text)] shadow-xl">
@@ -89,37 +116,40 @@ export function PointsRaceChart({ data }: { data: PointsRaceData[] }) {
                 );
               }}
             />
-            {sortedParticipants.map((p) => (
-              <Line
-                key={p.id}
-                type="monotone"
-                dataKey={p.id}
-                name={p.name}
-                stroke={p.avatar_color}
-                strokeWidth={highlighted === p.id ? 4 : highlighted ? 1 : 2}
-                strokeOpacity={highlighted ? (highlighted === p.id ? 1 : 0.15) : 0.8}
-                dot={false}
-                activeDot={highlighted === null || highlighted === p.id ? { r: 4 } : false}
-                connectNulls
-              />
-            ))}
+            {sortedParticipants.map((p) => {
+              const isSelected = selected.has(p.id);
+              return (
+                <Line
+                  key={p.id}
+                  type="monotone"
+                  dataKey={p.id}
+                  name={p.name}
+                  stroke={p.avatar_color}
+                  strokeWidth={isSelected ? 4 : hasSelection ? 1 : 2}
+                  strokeOpacity={hasSelection ? (isSelected ? 1 : 0.15) : 0.8}
+                  dot={false}
+                  activeDot={!hasSelection || isSelected ? { r: 4 } : false}
+                  connectNulls
+                />
+              );
+            })}
           </LineChart>
         </ResponsiveContainer>
       </div>
 
-      {/* Player legend — larger tap targets, ranked order */}
+      {/* Player legend */}
       <div className="flex flex-wrap gap-2 mt-4">
         {sortedParticipants.map((p) => {
           const pts = (latestMatch?.[p.id] as number) || 0;
-          const isActive = highlighted === p.id;
-          const isDimmed = highlighted !== null && !isActive;
+          const isActive = selected.has(p.id);
+          const isDimmed = hasSelection && !isActive;
           return (
             <button
               key={p.id}
-              onClick={() => setHighlighted(prev => prev === p.id ? null : p.id)}
+              onClick={() => toggle(p.id)}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all active:scale-95 ${
                 isActive
-                  ? 'border-[var(--app-border-strong)] bg-[var(--app-surface-alt)]'
+                  ? 'bg-[var(--app-surface-alt)]'
                   : isDimmed
                   ? 'border-transparent opacity-35'
                   : 'border-transparent hover:bg-[var(--app-surface)]'
