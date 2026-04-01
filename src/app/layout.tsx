@@ -34,7 +34,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-gradient-to-b from-indigo-950 via-purple-950 to-slate-950 text-white">
+      <body className="min-h-full flex flex-col bg-[#1a1040] text-white">
         <TooltipProvider>
           <main className="flex-1 pb-20 overflow-x-hidden">
             {children}

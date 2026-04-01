@@ -129,6 +129,15 @@
   }
 }
 
+/* Fixed gradient background that doesn't break on scroll */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(ellipse at top, #1e1b4b 0%, #1a1040 40%, #0f0a2a 100%);
+}
+
 /* Force visible thin scrollbar on tooltip lists */
 .tooltip-scroll::-webkit-scrollbar {
   width: 4px;
