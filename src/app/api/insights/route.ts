@@ -371,9 +371,22 @@ function buildWallOfShame(matches: Match[], predictions: Prediction[], jokers: a
   return { wastedJokers, jinxers, losingStreaks };
 }
 
+interface CopyInstance {
+  matchId: number;
+  homeTeam: string;
+  awayTeam: string;
+  team: string;
+  targetTime: string;
+  copierTime: string;
+  gapMinutes: number;
+}
+
 function buildCopycats(matches: Match[], predictions: Prediction[]) {
-  // For each pair (A, B): count times B voted after A (within 60 min) and picked the same team
-  const pairCounts: Record<string, { copier: string; copierName: string; copierColor: string; target: string; targetName: string; targetColor: string; count: number; matches: number }> = {};
+  const pairData: Record<string, {
+    copier: string; copierName: string; copierColor: string;
+    target: string; targetName: string; targetColor: string;
+    count: number; matches: number; instances: CopyInstance[];
+  }> = {};
 
   matches.forEach(match => {
     const matchPreds = predictions
@@ -386,38 +399,44 @@ function buildCopycats(matches: Match[], predictions: Prediction[]) {
         const later = matchPreds[j];
         const timeDiff = (new Date(later.prediction_time!).getTime() - new Date(earlier.prediction_time!).getTime()) / 60000;
 
-        // Within 60 minutes and same team pick
         if (timeDiff <= 60 && earlier.predicted_team === later.predicted_team) {
           const key = `${later.participant_id}→${earlier.participant_id}`;
-          if (!pairCounts[key]) {
+          if (!pairData[key]) {
             const copier = PARTICIPANTS.find(p => p.id === later.participant_id);
             const target = PARTICIPANTS.find(p => p.id === earlier.participant_id);
-            pairCounts[key] = {
+            pairData[key] = {
               copier: later.participant_id,
               copierName: copier?.name || later.participant_id,
               copierColor: copier?.avatar_color || '#666',
               target: earlier.participant_id,
               targetName: target?.name || earlier.participant_id,
               targetColor: target?.avatar_color || '#666',
-              count: 0,
-              matches: 0,
+              count: 0, matches: 0, instances: [],
             };
           }
-          pairCounts[key].count++;
+          pairData[key].count++;
+          pairData[key].instances.push({
+            matchId: match.id,
+            homeTeam: match.home_team,
+            awayTeam: match.away_team,
+            team: earlier.predicted_team,
+            targetTime: earlier.prediction_time!,
+            copierTime: later.prediction_time!,
+            gapMinutes: Math.round(timeDiff),
+          });
         }
       }
     }
   });
 
-  // Calculate total matches each pair could have copied
-  Object.values(pairCounts).forEach(pair => {
+  Object.values(pairData).forEach(pair => {
     pair.matches = matches.filter(m =>
       predictions.some(p => p.match_id === m.id && p.participant_id === pair.copier && p.prediction_time) &&
       predictions.some(p => p.match_id === m.id && p.participant_id === pair.target && p.prediction_time)
     ).length;
   });
 
-  return Object.values(pairCounts)
+  return Object.values(pairData)
     .filter(p => p.count >= 1)
     .sort((a, b) => b.count - a.count)
     .slice(0, 15);
