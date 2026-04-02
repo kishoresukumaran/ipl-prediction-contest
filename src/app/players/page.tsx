@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Users, Search, ArrowUpDown, Trophy, Loader2 } from 'lucide-react';
+import { Users, Search, ArrowUpDown, Trophy, Loader2, ChevronRight } from 'lucide-react';
 import { PlayerPointsBreakdown } from '@/lib/types';
 
 interface PlayerData extends PlayerPointsBreakdown {
@@ -150,6 +150,7 @@ export default function PlayersPage() {
                     Rank #{player.rank}
                   </span>
                 </div>
+                <ChevronRight className="h-4 w-4 text-[var(--app-text-tertiary)] group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all shrink-0" />
               </div>
 
               {/* Stats */}
