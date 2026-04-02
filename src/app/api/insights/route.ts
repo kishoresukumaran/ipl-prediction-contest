@@ -66,12 +66,15 @@ export async function GET() {
     // Late voters
     const lateVoters = buildLateVoters(completedMatches, predictions);
 
+    // Crowd trap: bonus questions where the majority got it wrong
+    const crowdTrap = buildCrowdTrap(bonusQuestions, bonusResponses, matches);
+
     return NextResponse.json({
       leaderboard, matches, predictions, pointsRace, teamPopularity,
       accuracyByPlayer, predictionTimings, weeklyPoints, crowdWisdom,
       contrarianData, matchDifficulty, formData, winRateByTeam,
       doubleHeaderData, heatmapData, streakData, bonusAccuracy, wallOfShame, copycats,
-      pointsMatrix, lateVoters,
+      pointsMatrix, lateVoters, crowdTrap,
     });
   } catch (error) {
     console.error('Insights API error:', error);
@@ -300,6 +303,48 @@ function buildBonusAccuracy(bonusQuestions: any[], bonusResponses: any[]) {
       color: p.avatar_color,
     };
   });
+}
+
+function buildCrowdTrap(bonusQuestions: any[], bonusResponses: any[], matches: Match[]) {
+  if (!bonusQuestions.length) return [];
+
+  const traps = bonusQuestions
+    .filter((q: any) => q.correct_answer)
+    .map((q: any) => {
+      const responses = bonusResponses.filter((r: any) => r.bonus_question_id === q.id);
+      if (responses.length === 0) return null;
+
+      const wrongResponses = responses.filter((r: any) => !r.is_correct);
+      const wrongPct = (wrongResponses.length / responses.length) * 100;
+
+      // Find most popular wrong answer
+      const wrongCounts: Record<string, number> = {};
+      wrongResponses.forEach((r: any) => {
+        wrongCounts[r.selected_option] = (wrongCounts[r.selected_option] || 0) + 1;
+      });
+      const topWrong = Object.entries(wrongCounts).sort((a, b) => b[1] - a[1])[0];
+
+      const match = matches.find((m) => m.id === q.match_id);
+
+      return {
+        questionId: q.id as number,
+        questionText: q.question as string,
+        matchId: q.match_id as number,
+        homeTeam: match?.home_team || '',
+        awayTeam: match?.away_team || '',
+        correctAnswer: q.correct_answer as string,
+        totalResponses: responses.length as number,
+        wrongCount: wrongResponses.length as number,
+        correctCount: (responses.length - wrongResponses.length) as number,
+        wrongPct,
+        mostPopularWrongAnswer: topWrong?.[0] || '',
+        mostPopularWrongCount: topWrong?.[1] || 0,
+      };
+    })
+    .filter((q): q is NonNullable<typeof q> => q !== null && q.wrongPct > 50)
+    .sort((a, b) => b.wrongPct - a.wrongPct);
+
+  return traps;
 }
 
 function buildWallOfShame(matches: Match[], predictions: Prediction[], jokers: any[]) {

@@ -29,6 +29,7 @@ const LastMinutePanicker = dynamic(() => import('@/components/charts/LastMinuteP
 const CopycatChart = dynamic(() => import('@/components/charts/CopycatChart').then(m => ({ default: m.CopycatChart })), { ssr: false });
 const LateVotersChart = dynamic(() => import('@/components/charts/LateVotersChart').then(m => ({ default: m.LateVotersChart })), { ssr: false });
 const PointsMatrixChart = dynamic(() => import('@/components/charts/PointsMatrixChart').then(m => ({ default: m.PointsMatrixChart })), { ssr: false });
+const CrowdTrapChart = dynamic(() => import('@/components/charts/CrowdTrapChart').then(m => ({ default: m.CrowdTrapChart })), { ssr: false });
 
 interface InsightsAPIData {
   leaderboard: PlayerPointsBreakdown[];
@@ -48,6 +49,7 @@ interface InsightsAPIData {
   heatmapData: { participants: { id: string; name: string }[]; matches: { id: number; home_team: string; away_team: string }[]; predictions: Record<string, Record<number, { predicted: string; correct: boolean | null }>> };
   streakData: { name: string; longestStreak: number; currentStreak: number; color: string }[];
   bonusAccuracy: { name: string; correct: number; total: number; accuracy: number; points: number; color: string }[];
+  crowdTrap: { questionId: number; questionText: string; matchId: number; homeTeam: string; awayTeam: string; correctAnswer: string; totalResponses: number; wrongCount: number; correctCount: number; wrongPct: number; mostPopularWrongAnswer: string; mostPopularWrongCount: number }[];
   wallOfShame: {
     wastedJokers: { name: string; matchId: number; homeTeam: string; awayTeam: string; picked: string; winner: string; color: string }[];
     jinxers: { name: string; pickedFavorite: number; favoriteWon: number; favoriteLost: number; jinxRate: number; color: string }[];
@@ -170,6 +172,9 @@ export default function InsightsPage() {
             </ChartCard>
             <ChartCard title="Bonus Question Accuracy" subtitle="Who gets the most bonus questions right?">
               <BonusQuestionAccuracyChart data={data.bonusAccuracy} />
+            </ChartCard>
+            <ChartCard title="Crowd Trap 🪤" subtitle="Bonus questions where the majority confidently walked into the wrong answer. The trap was set. You all fell for it.">
+              <CrowdTrapChart data={data.crowdTrap} />
             </ChartCard>
           </>
         )}
