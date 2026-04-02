@@ -34,10 +34,11 @@ interface PredictionHistoryItem {
 interface BonusHistoryItem {
   questionId: number;
   questionText: string;
+  options: string[];
   matchId: number;
   homeTeam: string;
   awayTeam: string;
-  selectedOption: string;
+  selectedOption: string | null;
   correctAnswer: string | null;
   isCorrect: boolean;
   points: number;
@@ -384,70 +385,101 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
       </div>
 
       {/* Bonus Question History */}
-      {player.bonusHistory?.length > 0 && (
-        <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-[var(--app-border)]">
-            <h2 className="text-sm font-semibold text-[var(--app-text-secondary)] flex items-center gap-2">
-              <HelpCircle className="h-4 w-4 text-amber-400" />
-              Bonus Question History ({player.bonusHistory.length})
-            </h2>
-          </div>
-          <div className="max-h-[400px] overflow-y-auto divide-y divide-[var(--app-border)]">
-            {[...player.bonusHistory].reverse().map((bh) => (
-              <Link key={bh.questionId} href={`/matches/${bh.matchId}`}>
-                <div className="flex items-start gap-3 px-4 py-3 hover:bg-[var(--app-surface)] transition-all">
-                  <div className="shrink-0 mt-0.5">
-                    {bh.correctAnswer === null ? (
-                      <Minus className="h-5 w-5 text-[var(--app-text-tertiary)]" />
-                    ) : bh.isCorrect ? (
-                      <CheckCircle className="h-5 w-5 text-emerald-400" />
-                    ) : (
-                      <XCircle className="h-5 w-5 text-red-400" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    {/* Match line */}
-                    <div className="flex items-center gap-1.5 mb-1">
+      <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-[var(--app-border)]">
+          <h2 className="text-sm font-semibold text-[var(--app-text-secondary)] flex items-center gap-2">
+            <HelpCircle className="h-4 w-4 text-amber-400" />
+            Bonus Question History ({player.bonusHistory?.length ?? 0})
+          </h2>
+        </div>
+        <div className="max-h-[500px] overflow-y-auto divide-y divide-[var(--app-border)]">
+          {!player.bonusHistory?.length ? (
+            <div className="px-4 py-6 text-center text-[var(--app-text-tertiary)] text-sm">No bonus questions yet</div>
+          ) : (
+            [...player.bonusHistory].reverse().map((bh) => {
+              const answered = bh.selectedOption !== null;
+              const resolved = bh.correctAnswer !== null;
+              return (
+                <Link key={bh.questionId} href={`/matches/${bh.matchId}`}>
+                  <div className="px-4 py-3 hover:bg-[var(--app-surface-hover)] transition-all">
+                    {/* Match + result icon row */}
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="shrink-0">
+                        {!answered ? (
+                          <Minus className="h-4 w-4 text-[var(--app-text-tertiary)]" />
+                        ) : !resolved ? (
+                          <Minus className="h-4 w-4 text-[var(--app-text-tertiary)]" />
+                        ) : bh.isCorrect ? (
+                          <CheckCircle className="h-4 w-4 text-emerald-400" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-400" />
+                        )}
+                      </div>
                       <span className="text-[10px] text-[var(--app-text-tertiary)]">#{bh.matchId}</span>
                       {bh.homeTeam && <TeamBadge team={bh.homeTeam} />}
-                      {bh.homeTeam && <span className="text-[var(--app-text-tertiary)] text-[10px]">vs</span>}
+                      {bh.homeTeam && bh.awayTeam && (
+                        <span className="text-[var(--app-text-tertiary)] text-[10px]">vs</span>
+                      )}
                       {bh.awayTeam && <TeamBadge team={bh.awayTeam} />}
-                    </div>
-                    {/* Question */}
-                    <p className="text-xs text-[var(--app-text)] leading-snug line-clamp-2">{bh.questionText}</p>
-                    {/* Their answer */}
-                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                        bh.correctAnswer === null
-                          ? 'border-[var(--app-border)] text-[var(--app-text-secondary)]'
-                          : bh.isCorrect
-                          ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400'
-                          : 'border-red-500/40 bg-red-500/10 text-red-400'
-                      }`}>
-                        Picked: {bh.selectedOption}
-                      </span>
-                      {!bh.isCorrect && bh.correctAnswer && (
-                        <span className="text-[10px] text-emerald-400 font-medium">
-                          ✓ {bh.correctAnswer}
-                        </span>
-                      )}
-                      {bh.correctAnswer === null && (
-                        <span className="text-[10px] text-[var(--app-text-tertiary)] italic">Pending result</span>
+                      {bh.isCorrect && bh.points > 0 && (
+                        <span className="ml-auto text-xs font-bold text-amber-400">+{bh.points} pts</span>
                       )}
                     </div>
+
+                    {/* Question text */}
+                    <p className="text-xs font-medium text-[var(--app-text)] leading-snug mb-2">
+                      {bh.questionText}
+                    </p>
+
+                    {/* Options grid */}
+                    {bh.options.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {bh.options.map((opt) => {
+                          const isPlayerPick = opt === bh.selectedOption;
+                          const isCorrectOpt = resolved && opt === bh.correctAnswer;
+                          const isWrongPick = isPlayerPick && resolved && !bh.isCorrect;
+
+                          let cls = 'text-[10px] font-medium px-2 py-0.5 rounded-full border transition-all ';
+                          if (isCorrectOpt && isPlayerPick) {
+                            // player picked correctly
+                            cls += 'bg-emerald-500/20 border-emerald-400 text-emerald-300';
+                          } else if (isCorrectOpt) {
+                            // correct answer but player didn't pick it
+                            cls += 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400';
+                          } else if (isWrongPick) {
+                            // player picked this but it's wrong
+                            cls += 'bg-red-500/15 border-red-400 text-red-300';
+                          } else if (isPlayerPick && !resolved) {
+                            // picked but result pending
+                            cls += 'bg-indigo-500/15 border-indigo-400/60 text-indigo-300';
+                          } else {
+                            // neutral unchosen option
+                            cls += 'bg-transparent border-[var(--app-border)] text-[var(--app-text-tertiary)]';
+                          }
+
+                          return (
+                            <span key={opt} className={cls}>
+                              {isPlayerPick && '→ '}
+                              {opt}
+                              {isCorrectOpt && !isPlayerPick && ' ✓'}
+                            </span>
+                          );
+                        })}
+                        {!answered && (
+                          <span className="text-[10px] italic text-[var(--app-text-tertiary)] px-1">No answer</span>
+                        )}
+                        {answered && !resolved && (
+                          <span className="text-[10px] italic text-[var(--app-text-tertiary)] px-1">Result pending</span>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  {bh.isCorrect && bh.points > 0 && (
-                    <div className="shrink-0 text-right">
-                      <span className="text-xs font-bold text-amber-400">+{bh.points}</span>
-                      <div className="text-[9px] text-[var(--app-text-tertiary)]">pts</div>
-                    </div>
-                  )}
-                </div>
-              </Link>
-            ))}
-          </div>
+                </Link>
+              );
+            })
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
