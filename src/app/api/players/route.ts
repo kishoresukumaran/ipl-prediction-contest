@@ -107,6 +107,30 @@ export async function GET() {
         .sort((a, b) => b[1] - a[1])
         .map(([team, points]) => ({ team, points }));
 
+      // Bonus question history for this player
+      const playerBonusResponses = bonusResponses.filter(
+        (r: any) => r.participant_id === player.participantId
+      );
+      const bonusHistory = playerBonusResponses
+        .map((r: any) => {
+          const question = bonusQuestions.find((q: any) => q.id === r.bonus_question_id);
+          if (!question) return null;
+          const match = matches.find((m: any) => m.id === question.match_id);
+          return {
+            questionId: question.id as number,
+            questionText: question.question as string,
+            matchId: question.match_id as number,
+            homeTeam: match?.home_team || '',
+            awayTeam: match?.away_team || '',
+            selectedOption: r.selected_option as string,
+            correctAnswer: question.correct_answer as string | null,
+            isCorrect: r.is_correct as boolean,
+            points: r.is_correct ? (question.points ?? 1) : 0,
+          };
+        })
+        .filter(Boolean)
+        .sort((a: any, b: any) => a.matchId - b.matchId);
+
       return {
         ...player,
         avatarColor: participant?.avatar_color || '#666',
@@ -116,6 +140,7 @@ export async function GET() {
         hatedTeams,
         profitableTeams,
         predictionHistory,
+        bonusHistory,
       };
     });
 

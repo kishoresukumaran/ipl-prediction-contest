@@ -15,6 +15,7 @@ import {
   Award,
   BarChart3,
   Minus,
+  HelpCircle,
 } from 'lucide-react';
 import { TEAMS } from '@/lib/constants';
 import { PlayerPointsBreakdown } from '@/lib/types';
@@ -30,6 +31,18 @@ interface PredictionHistoryItem {
   predictionTime: string | null;
 }
 
+interface BonusHistoryItem {
+  questionId: number;
+  questionText: string;
+  matchId: number;
+  homeTeam: string;
+  awayTeam: string;
+  selectedOption: string;
+  correctAnswer: string | null;
+  isCorrect: boolean;
+  points: number;
+}
+
 interface PlayerData extends PlayerPointsBreakdown {
   avatarColor: string;
   jokerMatchId: number | null;
@@ -38,6 +51,7 @@ interface PlayerData extends PlayerPointsBreakdown {
   hatedTeams: { team: string; count: number }[];
   profitableTeams: { team: string; points: number }[];
   predictionHistory: PredictionHistoryItem[];
+  bonusHistory: BonusHistoryItem[];
 }
 
 function TeamBadge({ team }: { team: string }) {
@@ -368,6 +382,72 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
           )}
         </div>
       </div>
+
+      {/* Bonus Question History */}
+      {player.bonusHistory?.length > 0 && (
+        <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-[var(--app-border)]">
+            <h2 className="text-sm font-semibold text-[var(--app-text-secondary)] flex items-center gap-2">
+              <HelpCircle className="h-4 w-4 text-amber-400" />
+              Bonus Question History ({player.bonusHistory.length})
+            </h2>
+          </div>
+          <div className="max-h-[400px] overflow-y-auto divide-y divide-[var(--app-border)]">
+            {[...player.bonusHistory].reverse().map((bh) => (
+              <Link key={bh.questionId} href={`/matches/${bh.matchId}`}>
+                <div className="flex items-start gap-3 px-4 py-3 hover:bg-[var(--app-surface)] transition-all">
+                  <div className="shrink-0 mt-0.5">
+                    {bh.correctAnswer === null ? (
+                      <Minus className="h-5 w-5 text-[var(--app-text-tertiary)]" />
+                    ) : bh.isCorrect ? (
+                      <CheckCircle className="h-5 w-5 text-emerald-400" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-red-400" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    {/* Match line */}
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="text-[10px] text-[var(--app-text-tertiary)]">#{bh.matchId}</span>
+                      {bh.homeTeam && <TeamBadge team={bh.homeTeam} />}
+                      {bh.homeTeam && <span className="text-[var(--app-text-tertiary)] text-[10px]">vs</span>}
+                      {bh.awayTeam && <TeamBadge team={bh.awayTeam} />}
+                    </div>
+                    {/* Question */}
+                    <p className="text-xs text-[var(--app-text)] leading-snug line-clamp-2">{bh.questionText}</p>
+                    {/* Their answer */}
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                        bh.correctAnswer === null
+                          ? 'border-[var(--app-border)] text-[var(--app-text-secondary)]'
+                          : bh.isCorrect
+                          ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400'
+                          : 'border-red-500/40 bg-red-500/10 text-red-400'
+                      }`}>
+                        Picked: {bh.selectedOption}
+                      </span>
+                      {!bh.isCorrect && bh.correctAnswer && (
+                        <span className="text-[10px] text-emerald-400 font-medium">
+                          ✓ {bh.correctAnswer}
+                        </span>
+                      )}
+                      {bh.correctAnswer === null && (
+                        <span className="text-[10px] text-[var(--app-text-tertiary)] italic">Pending result</span>
+                      )}
+                    </div>
+                  </div>
+                  {bh.isCorrect && bh.points > 0 && (
+                    <div className="shrink-0 text-right">
+                      <span className="text-xs font-bold text-amber-400">+{bh.points}</span>
+                      <div className="text-[9px] text-[var(--app-text-tertiary)]">pts</div>
+                    </div>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
