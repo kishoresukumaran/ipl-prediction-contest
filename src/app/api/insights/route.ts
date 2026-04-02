@@ -69,12 +69,15 @@ export async function GET() {
     // Crowd trap: bonus questions where the majority got it wrong
     const crowdTrap = buildCrowdTrap(bonusQuestions, bonusResponses, matches);
 
+    // Bonus matrix: per-player per-question 0/1 correctness grid
+    const bonusMatrix = buildBonusMatrix(bonusQuestions, bonusResponses);
+
     return NextResponse.json({
       leaderboard, matches, predictions, pointsRace, teamPopularity,
       accuracyByPlayer, predictionTimings, weeklyPoints, crowdWisdom,
       contrarianData, matchDifficulty, formData, winRateByTeam,
       doubleHeaderData, heatmapData, streakData, bonusAccuracy, wallOfShame, copycats,
-      pointsMatrix, lateVoters, crowdTrap,
+      pointsMatrix, lateVoters, crowdTrap, bonusMatrix,
     });
   } catch (error) {
     console.error('Insights API error:', error);
@@ -303,6 +306,35 @@ function buildBonusAccuracy(bonusQuestions: any[], bonusResponses: any[]) {
       color: p.avatar_color,
     };
   });
+}
+
+function buildBonusMatrix(bonusQuestions: any[], bonusResponses: any[]) {
+  if (!bonusQuestions.length) return { questions: [], matrix: {} };
+
+  const sorted = [...bonusQuestions].sort((a: any, b: any) =>
+    a.match_id !== b.match_id ? a.match_id - b.match_id : a.id - b.id
+  );
+
+  const matrix: Record<string, Record<number, number>> = {};
+  for (const p of PARTICIPANTS) {
+    matrix[p.id] = {};
+    const playerResponses = bonusResponses.filter((r: any) => r.participant_id === p.id);
+    for (const q of sorted) {
+      const response = playerResponses.find((r: any) => r.bonus_question_id === q.id);
+      matrix[p.id][q.id] = response?.is_correct ? 1 : 0;
+    }
+  }
+
+  return {
+    questions: sorted.map((q: any) => ({
+      id: q.id as number,
+      questionText: q.question as string,
+      correctAnswer: q.correct_answer as string | null,
+      matchId: q.match_id as number,
+      points: (q.points || 1) as number,
+    })),
+    matrix,
+  };
 }
 
 function buildCrowdTrap(bonusQuestions: any[], bonusResponses: any[], matches: Match[]) {

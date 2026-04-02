@@ -30,6 +30,7 @@ const CopycatChart = dynamic(() => import('@/components/charts/CopycatChart').th
 const LateVotersChart = dynamic(() => import('@/components/charts/LateVotersChart').then(m => ({ default: m.LateVotersChart })), { ssr: false });
 const PointsMatrixChart = dynamic(() => import('@/components/charts/PointsMatrixChart').then(m => ({ default: m.PointsMatrixChart })), { ssr: false });
 const CrowdTrapChart = dynamic(() => import('@/components/charts/CrowdTrapChart').then(m => ({ default: m.CrowdTrapChart })), { ssr: false });
+const BonusMatrixChart = dynamic(() => import('@/components/charts/BonusMatrixChart').then(m => ({ default: m.BonusMatrixChart })), { ssr: false });
 
 interface InsightsAPIData {
   leaderboard: PlayerPointsBreakdown[];
@@ -50,6 +51,10 @@ interface InsightsAPIData {
   streakData: { name: string; longestStreak: number; currentStreak: number; color: string }[];
   bonusAccuracy: { name: string; correct: number; total: number; accuracy: number; points: number; color: string }[];
   crowdTrap: { questionId: number; questionText: string; matchId: number; homeTeam: string; awayTeam: string; correctAnswer: string; totalResponses: number; wrongCount: number; correctCount: number; wrongPct: number; mostPopularWrongAnswer: string; mostPopularWrongCount: number }[];
+  bonusMatrix: {
+    questions: { id: number; questionText: string; correctAnswer: string | null; matchId: number; points: number }[];
+    matrix: Record<string, Record<number, number>>;
+  };
   wallOfShame: {
     wastedJokers: { name: string; matchId: number; homeTeam: string; awayTeam: string; picked: string; winner: string; color: string }[];
     jinxers: { name: string; pickedFavorite: number; favoriteWon: number; favoriteLost: number; jinxRate: number; color: string }[];
@@ -133,6 +138,9 @@ export default function InsightsPage() {
             </ChartCard>
             <ChartCard title="Weekly Points" subtitle="Points earned each week (weeks run Sunday to Saturday)">
               <WeeklyPointsChart data={data.weeklyPoints} />
+            </ChartCard>
+            <ChartCard title="Bonus Matrix" subtitle="Who got each bonus question right? Hover a column header to see the question and correct answer.">
+              <BonusMatrixChart data={data.bonusMatrix} leaderboard={data.leaderboard} />
             </ChartCard>
           </>
         )}
