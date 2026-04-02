@@ -48,7 +48,7 @@ export const POINTS_CONFIG = {
   eliminator: 10,
   qualifier2: 10,
   final: 15,
-  underdogBonus: 3,
+  underdogBonus: 1,
   jokerBonus: 10,
   doubleHeaderBonus: 2,
   minStreak: 3,
