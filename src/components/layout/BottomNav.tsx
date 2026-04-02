@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Trophy, Calendar, BarChart3, Shield } from 'lucide-react';
+import { Home, Trophy, Calendar, BarChart3, Shield, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/matches', label: 'Matches', icon: Calendar },
   { href: '/leaderboard', label: 'Board', icon: Trophy },
+  { href: '/players', label: 'Players', icon: Users },
   { href: '/insights', label: 'Insights', icon: BarChart3 },
   { href: '/admin', label: 'Admin', icon: Shield },
 ];
@@ -26,7 +27,7 @@ export function BottomNav() {
               key={href}
               href={href}
               className={cn(
-                'flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-lg transition-all min-w-[56px]',
+                'flex flex-col items-center justify-center gap-0.5 px-2 py-1.5 rounded-lg transition-all min-w-[48px]',
                 isActive
                   ? 'text-amber-400 scale-105'
                   : 'text-[var(--app-nav-text)] hover:text-[var(--app-nav-hover)] active:scale-95'
