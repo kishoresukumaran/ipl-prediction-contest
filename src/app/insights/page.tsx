@@ -31,6 +31,7 @@ const LateVotersChart = dynamic(() => import('@/components/charts/LateVotersChar
 const PointsMatrixChart = dynamic(() => import('@/components/charts/PointsMatrixChart').then(m => ({ default: m.PointsMatrixChart })), { ssr: false });
 const CrowdTrapChart = dynamic(() => import('@/components/charts/CrowdTrapChart').then(m => ({ default: m.CrowdTrapChart })), { ssr: false });
 const BonusMatrixChart = dynamic(() => import('@/components/charts/BonusMatrixChart').then(m => ({ default: m.BonusMatrixChart })), { ssr: false });
+const OnFireIceCold = dynamic(() => import('@/components/charts/OnFireIceCold').then(m => ({ default: m.OnFireIceCold })), { ssr: false });
 
 interface InsightsAPIData {
   leaderboard: PlayerPointsBreakdown[];
@@ -172,6 +173,9 @@ export default function InsightsPage() {
 
         {activeTab === 'streaks' && (
           <>
+            <ChartCard title="On Fire / Ice Cold 🔥❄️" subtitle="Current streak status across all players">
+              <OnFireIceCold data={data.streakData} />
+            </ChartCard>
             <ChartCard title="Winning Streaks" subtitle="Longest and current streaks">
               <StreakChart data={data.streakData} />
             </ChartCard>
