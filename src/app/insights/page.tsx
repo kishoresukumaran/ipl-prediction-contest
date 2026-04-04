@@ -32,6 +32,7 @@ const PointsMatrixChart = dynamic(() => import('@/components/charts/PointsMatrix
 const CrowdTrapChart = dynamic(() => import('@/components/charts/CrowdTrapChart').then(m => ({ default: m.CrowdTrapChart })), { ssr: false });
 const BonusMatrixChart = dynamic(() => import('@/components/charts/BonusMatrixChart').then(m => ({ default: m.BonusMatrixChart })), { ssr: false });
 const OnFireIceCold = dynamic(() => import('@/components/charts/OnFireIceCold').then(m => ({ default: m.OnFireIceCold })), { ssr: false });
+const DoubleHeaderHeroesChart = dynamic(() => import('@/components/charts/DoubleHeaderHeroesChart').then(m => ({ default: m.DoubleHeaderHeroesChart })), { ssr: false });
 const GhostVotersChart = dynamic(() => import('@/components/charts/GhostVotersChart').then(m => ({ default: m.GhostVotersChart })), { ssr: false });
 const TeamVoteTotalsChart = dynamic(() => import('@/components/charts/TeamVoteTotalsChart').then(m => ({ default: m.TeamVoteTotalsChart })), { ssr: false });
 const VoteSplitChart = dynamic(() => import('@/components/charts/VoteSplitChart').then(m => ({ default: m.VoteSplitChart })), { ssr: false });
@@ -53,6 +54,7 @@ interface InsightsAPIData {
   formData: { matchId: number; [key: string]: number | string }[];
   winRateByTeam: { participants: { id: string; name: string }[]; teams: string[]; data: Record<string, Record<string, { correct: number; total: number; rate: number }>> };
   doubleHeaderData: { name: string; totalDoubleHeaders: number; bothCorrect: number; successRate: number; color: string }[];
+  doubleHeaderHeroes: { name: string; color: string; totalDays: number; sweptDays: number; totalBonusPoints: number; successRate: number; instances: { date: string; matches: { matchId: number; homeTeam: string; awayTeam: string; predicted: string; winner: string; correct: boolean }[]; swept: boolean }[] }[];
   heatmapData: { participants: { id: string; name: string }[]; matches: { id: number; home_team: string; away_team: string }[]; predictions: Record<string, Record<number, { predicted: string; correct: boolean | null }>> };
   streakData: { name: string; longestStreak: number; currentStreak: number; color: string }[];
   bonusAccuracy: { name: string; correct: number; total: number; accuracy: number; points: number; color: string }[];
@@ -192,6 +194,9 @@ export default function InsightsPage() {
             </ChartCard>
             <ChartCard title="Double Header Success" subtitle="Both matches correct on same day">
               <DoubleHeaderChart data={data.doubleHeaderData} />
+            </ChartCard>
+            <ChartCard title="The Clean Sweep Club 🧹" subtitle="Two matches, one day, all correct — that's the double header sweep. Click a player to see exactly which days they nailed it and which ones got away.">
+              <DoubleHeaderHeroesChart data={data.doubleHeaderHeroes} />
             </ChartCard>
             <ChartCard title="Bonus Question Accuracy" subtitle="Who gets the most bonus questions right?">
               <BonusQuestionAccuracyChart data={data.bonusAccuracy} />

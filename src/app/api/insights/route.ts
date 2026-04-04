@@ -42,6 +42,7 @@ export async function GET() {
     const formData = buildFormData(completedMatches, predictions);
     const winRateByTeam = buildWinRateByTeam(completedMatches, predictions);
     const doubleHeaderData = buildDoubleHeaderData(completedMatches, predictions);
+    const doubleHeaderHeroes = buildDoubleHeaderHeroes(completedMatches, predictions);
     const heatmapData = buildHeatmapData(matches, predictions);
 
     const streakData = leaderboard.map(p => ({
@@ -83,7 +84,7 @@ export async function GET() {
       leaderboard, matches, predictions, pointsRace, teamPopularity,
       accuracyByPlayer, predictionTimings, weeklyPoints, crowdWisdom,
       contrarianData, matchDifficulty, formData, winRateByTeam,
-      doubleHeaderData, heatmapData, streakData, bonusAccuracy, wallOfShame, copycats,
+      doubleHeaderData, doubleHeaderHeroes, heatmapData, streakData, bonusAccuracy, wallOfShame, copycats,
       pointsMatrix, lateVoters, crowdTrap, bonusMatrix,
       ghostVoters, teamVoteTotals, voteSplits, participationRate, homeAwayBias,
     });
@@ -267,6 +268,65 @@ function buildDoubleHeaderData(matches: Match[], predictions: Prediction[]) {
     });
     return { name: p.name, totalDoubleHeaders: totalDH, bothCorrect, successRate: totalDH > 0 ? (bothCorrect / totalDH) * 100 : 0, color: p.avatar_color };
   });
+}
+
+function buildDoubleHeaderHeroes(matches: Match[], predictions: Prediction[]) {
+  const dateMap: Record<string, Match[]> = {};
+  matches.forEach(m => {
+    if (!dateMap[m.match_date]) dateMap[m.match_date] = [];
+    dateMap[m.match_date].push(m);
+  });
+  const dhDays = Object.entries(dateMap).filter(([, ms]) => ms.length >= 2);
+
+  return PARTICIPANTS.map(p => {
+    const instances: {
+      date: string;
+      matches: { matchId: number; homeTeam: string; awayTeam: string; predicted: string; winner: string; correct: boolean }[];
+      swept: boolean;
+    }[] = [];
+
+    let totalDays = 0;
+    let sweptDays = 0;
+    let totalBonusPoints = 0;
+
+    dhDays.forEach(([date, dayMatches]) => {
+      const preds = dayMatches.map(m => {
+        const pred = predictions.find(pr => pr.match_id === m.id && pr.participant_id === p.id);
+        return {
+          matchId: m.id,
+          homeTeam: m.home_team,
+          awayTeam: m.away_team,
+          predicted: pred?.predicted_team || '',
+          winner: m.winner || '',
+          correct: pred ? pred.predicted_team === m.winner : false,
+        };
+      });
+
+      const allVoted = preds.every(pr => pr.predicted);
+      if (!allVoted) return;
+
+      totalDays++;
+      const swept = preds.every(pr => pr.correct);
+      if (swept) {
+        sweptDays++;
+        totalBonusPoints += POINTS_CONFIG.doubleHeaderBonus;
+      }
+
+      instances.push({ date, matches: preds, swept });
+    });
+
+    return {
+      name: p.name,
+      color: p.avatar_color,
+      totalDays,
+      sweptDays,
+      totalBonusPoints,
+      successRate: totalDays > 0 ? (sweptDays / totalDays) * 100 : 0,
+      instances: instances.sort((a, b) => b.date.localeCompare(a.date)),
+    };
+  })
+    .filter(p => p.totalDays > 0)
+    .sort((a, b) => b.sweptDays - a.sweptDays || b.successRate - a.successRate);
 }
 
 function buildHeatmapData(matches: Match[], predictions: Prediction[]) {
