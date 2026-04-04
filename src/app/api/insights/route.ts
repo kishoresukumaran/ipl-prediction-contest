@@ -72,12 +72,20 @@ export async function GET() {
     // Bonus matrix: per-player per-question 0/1 correctness grid
     const bonusMatrix = buildBonusMatrix(bonusQuestions, bonusResponses);
 
+    // Votes tab data
+    const ghostVoters = buildGhostVoters(completedMatches, predictions);
+    const teamVoteTotals = buildTeamVoteTotals(matches, predictions);
+    const voteSplits = buildVoteSplits(completedMatches, predictions);
+    const participationRate = buildParticipationRate(completedMatches, predictions);
+    const homeAwayBias = buildHomeAwayBias(completedMatches, predictions);
+
     return NextResponse.json({
       leaderboard, matches, predictions, pointsRace, teamPopularity,
       accuracyByPlayer, predictionTimings, weeklyPoints, crowdWisdom,
       contrarianData, matchDifficulty, formData, winRateByTeam,
       doubleHeaderData, heatmapData, streakData, bonusAccuracy, wallOfShame, copycats,
       pointsMatrix, lateVoters, crowdTrap, bonusMatrix,
+      ghostVoters, teamVoteTotals, voteSplits, participationRate, homeAwayBias,
     });
   } catch (error) {
     console.error('Insights API error:', error);
@@ -637,6 +645,140 @@ function buildPointsMatrix(
     })),
     matrix,
   };
+}
+
+function buildGhostVoters(matches: Match[], predictions: Prediction[]) {
+  const totalCompleted = matches.length;
+  return PARTICIPANTS.map(p => {
+    const missedMatches: { matchId: number; homeTeam: string; awayTeam: string; matchDate: string; reason: 'no_vote' | 'late' }[] = [];
+    matches.forEach(match => {
+      const pred = predictions.find(pr => pr.match_id === match.id && pr.participant_id === p.id);
+      if (!pred) {
+        missedMatches.push({ matchId: match.id, homeTeam: match.home_team, awayTeam: match.away_team, matchDate: match.match_date, reason: 'no_vote' });
+      } else if (isPredictionLate(pred.prediction_time, match.match_date, match.start_time)) {
+        missedMatches.push({ matchId: match.id, homeTeam: match.home_team, awayTeam: match.away_team, matchDate: match.match_date, reason: 'late' });
+      }
+    });
+    return {
+      name: p.name,
+      color: p.avatar_color,
+      missedCount: missedMatches.length,
+      noVoteCount: missedMatches.filter(m => m.reason === 'no_vote').length,
+      lateCount: missedMatches.filter(m => m.reason === 'late').length,
+      participationRate: totalCompleted > 0 ? ((totalCompleted - missedMatches.length) / totalCompleted) * 100 : 100,
+      totalMatches: totalCompleted,
+      missedMatches,
+    };
+  }).sort((a, b) => b.missedCount - a.missedCount);
+}
+
+function buildTeamVoteTotals(matches: Match[], predictions: Prediction[]) {
+  const teams = Object.keys(TEAMS);
+  const completedMatchIds = new Set(matches.filter(m => m.is_completed && m.winner).map(m => m.id));
+  return teams.map(team => {
+    let total = 0, correct = 0, wrong = 0, pending = 0;
+    predictions.forEach(p => {
+      if (p.predicted_team !== team) return;
+      total++;
+      if (completedMatchIds.has(p.match_id)) {
+        const match = matches.find(m => m.id === p.match_id);
+        if (match?.winner === team) correct++; else wrong++;
+      } else {
+        pending++;
+      }
+    });
+    return {
+      team,
+      teamName: TEAMS[team]?.name || team,
+      color: TEAMS[team]?.color || '#666',
+      textColor: TEAMS[team]?.textColor || '#fff',
+      total,
+      correct,
+      wrong,
+      pending,
+      winRate: (correct + wrong) > 0 ? (correct / (correct + wrong)) * 100 : 0,
+    };
+  }).sort((a, b) => b.total - a.total);
+}
+
+function buildVoteSplits(matches: Match[], predictions: Prediction[]) {
+  return matches.map(match => {
+    const matchPreds = predictions.filter(p => p.match_id === match.id);
+    const validPreds = matchPreds.filter(p => !isPredictionLate(p.prediction_time, match.match_date, match.start_time));
+    const homePicks = validPreds.filter(p => p.predicted_team === match.home_team).length;
+    const awayPicks = validPreds.filter(p => p.predicted_team === match.away_team).length;
+    const totalVotes = homePicks + awayPicks;
+    const majorityPct = totalVotes > 0 ? (Math.max(homePicks, awayPicks) / totalVotes) * 100 : 0;
+    const majorityTeam = homePicks >= awayPicks ? match.home_team : match.away_team;
+    return {
+      matchId: match.id,
+      homeTeam: match.home_team,
+      awayTeam: match.away_team,
+      homePicks,
+      awayPicks,
+      totalVotes,
+      consensusPct: majorityPct,
+      majorityTeam,
+      majorityCorrect: majorityTeam === match.winner,
+      winner: match.winner,
+    };
+  }).sort((a, b) => b.consensusPct - a.consensusPct);
+}
+
+function buildParticipationRate(matches: Match[], predictions: Prediction[]) {
+  const totalParticipants = PARTICIPANTS.length;
+  let runningTotal = 0;
+  const sorted = [...matches].sort((a, b) => {
+    const d = a.match_date.localeCompare(b.match_date);
+    return d !== 0 ? d : a.start_time.localeCompare(b.start_time);
+  });
+  return sorted.map((match, i) => {
+    const validPreds = predictions.filter(p =>
+      p.match_id === match.id && !isPredictionLate(p.prediction_time, match.match_date, match.start_time)
+    );
+    const rate = (validPreds.length / totalParticipants) * 100;
+    runningTotal += rate;
+    return {
+      matchId: match.id,
+      matchLabel: `#${match.id}`,
+      homeTeam: match.home_team,
+      awayTeam: match.away_team,
+      matchDate: match.match_date,
+      voterCount: validPreds.length,
+      totalParticipants,
+      rate,
+      runningAvg: runningTotal / (i + 1),
+    };
+  });
+}
+
+function buildHomeAwayBias(matches: Match[], predictions: Prediction[]) {
+  let groupHomePicks = 0, groupTotalPicks = 0;
+
+  const perPlayer = PARTICIPANTS.map(p => {
+    let homePicks = 0, awayPicks = 0;
+    matches.forEach(match => {
+      const pred = predictions.find(pr => pr.match_id === match.id && pr.participant_id === p.id);
+      if (!pred) return;
+      if (isPredictionLate(pred.prediction_time, match.match_date, match.start_time)) return;
+      if (pred.predicted_team === match.home_team) homePicks++;
+      else awayPicks++;
+    });
+    const total = homePicks + awayPicks;
+    groupHomePicks += homePicks;
+    groupTotalPicks += total;
+    return {
+      name: p.name,
+      color: p.avatar_color,
+      homePicks,
+      awayPicks,
+      total,
+      homeBias: total > 0 ? (homePicks / total) * 100 : 50,
+    };
+  }).sort((a, b) => b.homeBias - a.homeBias);
+
+  const groupAvg = groupTotalPicks > 0 ? (groupHomePicks / groupTotalPicks) * 100 : 50;
+  return { players: perPlayer, groupAvg };
 }
 
 function buildLateVoters(matches: Match[], predictions: Prediction[]) {

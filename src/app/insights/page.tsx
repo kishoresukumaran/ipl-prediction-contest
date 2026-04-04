@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { BarChart3, TrendingUp, Users, Zap, Target, Clock, Trophy, Flame, Skull } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, Zap, Target, Clock, Trophy, Flame, Skull, Vote } from 'lucide-react';
 import { PlayerPointsBreakdown, Match, Prediction } from '@/lib/types';
 import { TEAMS, PARTICIPANTS } from '@/lib/constants';
 
@@ -32,6 +32,11 @@ const PointsMatrixChart = dynamic(() => import('@/components/charts/PointsMatrix
 const CrowdTrapChart = dynamic(() => import('@/components/charts/CrowdTrapChart').then(m => ({ default: m.CrowdTrapChart })), { ssr: false });
 const BonusMatrixChart = dynamic(() => import('@/components/charts/BonusMatrixChart').then(m => ({ default: m.BonusMatrixChart })), { ssr: false });
 const OnFireIceCold = dynamic(() => import('@/components/charts/OnFireIceCold').then(m => ({ default: m.OnFireIceCold })), { ssr: false });
+const GhostVotersChart = dynamic(() => import('@/components/charts/GhostVotersChart').then(m => ({ default: m.GhostVotersChart })), { ssr: false });
+const TeamVoteTotalsChart = dynamic(() => import('@/components/charts/TeamVoteTotalsChart').then(m => ({ default: m.TeamVoteTotalsChart })), { ssr: false });
+const VoteSplitChart = dynamic(() => import('@/components/charts/VoteSplitChart').then(m => ({ default: m.VoteSplitChart })), { ssr: false });
+const ParticipationPulseChart = dynamic(() => import('@/components/charts/ParticipationPulseChart').then(m => ({ default: m.ParticipationPulseChart })), { ssr: false });
+const HomeAwayBiasChart = dynamic(() => import('@/components/charts/HomeAwayBiasChart').then(m => ({ default: m.HomeAwayBiasChart })), { ssr: false });
 
 interface InsightsAPIData {
   leaderboard: PlayerPointsBreakdown[];
@@ -67,6 +72,11 @@ interface InsightsAPIData {
     matrix: Record<string, Record<number, number>>;
   };
   lateVoters: { id: string; name: string; color: string; lateCount: number; matches: { matchId: number; homeTeam: string; awayTeam: string; matchDate: string; minutesLate: number }[] }[];
+  ghostVoters: { name: string; color: string; missedCount: number; noVoteCount: number; lateCount: number; participationRate: number; totalMatches: number; missedMatches: { matchId: number; homeTeam: string; awayTeam: string; matchDate: string; reason: 'no_vote' | 'late' }[] }[];
+  teamVoteTotals: { team: string; teamName: string; color: string; textColor: string; total: number; correct: number; wrong: number; pending: number; winRate: number }[];
+  voteSplits: { matchId: number; homeTeam: string; awayTeam: string; homePicks: number; awayPicks: number; totalVotes: number; consensusPct: number; majorityTeam: string; majorityCorrect: boolean; winner: string | null }[];
+  participationRate: { matchId: number; matchLabel: string; homeTeam: string; awayTeam: string; matchDate: string; voterCount: number; totalParticipants: number; rate: number; runningAvg: number }[];
+  homeAwayBias: { players: { name: string; color: string; homePicks: number; awayPicks: number; total: number; homeBias: number }[]; groupAvg: number };
 }
 
 const TABS = [
@@ -77,6 +87,7 @@ const TABS = [
   { id: 'behavior', label: 'Behavior', icon: Zap },
   { id: 'h2h', label: 'Head to Head', icon: TrendingUp },
   { id: 'matches', label: 'Match Analysis', icon: BarChart3 },
+  { id: 'votes', label: 'Votes', icon: Vote },
   { id: 'timing', label: 'Timing', icon: Clock },
   { id: 'shame', label: 'Wall of Shame', icon: Skull },
 ];
@@ -187,6 +198,26 @@ export default function InsightsPage() {
             </ChartCard>
             <ChartCard title="Crowd Trap 🪤" subtitle="Bonus questions where the majority confidently walked into the wrong answer. The trap was set. You all fell for it.">
               <CrowdTrapChart data={data.crowdTrap} />
+            </ChartCard>
+          </>
+        )}
+
+        {activeTab === 'votes' && (
+          <>
+            <ChartCard title="The Ghost Voters 👻" subtitle="Who forgot to show up? Players ranked by missed votes — no prediction at all or voted after the match started.">
+              <GhostVotersChart data={data.ghostVoters} />
+            </ChartCard>
+            <ChartCard title="Team Loyalty Leaderboard" subtitle="Total votes each team has received across all players and matches. The people's champions vs the underdogs nobody believes in.">
+              <TeamVoteTotalsChart data={data.teamVoteTotals} />
+            </ChartCard>
+            <ChartCard title="The Herd Meter" subtitle="How lopsided was each match vote? When everyone picks the same team, are they right or walking into a trap together?">
+              <VoteSplitChart data={data.voteSplits} />
+            </ChartCard>
+            <ChartCard title="Participation Pulse" subtitle="Are people still voting or have they quietly given up? Match-by-match participation rate over the season.">
+              <ParticipationPulseChart data={data.participationRate} />
+            </ChartCard>
+            <ChartCard title="Home vs Away Bias" subtitle="Some people just can't resist backing the home team. Others are contrarian away-pickers. Here's the truth.">
+              <HomeAwayBiasChart data={data.homeAwayBias} />
             </ChartCard>
           </>
         )}
