@@ -16,32 +16,26 @@ interface SyncPrediction {
   joker?: boolean;
 }
 
-interface SyncTrivia {
-  id: number;
-  date?: string;
-  question: string;
-  correct_answer: string;
-}
-
-interface SyncTriviaPrediction {
+interface SyncTriviaPoints {
   player: string;
   trivia_id: number;
   prediction: string;
+  correct_answer: string;
+  correct_check: number; // 1 for correct, 0 for incorrect
+  points_earned: number;
 }
 
 interface SyncPayload {
   matches?: SyncMatch[];
   predictions?: SyncPrediction[];
-  trivia?: SyncTrivia[];
-  trivia_predictions?: SyncTriviaPrediction[];
+  trivia_points?: SyncTriviaPoints[];
 }
 
 interface SyncSummary {
   matches: { updated: number; skipped: number };
   predictions: { upserted: number };
   jokers: { upserted: number };
-  trivia: { upserted: number };
-  trivia_responses: { upserted: number };
+  trivia_points: { upserted: number };
 }
 
 /**
@@ -69,8 +63,7 @@ export async function POST(request: NextRequest) {
       matches: { updated: 0, skipped: 0 },
       predictions: { upserted: 0 },
       jokers: { upserted: 0 },
-      trivia: { upserted: 0 },
-      trivia_responses: { upserted: 0 },
+      trivia_points: { upserted: 0 },
     };
 
     // ============ SYNC MATCHES ============
@@ -195,83 +188,36 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ============ SYNC TRIVIA ============
-    const triviaMap: Record<number, SyncTrivia> = {};
-    if (payload.trivia && Array.isArray(payload.trivia)) {
-      for (const trivia of payload.trivia) {
-        const { id, date, question, correct_answer } = trivia;
+    // ============ SYNC TRIVIA POINTS ============
+    if (payload.trivia_points && Array.isArray(payload.trivia_points)) {
+      for (const tp of payload.trivia_points) {
+        const { player, trivia_id, prediction, correct_answer, correct_check, points_earned } = tp;
 
-        if (!date || date.trim() === '') {
-          errors.push(`Skipping trivia ${id}: missing date`);
+        if (!player || player.toString().trim() === '') {
+          errors.push(`Skipping trivia points: missing player name`);
           continue;
         }
 
-        triviaMap[id] = trivia;
-
-        const { error: triviaError } = await admin
-          .from('trivia')
+        // Upsert trivia points
+        const { error: tpError } = await admin
+          .from('trivia_points')
           .upsert(
             {
-              id,
-              date,
-              question,
-              correct_answer,
-            },
-            { onConflict: 'id' }
-          );
-
-        if (triviaError) {
-          errors.push(`Failed to upsert trivia ${id}: ${triviaError.message}`);
-        } else {
-          summary.trivia.upserted++;
-        }
-      }
-    }
-
-    // ============ SYNC TRIVIA PREDICTIONS ============
-    if (payload.trivia_predictions && Array.isArray(payload.trivia_predictions)) {
-      for (const triviaPred of payload.trivia_predictions) {
-        const { player, trivia_id, prediction } = triviaPred;
-
-        // Resolve player ID
-        const participantId = resolvePlayerId(player);
-        if (!participantId) {
-          errors.push(`Unknown player: '${player}' in trivia ${trivia_id}`);
-          continue;
-        }
-
-        // Find the trivia to get correct answer
-        const trivia = triviaMap[trivia_id];
-        if (!trivia) {
-          errors.push(`Trivia ${trivia_id} not found or has no correct answer`);
-          continue;
-        }
-
-        // Check if prediction is correct
-        const isCorrect =
-          prediction &&
-          prediction.toString().trim().toLowerCase() ===
-            trivia.correct_answer.toString().trim().toLowerCase();
-
-        // Upsert trivia response
-        const { error: triviaRespError } = await admin
-          .from('trivia_responses')
-          .upsert(
-            {
+              player,
               trivia_id,
-              participant_id: participantId,
-              response: prediction,
-              is_correct: isCorrect,
+              prediction,
+              correct_answer,
+              correct_check,
+              points_earned,
             },
-            { onConflict: 'trivia_id,participant_id' }
+            { onConflict: 'player,trivia_id' }
           );
 
-        if (triviaRespError) {
-          errors.push(`Failed to upsert trivia response for ${player} in trivia ${trivia_id}: ${triviaRespError.message}`);
-          continue;
+        if (tpError) {
+          errors.push(`Failed to upsert trivia points for ${player} in trivia ${trivia_id}: ${tpError.message}`);
+        } else {
+          summary.trivia_points.upserted++;
         }
-
-        summary.trivia_responses.upserted++;
       }
     }
 

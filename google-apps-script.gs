@@ -28,18 +28,14 @@ function syncAll() {
     // Read predictions from "Predictions" tab
     const predictionsData = readPredictions(spreadsheet);
 
-    // Read trivia from "Sunday_Trivia" tab
-    const triviaData = readTrivia(spreadsheet);
-
-    // Read trivia predictions from "Trivia_Predictions" tab
-    const triviaPredictionsData = readTriviaPredictions(spreadsheet);
+    // Read trivia points from "Trivia_Points" tab
+    const triviaPointsData = readTriviaPoints(spreadsheet);
 
     // Build payload
     const payload = {
       matches: matchesData,
       predictions: predictionsData,
-      trivia: triviaData,
-      trivia_predictions: triviaPredictionsData
+      trivia_points: triviaPointsData
     };
 
     // POST to API
@@ -64,7 +60,8 @@ function syncAll() {
       let message = `Sync complete!\n\n`;
       message += `Matches: ${summary.matches.updated} updated\n`;
       message += `Predictions: ${summary.predictions.upserted} upserted\n`;
-      message += `Jokers: ${summary.jokers.upserted} upserted`;
+      message += `Jokers: ${summary.jokers.upserted} upserted\n`;
+      message += `Trivia Points: ${summary.trivia_points.upserted} upserted`;
 
       if (result.errors && result.errors.length > 0) {
         message += `\n\nWarnings:\n`;
@@ -210,154 +207,50 @@ function setupTrigger() {
 }
 
 /**
- * Read trivia from the "Sunday_Trivia" tab
- * Columns: A=Trivia ID, B=Date, C=Question, D=Correct Answer
- * Date format: "MAR, SUN 29" or "APR, SUN 5" (parsed to YYYY-MM-DD)
+ * Read trivia points from the "Trivia_Points" tab
+ * Columns: A=Player, B=Trivia ID, C=Prediction, D=Correct Answer, E=Correct Check, F=Points Earned
  */
-function readTrivia(spreadsheet) {
+function readTriviaPoints(spreadsheet) {
   try {
-    const sheet = spreadsheet.getSheetByName('Sunday_Trivia');
+    const sheet = spreadsheet.getSheetByName('Trivia_Points');
     if (!sheet) {
-      Logger.log('Sunday_Trivia sheet not found');
+      Logger.log('Trivia_Points sheet not found');
       return [];
     }
 
     const lastRow = sheet.getLastRow();
     if (lastRow < 2) return []; // No data rows
 
-    // Get all data at once
-    const data = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
+    // Get all data at once (6 columns: A-F)
+    const data = sheet.getRange(2, 1, lastRow - 1, 6).getValues();
 
-    const trivia = [];
+    const trivaPoints = [];
     data.forEach((row, idx) => {
-      const triviaId = row[0];
-      const dateStr = row[1];
-      const question = row[2];
-      const correctAnswer = row[3];
-
-      // Include rows with a date and trivia ID (question and answer can be filled in later)
-      if (dateStr && dateStr.toString().trim() !== '' && triviaId) {
-        // Parse date string like "MAR, SUN 29" to "2024-03-29"
-        const formattedDate = parseIPLDate(dateStr);
-
-        // Only push if date parsing was successful
-        if (formattedDate) {
-          trivia.push({
-            id: triviaId,
-            date: formattedDate,
-            question: question || '',
-            correct_answer: correctAnswer || null  // Can be null, will be filled later
-          });
-          Logger.log(`Row ${idx + 2}: Loaded trivia ${triviaId} for ${formattedDate}`);
-        } else {
-          Logger.log(`Row ${idx + 2}: Could not parse date "${dateStr}" for trivia ${triviaId}`);
-        }
-      } else {
-        Logger.log(`Row ${idx + 2}: Skipping - missing date. Date="${dateStr}"`);
-      }
-    });
-
-    Logger.log(`Loaded ${trivia.length} trivia questions`);
-    return trivia;
-  } catch (error) {
-    Logger.log('Error reading trivia: ' + error.toString());
-    return [];
-  }
-}
-
-/**
- * Parse date format "MAR, SUN 29" to "2024-03-29"
- * Also handles Date objects from Google Sheets
- */
-function parseIPLDate(dateStr) {
-  if (!dateStr) return null;
-
-  let str = dateStr.toString().trim();
-
-  // If it's a Date object (from Google Sheets), convert it properly
-  if (dateStr instanceof Date) {
-    const dateObj = dateStr;
-    const day = dateObj.getDate();
-    const month = dateObj.getMonth() + 1; // getMonth() returns 0-11
-    const year = dateObj.getFullYear();
-
-    const formattedMonth = String(month).padStart(2, '0');
-    const formattedDay = String(day).padStart(2, '0');
-
-    return `${year}-${formattedMonth}-${formattedDay}`;
-  }
-
-  // Try to parse text format: "MAR, SUN 29" or "MAR SUN 29"
-  const match = str.match(/([A-Z]{3}),?\s+(?:SUN|MON|TUE|WED|THU|FRI|SAT)?\s*(\d{1,2})/i);
-
-  if (!match) {
-    Logger.log('Could not parse date string: ' + str);
-    return null;
-  }
-
-  const monthStr = match[1].toUpperCase();
-  const day = parseInt(match[2]);
-
-  const months = {
-    'JAN': 1, 'FEB': 2, 'MAR': 3, 'APR': 4,
-    'MAY': 5, 'JUN': 6, 'JUL': 7, 'AUG': 8,
-    'SEP': 9, 'OCT': 10, 'NOV': 11, 'DEC': 12
-  };
-
-  const month = months[monthStr];
-  if (!month) {
-    Logger.log('Unknown month: ' + monthStr);
-    return null;
-  }
-
-  let year = 2024;
-  if (month >= 6) year = 2024; // Adjust if needed for 2025
-
-  // Format as YYYY-MM-DD
-  const formattedMonth = String(month).padStart(2, '0');
-  const formattedDay = String(day).padStart(2, '0');
-
-  return `${year}-${formattedMonth}-${formattedDay}`;
-}
-
-/**
- * Read trivia predictions from the "Trivia_Predictions" tab
- * Columns: A=Player, B=Trivia ID, C=Prediction
- * Ignores columns D (Entered By) and E (Validated By)
- */
-function readTriviaPredictions(spreadsheet) {
-  try {
-    const sheet = spreadsheet.getSheetByName('Trivia_Predictions');
-    if (!sheet) {
-      Logger.log('Trivia_Predictions sheet not found');
-      return [];
-    }
-
-    const lastRow = sheet.getLastRow();
-    if (lastRow < 2) return []; // No data rows
-
-    // Get all data at once
-    const data = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
-
-    const triviaPredictions = [];
-    data.forEach((row) => {
       const player = row[0];
       const triviaId = row[1];
       const prediction = row[2];
+      const correctAnswer = row[3];
+      const correctCheck = row[4];
+      const pointsEarned = row[5];
 
-      // Only include rows with a prediction
-      if (prediction && prediction.toString().trim() !== '') {
-        triviaPredictions.push({
+      // Only include rows with a player and trivia ID
+      if (player && player.toString().trim() !== '' && triviaId) {
+        trivaPoints.push({
           player: player,
           trivia_id: triviaId,
-          prediction: prediction
+          prediction: prediction || '',
+          correct_answer: correctAnswer || '',
+          correct_check: correctCheck === 1 || correctCheck === true ? 1 : 0,
+          points_earned: parseInt(pointsEarned) || 0
         });
+        Logger.log(`Row ${idx + 2}: Loaded ${player} - Trivia ${triviaId} - Points: ${pointsEarned}`);
       }
     });
 
-    return triviaPredictions;
+    Logger.log(`Loaded ${trivaPoints.length} trivia point records`);
+    return trivaPoints;
   } catch (error) {
-    Logger.log('Error reading trivia predictions: ' + error.toString());
+    Logger.log('Error reading trivia points: ' + error.toString());
     return [];
   }
 }
