@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { BarChart3, TrendingUp, Users, Zap, Target, Clock, Trophy, Flame, Skull, Vote } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, Zap, Target, Trophy, Flame, Skull, Vote } from 'lucide-react';
 import { PlayerPointsBreakdown, Match, Prediction } from '@/lib/types';
 import { TEAMS, PARTICIPANTS } from '@/lib/constants';
 
@@ -11,10 +11,8 @@ const PointsRaceChart = dynamic(() => import('@/components/charts/PointsRaceChar
 const TeamPopularityChart = dynamic(() => import('@/components/charts/TeamPopularityChart').then(m => ({ default: m.TeamPopularityChart })), { ssr: false });
 const AccuracyChart = dynamic(() => import('@/components/charts/AccuracyChart').then(m => ({ default: m.AccuracyChart })), { ssr: false });
 const StreakChart = dynamic(() => import('@/components/charts/StreakChart').then(m => ({ default: m.StreakChart })), { ssr: false });
-const BonusBreakdownChart = dynamic(() => import('@/components/charts/BonusBreakdownChart').then(m => ({ default: m.BonusBreakdownChart })), { ssr: false });
 const PredictionHeatmap = dynamic(() => import('@/components/charts/PredictionHeatmap').then(m => ({ default: m.PredictionHeatmap })), { ssr: false });
 const HeadToHeadChart = dynamic(() => import('@/components/charts/HeadToHeadChart').then(m => ({ default: m.HeadToHeadChart })), { ssr: false });
-const PredictionTimingChart = dynamic(() => import('@/components/charts/PredictionTimingChart').then(m => ({ default: m.PredictionTimingChart })), { ssr: false });
 const DoubleHeaderChart = dynamic(() => import('@/components/charts/DoubleHeaderChart').then(m => ({ default: m.DoubleHeaderChart })), { ssr: false });
 const CrowdWisdomChart = dynamic(() => import('@/components/charts/CrowdWisdomChart').then(m => ({ default: m.CrowdWisdomChart })), { ssr: false });
 const ContrarianChart = dynamic(() => import('@/components/charts/ContrarianChart').then(m => ({ default: m.ContrarianChart })), { ssr: false });
@@ -23,14 +21,10 @@ const MatchDifficultyChart = dynamic(() => import('@/components/charts/MatchDiff
 const FormChart = dynamic(() => import('@/components/charts/FormChart').then(m => ({ default: m.FormChart })), { ssr: false });
 const WinRateByTeamChart = dynamic(() => import('@/components/charts/WinRateByTeamChart').then(m => ({ default: m.WinRateByTeamChart })), { ssr: false });
 const PointsGapChart = dynamic(() => import('@/components/charts/PointsGapChart').then(m => ({ default: m.PointsGapChart })), { ssr: false });
-const BonusQuestionAccuracyChart = dynamic(() => import('@/components/charts/BonusQuestionAccuracyChart').then(m => ({ default: m.BonusQuestionAccuracyChart })), { ssr: false });
 const WallOfShame = dynamic(() => import('@/components/charts/WallOfShame').then(m => ({ default: m.WallOfShame })), { ssr: false });
-const LastMinutePanicker = dynamic(() => import('@/components/charts/LastMinutePanicker').then(m => ({ default: m.LastMinutePanicker })), { ssr: false });
 const CopycatChart = dynamic(() => import('@/components/charts/CopycatChart').then(m => ({ default: m.CopycatChart })), { ssr: false });
-const LateVotersChart = dynamic(() => import('@/components/charts/LateVotersChart').then(m => ({ default: m.LateVotersChart })), { ssr: false });
 const PointsMatrixChart = dynamic(() => import('@/components/charts/PointsMatrixChart').then(m => ({ default: m.PointsMatrixChart })), { ssr: false });
 const CrowdTrapChart = dynamic(() => import('@/components/charts/CrowdTrapChart').then(m => ({ default: m.CrowdTrapChart })), { ssr: false });
-const BonusMatrixChart = dynamic(() => import('@/components/charts/BonusMatrixChart').then(m => ({ default: m.BonusMatrixChart })), { ssr: false });
 const OnFireIceCold = dynamic(() => import('@/components/charts/OnFireIceCold').then(m => ({ default: m.OnFireIceCold })), { ssr: false });
 const DoubleHeaderHeroesChart = dynamic(() => import('@/components/charts/DoubleHeaderHeroesChart').then(m => ({ default: m.DoubleHeaderHeroesChart })), { ssr: false });
 const GhostVotersChart = dynamic(() => import('@/components/charts/GhostVotersChart').then(m => ({ default: m.GhostVotersChart })), { ssr: false });
@@ -46,7 +40,6 @@ interface InsightsAPIData {
   pointsRace: { matchId: number; matchDate: string; [key: string]: number | string }[];
   teamPopularity: { team: string; correct: number; wrong: number; total: number }[];
   accuracyByPlayer: { id: string; name: string; accuracy: number; correct: number; total: number }[];
-  predictionTimings: { id: string; name: string; avgMinutesBefore: number }[];
   weeklyPoints: { week: string; [key: string]: number | string }[];
   crowdWisdom: { matchId: number; homeTeam: string; awayTeam: string; majorityTeam: string; majorityPct: number; crowdCorrect: boolean; runningAccuracy: number }[];
   contrarianData: { name: string; contrarianPct: number; contrarianAccuracy: number; color: string }[];
@@ -57,12 +50,6 @@ interface InsightsAPIData {
   doubleHeaderHeroes: { name: string; color: string; totalDays: number; sweptDays: number; totalBonusPoints: number; successRate: number; instances: { date: string; matches: { matchId: number; homeTeam: string; awayTeam: string; predicted: string; winner: string; correct: boolean }[]; swept: boolean }[] }[];
   heatmapData: { participants: { id: string; name: string }[]; matches: { id: number; home_team: string; away_team: string }[]; predictions: Record<string, Record<number, { predicted: string; correct: boolean | null }>> };
   streakData: { name: string; longestStreak: number; currentStreak: number; color: string }[];
-  bonusAccuracy: { name: string; correct: number; total: number; accuracy: number; points: number; color: string }[];
-  crowdTrap: { questionId: number; questionText: string; matchId: number; homeTeam: string; awayTeam: string; correctAnswer: string; totalResponses: number; wrongCount: number; correctCount: number; wrongPct: number; mostPopularWrongAnswer: string; mostPopularWrongCount: number }[];
-  bonusMatrix: {
-    questions: { id: number; questionText: string; correctAnswer: string | null; matchId: number; points: number }[];
-    matrix: Record<string, Record<number, number>>;
-  };
   wallOfShame: {
     wastedJokers: { name: string; matchId: number; homeTeam: string; awayTeam: string; picked: string; winner: string; color: string }[];
     jinxers: { name: string; pickedFavorite: number; favoriteWon: number; favoriteLost: number; jinxRate: number; color: string }[];
@@ -73,7 +60,6 @@ interface InsightsAPIData {
     matches: { id: number; home_team: string; away_team: string; match_type: string; is_power_match: boolean }[];
     matrix: Record<string, Record<number, number>>;
   };
-  lateVoters: { id: string; name: string; color: string; lateCount: number; matches: { matchId: number; homeTeam: string; awayTeam: string; matchDate: string; minutesLate: number }[] }[];
   ghostVoters: { name: string; color: string; missedCount: number; noVoteCount: number; lateCount: number; participationRate: number; totalMatches: number; missedMatches: { matchId: number; homeTeam: string; awayTeam: string; matchDate: string; reason: 'no_vote' | 'late' }[] }[];
   teamVoteTotals: { team: string; teamName: string; color: string; textColor: string; total: number; correct: number; wrong: number; pending: number; winRate: number }[];
   voteSplits: { matchId: number; homeTeam: string; awayTeam: string; homePicks: number; awayPicks: number; totalVotes: number; consensusPct: number; majorityTeam: string; majorityCorrect: boolean; winner: string | null }[];
@@ -90,7 +76,6 @@ const TABS = [
   { id: 'h2h', label: 'Head to Head', icon: TrendingUp },
   { id: 'matches', label: 'Match Analysis', icon: BarChart3 },
   { id: 'votes', label: 'Votes', icon: Vote },
-  { id: 'timing', label: 'Timing', icon: Clock },
   { id: 'shame', label: 'Wall of Shame', icon: Skull },
 ];
 
@@ -147,14 +132,8 @@ export default function InsightsPage() {
             <ChartCard title="Points Gap Analysis" subtitle="How far behind the leader?">
               <PointsGapChart data={data.leaderboard} />
             </ChartCard>
-            <ChartCard title="Points Source Breakdown" subtitle="Where do points come from?">
-              <BonusBreakdownChart data={data.leaderboard} />
-            </ChartCard>
             <ChartCard title="Weekly Points" subtitle="Points earned each week (weeks run Sunday to Saturday)">
               <WeeklyPointsChart data={data.weeklyPoints} />
-            </ChartCard>
-            <ChartCard title="Bonus Matrix" subtitle="Who got each bonus question right? Hover a column header to see the question and correct answer.">
-              <BonusMatrixChart data={data.bonusMatrix} leaderboard={data.leaderboard} />
             </ChartCard>
           </>
         )}
@@ -197,12 +176,6 @@ export default function InsightsPage() {
             </ChartCard>
             <ChartCard title="The Clean Sweep Club 🧹" subtitle="Two matches, one day, all correct — that's the double header sweep. Click a player to see exactly which days they nailed it and which ones got away.">
               <DoubleHeaderHeroesChart data={data.doubleHeaderHeroes} />
-            </ChartCard>
-            <ChartCard title="Bonus Question Accuracy" subtitle="Who gets the most bonus questions right?">
-              <BonusQuestionAccuracyChart data={data.bonusAccuracy} />
-            </ChartCard>
-            <ChartCard title="Crowd Trap 🪤" subtitle="Bonus questions where the majority confidently walked into the wrong answer. The trap was set. You all fell for it.">
-              <CrowdTrapChart data={data.crowdTrap} />
             </ChartCard>
           </>
         )}
@@ -248,23 +221,6 @@ export default function InsightsPage() {
           <ChartCard title="Hardest Matches to Predict" subtitle="The matches that made everyone look clueless. Don't worry, even experts got these wrong... probably.">
             <MatchDifficultyChart data={data.matchDifficulty} />
           </ChartCard>
-        )}
-
-        {activeTab === 'timing' && (
-          <>
-            <ChartCard title="Early Bird Rankings" subtitle="Some predict days ahead like psychics. Others wait till the toss and panic-vote. No judgement... okay, maybe a little.">
-              <PredictionTimingChart data={data.predictionTimings} />
-            </ChartCard>
-            <ChartCard title="The Last-Minute Panicker" subtitle="These legends vote like they're defusing a bomb. Average vote time dangerously close to match start.">
-              <LastMinutePanicker data={data.predictionTimings} matches={data.matches} predictions={data.predictions} />
-            </ChartCard>
-            <ChartCard title="The Copycat" subtitle="Voted right after someone else and picked the exact same team? Suspicious. Very suspicious. We're watching you.">
-              <CopycatChart data={data.copycats} />
-            </ChartCard>
-            <ChartCard title="The Fashionably Late" subtitle="These folks showed up after the party started. Voted after match kickoff — prediction doesn't count. Better luck next time!">
-              <LateVotersChart data={data.lateVoters} />
-            </ChartCard>
-          </>
         )}
 
         {activeTab === 'shame' && (
