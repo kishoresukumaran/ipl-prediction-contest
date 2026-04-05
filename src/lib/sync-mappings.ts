@@ -19,6 +19,8 @@ export const TEAM_NAME_TO_ABBR: Record<string, string> = Object.entries(TEAMS).r
 const SHEET_PLAYER_OVERRIDES: Record<string, string> = {
   'Manick': 'panicking',
   'Manikbasha': 'panicking',
+  'Sathish': 'satish',
+  'Vamshi': 'vamsi',
 };
 
 /**
