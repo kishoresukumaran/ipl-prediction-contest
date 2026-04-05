@@ -25,14 +25,14 @@ const AVATAR_COLORS = [
 export const PARTICIPANTS: Participant[] = [
   'BK', 'Dharaneesh', 'Dinesh', 'Gerard', 'Haroon', 'Kerun', 'Kishore',
   'Krish', 'Naina', 'Ramnath', 'Safeer', 'Shakthi', 'Vijay', 'Jaya',
-  'Yal', 'Alphonse', 'Guhan', 'Jessinth', 'Kesh', 'Manikbasha',
-  'Ranjith', 'Selva', 'Vamsi', 'Shahul', 'Venkat', 'Satish',
+  'Yal', 'Alphonse', 'Guhan', 'Jessinth', 'Kesh', 'Manick',
+  'Ranjith', 'Selva', 'Vamshi', 'Shahul', 'Venkat', 'Sathish',
   'Azhar', 'Siva', 'Sriram',
 ].map((name, i) => {
   // Keep original IDs for renamed participants to match existing DB data
   const ID_OVERRIDES: Record<string, string> = {
     'Safeer': 'safer',
-    'Manikbasha': 'panicking',
+    'Manick': 'panicking',
   };
   return {
     id: ID_OVERRIDES[name] || name.toLowerCase(),

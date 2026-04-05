@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabase';
 import { calculateAllPlayerPoints } from '@/lib/scoring';
 import { PARTICIPANTS } from '@/lib/constants';
 
@@ -7,11 +7,12 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
+    const admin = getSupabaseAdmin();
     const [matchesRes, predictionsRes, jokersRes, triviaPtsRes] = await Promise.all([
-      supabase.from('matches').select('*').order('match_date').order('start_time'),
-      supabase.from('predictions').select('*'),
-      supabase.from('jokers').select('*'),
-      supabase.from('trivia_points').select('*'),
+      admin.from('matches').select('*').order('match_date').order('start_time'),
+      admin.from('predictions').select('*'),
+      admin.from('jokers').select('*'),
+      admin.from('trivia_points').select('*'),
     ]);
 
     if (matchesRes.error) {
@@ -24,6 +25,7 @@ export async function GET() {
       return NextResponse.json({ error: jokersRes.error.message }, { status: 500 });
     }
     if (triviaPtsRes.error) {
+      console.error('Trivia Points query error:', triviaPtsRes.error);
       return NextResponse.json({ error: triviaPtsRes.error.message }, { status: 500 });
     }
 
