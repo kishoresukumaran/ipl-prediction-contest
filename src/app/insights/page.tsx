@@ -31,6 +31,7 @@ const TeamVoteTotalsChart = dynamic(() => import('@/components/charts/TeamVoteTo
 const VoteSplitChart = dynamic(() => import('@/components/charts/VoteSplitChart').then(m => ({ default: m.VoteSplitChart })), { ssr: false });
 const ParticipationPulseChart = dynamic(() => import('@/components/charts/ParticipationPulseChart').then(m => ({ default: m.ParticipationPulseChart })), { ssr: false });
 const HomeAwayBiasChart = dynamic(() => import('@/components/charts/HomeAwayBiasChart').then(m => ({ default: m.HomeAwayBiasChart })), { ssr: false });
+const PowerRankingsChart = dynamic(() => import('@/components/charts/PowerRankingsChart').then(m => ({ default: m.PowerRankingsChart })), { ssr: false });
 
 interface InsightsAPIData {
   leaderboard: PlayerPointsBreakdown[];
@@ -123,6 +124,9 @@ export default function InsightsPage() {
       <div className="space-y-6">
         {activeTab === 'leaderboard' && (
           <>
+            <ChartCard title="Power Rankings" subtitle="Who's dominating the prediction battle? Every correct call counts.">
+              <PowerRankingsChart data={data.leaderboard} />
+            </ChartCard>
             <ChartCard title="Points Race" subtitle="Cumulative points over matches">
               <PointsRaceChart data={data.pointsRace} matches={data.matches} />
             </ChartCard>
