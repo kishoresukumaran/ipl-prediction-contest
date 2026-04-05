@@ -85,6 +85,7 @@ function syncAll() {
 /**
  * Read matches from the "Matches" tab
  * Columns: A=Match ID, E=Match Type, F=Underdog Team, G=Winner
+ * Match Type can be "Normal" or "Power" (power matches get is_power_match=true)
  */
 function readMatches(spreadsheet) {
   try {
@@ -112,6 +113,7 @@ function readMatches(spreadsheet) {
         matches.push({
           id: matchId,
           match_type: matchType || '',
+          is_power_match: matchType && matchType.toString().toLowerCase().includes('power'),
           underdog_team: underdogTeam || null,
           winner: winner
         });
@@ -127,7 +129,7 @@ function readMatches(spreadsheet) {
 
 /**
  * Read predictions from the "Predictions" tab
- * Columns: A=Player, B=Match ID, C=Prediction, D=Joker (boolean)
+ * Columns: A=Player, B=Match ID, C=Prediction, D=Joker (can be TRUE, YES, true, 1, or empty)
  */
 function readPredictions(spreadsheet) {
   try {
@@ -152,11 +154,12 @@ function readPredictions(spreadsheet) {
 
       // Only include rows with a prediction
       if (prediction && prediction.toString().trim() !== '') {
+        const jokerStr = joker.toString().toUpperCase().trim();
         predictions.push({
           player: player,
           match_id: matchId,
           prediction: prediction,
-          joker: joker === true || joker === 'TRUE' || joker === 1
+          joker: joker === true || joker === 1 || jokerStr === 'TRUE' || jokerStr === 'YES'
         });
       }
     });

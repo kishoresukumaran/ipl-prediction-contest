@@ -6,6 +6,7 @@ interface SyncMatch {
   id: number;
   winner?: string | null;
   match_type?: string;
+  is_power_match?: boolean;
   underdog_team?: string | null;
 }
 
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
     // ============ SYNC MATCHES ============
     if (payload.matches && Array.isArray(payload.matches)) {
       for (const match of payload.matches) {
-        const { id, winner, match_type, underdog_team } = match;
+        const { id, winner, match_type, is_power_match, underdog_team } = match;
 
         // Only upsert if there's a winner to update
         if (!winner || winner.trim() === '') {
@@ -112,6 +113,10 @@ export async function POST(request: NextRequest) {
 
         if (resolvedMatchType) {
           updateData.match_type = resolvedMatchType;
+        }
+
+        if (is_power_match !== undefined) {
+          updateData.is_power_match = is_power_match;
         }
 
         const { error: updateError } = await admin
