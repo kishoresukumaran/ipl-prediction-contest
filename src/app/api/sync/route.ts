@@ -199,9 +199,10 @@ export async function POST(request: NextRequest) {
     const triviaMap: Record<number, SyncTrivia> = {};
     if (payload.trivia && Array.isArray(payload.trivia)) {
       for (const trivia of payload.trivia) {
-        const { id, question, correct_answer } = trivia;
+        const { id, date, question, correct_answer } = trivia;
 
-        if (!question || question.trim() === '') {
+        if (!date || date.trim() === '') {
+          errors.push(`Skipping trivia ${id}: missing date`);
           continue;
         }
 
@@ -212,6 +213,7 @@ export async function POST(request: NextRequest) {
           .upsert(
             {
               id,
+              date,
               question,
               correct_answer,
             },
