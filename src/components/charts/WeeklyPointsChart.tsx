@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { X } from 'lucide-react';
 import { PARTICIPANTS } from '@/lib/constants';
 import { useChartTheme } from '@/hooks/useChartTheme';
 
@@ -12,12 +13,82 @@ interface WeeklyData {
 
 export function WeeklyPointsChart({ data }: { data: WeeklyData[] }) {
   const chartTheme = useChartTheme();
-  const [highlighted, setHighlighted] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   if (!data?.length) return <EmptyState />;
 
+  const hasSelection = selected.size > 0;
+
+  const toggle = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const remove = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  };
+
+  // Total points per player across all weeks (for legend labels)
+  const totalByPlayer: Record<string, number> = {};
+  for (const p of PARTICIPANTS) {
+    totalByPlayer[p.id] = data.reduce((sum, week) => sum + ((week[p.id] as number) || 0), 0);
+  }
+
+  const sortedParticipants = [...PARTICIPANTS].sort(
+    (a, b) => (totalByPlayer[b.id] || 0) - (totalByPlayer[a.id] || 0)
+  );
+
+  const selectedPlayers = sortedParticipants.filter(p => selected.has(p.id));
+
   return (
     <div>
+      {/* Active filter pills / hint */}
+      <div className="mb-3 min-h-[32px]">
+        {hasSelection ? (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {selectedPlayers.map(p => (
+              <div
+                key={p.id}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border"
+                style={{
+                  backgroundColor: p.avatar_color + '22',
+                  borderColor: p.avatar_color + '66',
+                }}
+              >
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.avatar_color }} />
+                <span style={{ color: p.avatar_color }}>{p.name}</span>
+                <span className="font-bold" style={{ color: p.avatar_color }}>
+                  {totalByPlayer[p.id] || 0}
+                </span>
+                <button
+                  onClick={() => remove(p.id)}
+                  className="ml-0.5 text-[var(--app-text-tertiary)] hover:text-[var(--app-text)] active:scale-90"
+                  aria-label={`Remove ${p.name}`}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={() => setSelected(new Set())}
+              className="text-[10px] text-[var(--app-text-tertiary)] hover:text-[var(--app-text)] px-2 py-1 rounded-full border border-[var(--app-border)] active:scale-95"
+            >
+              Clear all
+            </button>
+          </div>
+        ) : (
+          <p className="text-[10px] text-[var(--app-text-tertiary)]">Tap names below to compare players</p>
+        )}
+      </div>
+
       <div className="w-full h-[400px]">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 5, right: 5, left: -10, bottom: 20 }}>
@@ -25,15 +96,13 @@ export function WeeklyPointsChart({ data }: { data: WeeklyData[] }) {
             <XAxis dataKey="week" stroke={chartTheme.axis} tick={{ fontSize: 10 }} />
             <YAxis stroke={chartTheme.axis} tick={{ fontSize: 11 }} label={{ value: 'Points gained this week', angle: -90, position: 'insideLeft', fill: chartTheme.label, fontSize: 11, offset: 15 }} />
             <Tooltip
-              contentStyle={{ backgroundColor: chartTheme.tooltipBg, border: `1px solid ${chartTheme.tooltipBorder}`, borderRadius: '8px', color: chartTheme.tooltipText, fontSize: 11 }}
-              itemSorter={(item) => -(item.value as number || 0)}
               content={({ label, payload }) => {
                 if (!payload?.length) return null;
                 const sorted = [...payload]
                   .filter(p => (p.value as number) > 0)
                   .sort((a, b) => (b.value as number || 0) - (a.value as number || 0));
-                const items = highlighted
-                  ? sorted.filter(p => p.dataKey === highlighted)
+                const items = hasSelection
+                  ? sorted.filter(p => selected.has(p.dataKey as string))
                   : sorted;
                 return (
                   <div className="bg-white dark:bg-slate-800 border border-[var(--app-border)] rounded-lg text-xs text-[var(--app-text)] shadow-xl p-2.5">
@@ -51,36 +120,47 @@ export function WeeklyPointsChart({ data }: { data: WeeklyData[] }) {
                 );
               }}
             />
-            {PARTICIPANTS.map(p => (
-              <Bar
-                key={p.id}
-                dataKey={p.id}
-                name={p.name}
-                stackId="a"
-                fill={p.avatar_color}
-                fillOpacity={highlighted ? (highlighted === p.id ? 1 : 0.15) : 0.85}
-              />
-            ))}
+            {sortedParticipants.map(p => {
+              const isSelected = selected.has(p.id);
+              return (
+                <Bar
+                  key={p.id}
+                  dataKey={p.id}
+                  name={p.name}
+                  stackId="a"
+                  fill={p.avatar_color}
+                  fillOpacity={hasSelection ? (isSelected ? 1 : 0.1) : 0.85}
+                />
+              );
+            })}
           </BarChart>
         </ResponsiveContainer>
       </div>
 
       {/* Player legend */}
-      <div className="flex flex-wrap gap-x-3 gap-y-1.5 mt-3">
-        {PARTICIPANTS.map(p => (
-          <button
-            key={p.id}
-            onMouseEnter={() => setHighlighted(p.id)}
-            onMouseLeave={() => setHighlighted(null)}
-            onClick={() => setHighlighted(prev => prev === p.id ? null : p.id)}
-            className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded transition-all ${
-              highlighted === p.id ? 'bg-[var(--app-surface-alt)] scale-105' : highlighted ? 'opacity-40' : ''
-            }`}
-          >
-            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: p.avatar_color }} />
-            <span className="text-[var(--app-text-secondary)]">{p.name}</span>
-          </button>
-        ))}
+      <div className="flex flex-wrap gap-2 mt-4">
+        {sortedParticipants.map(p => {
+          const isActive = selected.has(p.id);
+          const isDimmed = hasSelection && !isActive;
+          return (
+            <button
+              key={p.id}
+              onClick={() => toggle(p.id)}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all active:scale-95 ${
+                isActive
+                  ? 'bg-[var(--app-surface-alt)]'
+                  : isDimmed
+                  ? 'border-transparent opacity-35'
+                  : 'border-transparent hover:bg-[var(--app-surface)]'
+              }`}
+              style={isActive ? { borderColor: p.avatar_color + '88' } : {}}
+            >
+              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: p.avatar_color }} />
+              <span className="text-[var(--app-text-secondary)]">{p.name}</span>
+              <span className="text-[var(--app-text-tertiary)] font-mono">{totalByPlayer[p.id] || 0}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
