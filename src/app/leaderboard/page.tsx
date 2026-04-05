@@ -125,7 +125,6 @@ function PointsBreakdownRow({ player }: { player: LeaderboardEntry }) {
     { label: 'Double', value: player.doubleHeaderBonus, color: 'bg-emerald-400' },
     { label: 'Streak', value: player.streakBonus, color: 'bg-orange-400' },
     { label: 'Trivia', value: player.triviaPoints, color: 'bg-pink-400' },
-    { label: 'Bonus', value: player.bonusPoints, color: 'bg-amber-400' },
   ].filter((s) => s.value > 0);
 
   return (

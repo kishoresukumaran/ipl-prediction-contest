@@ -22,7 +22,6 @@ const FormChart = dynamic(() => import('@/components/charts/FormChart').then(m =
 const WinRateByTeamChart = dynamic(() => import('@/components/charts/WinRateByTeamChart').then(m => ({ default: m.WinRateByTeamChart })), { ssr: false });
 const PointsGapChart = dynamic(() => import('@/components/charts/PointsGapChart').then(m => ({ default: m.PointsGapChart })), { ssr: false });
 const WallOfShame = dynamic(() => import('@/components/charts/WallOfShame').then(m => ({ default: m.WallOfShame })), { ssr: false });
-const CopycatChart = dynamic(() => import('@/components/charts/CopycatChart').then(m => ({ default: m.CopycatChart })), { ssr: false });
 const PointsMatrixChart = dynamic(() => import('@/components/charts/PointsMatrixChart').then(m => ({ default: m.PointsMatrixChart })), { ssr: false });
 const CrowdTrapChart = dynamic(() => import('@/components/charts/CrowdTrapChart').then(m => ({ default: m.CrowdTrapChart })), { ssr: false });
 const OnFireIceCold = dynamic(() => import('@/components/charts/OnFireIceCold').then(m => ({ default: m.OnFireIceCold })), { ssr: false });

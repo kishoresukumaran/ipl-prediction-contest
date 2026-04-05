@@ -135,7 +135,6 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
     { label: 'Double Header', value: player.doubleHeaderBonus, color: 'bg-emerald-400', textColor: 'text-emerald-400' },
     { label: 'Streak', value: player.streakBonus, color: 'bg-orange-400', textColor: 'text-orange-400' },
     { label: 'Trivia', value: player.triviaPoints, color: 'bg-pink-400', textColor: 'text-pink-400' },
-    { label: 'Bonus', value: player.bonusPoints, color: 'bg-amber-400', textColor: 'text-amber-400' },
   ];
 
   const topTeams = player.teamAffinity.slice(0, 5);

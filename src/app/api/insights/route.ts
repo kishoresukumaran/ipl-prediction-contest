@@ -49,9 +49,6 @@ export async function GET() {
     // Wall of Shame data
     const wallOfShame = buildWallOfShame(completedMatches, predictions, jokers);
 
-    // Copycat data
-    const copycats = buildCopycats(completedMatches, predictions);
-
     // Points matrix
     const pointsMatrix = buildPointsMatrix(completedMatches, predictions, jokers);
 
@@ -66,7 +63,7 @@ export async function GET() {
       leaderboard, matches, predictions, pointsRace, teamPopularity,
       accuracyByPlayer, weeklyPoints, crowdWisdom,
       contrarianData, matchDifficulty, formData, winRateByTeam,
-      doubleHeaderData, doubleHeaderHeroes, heatmapData, streakData, wallOfShame, copycats,
+      doubleHeaderData, doubleHeaderHeroes, heatmapData, streakData, wallOfShame,
       pointsMatrix,
       ghostVoters, teamVoteTotals, voteSplits, participationRate, homeAwayBias,
     });
@@ -390,77 +387,6 @@ function buildWallOfShame(matches: Match[], predictions: Prediction[], jokers: a
   return { wastedJokers, jinxers, losingStreaks };
 }
 
-interface CopyInstance {
-  matchId: number;
-  homeTeam: string;
-  awayTeam: string;
-  team: string;
-  targetTime: string;
-  copierTime: string;
-  gapMinutes: number;
-}
-
-function buildCopycats(matches: Match[], predictions: Prediction[]) {
-  const pairData: Record<string, {
-    copier: string; copierName: string; copierColor: string;
-    target: string; targetName: string; targetColor: string;
-    count: number; matches: number; instances: CopyInstance[];
-  }> = {};
-
-  matches.forEach(match => {
-    const matchPreds = predictions
-      .filter(p => p.match_id === match.id && p.prediction_time)
-      .sort((a, b) => new Date(a.prediction_time!).getTime() - new Date(b.prediction_time!).getTime());
-
-    for (let i = 0; i < matchPreds.length; i++) {
-      for (let j = i + 1; j < matchPreds.length; j++) {
-        const earlier = matchPreds[i];
-        const later = matchPreds[j];
-        const timeDiff = (new Date(later.prediction_time!).getTime() - new Date(earlier.prediction_time!).getTime()) / 60000;
-
-        if (timeDiff <= 60 && earlier.predicted_team === later.predicted_team) {
-          const key = `${later.participant_id}→${earlier.participant_id}`;
-          if (!pairData[key]) {
-            const copier = PARTICIPANTS.find(p => p.id === later.participant_id);
-            const target = PARTICIPANTS.find(p => p.id === earlier.participant_id);
-            pairData[key] = {
-              copier: later.participant_id,
-              copierName: copier?.name || later.participant_id,
-              copierColor: copier?.avatar_color || '#666',
-              target: earlier.participant_id,
-              targetName: target?.name || earlier.participant_id,
-              targetColor: target?.avatar_color || '#666',
-              count: 0, matches: 0, instances: [],
-            };
-          }
-          pairData[key].count++;
-          pairData[key].instances.push({
-            matchId: match.id,
-            homeTeam: match.home_team,
-            awayTeam: match.away_team,
-            team: earlier.predicted_team,
-            targetTime: earlier.prediction_time!,
-            copierTime: later.prediction_time!,
-            gapMinutes: Math.round(timeDiff),
-          });
-        }
-      }
-    }
-  });
-
-  Object.values(pairData).forEach(pair => {
-    pair.matches = matches.filter(m =>
-      predictions.some(p => p.match_id === m.id && p.participant_id === pair.copier && p.prediction_time) &&
-      predictions.some(p => p.match_id === m.id && p.participant_id === pair.target && p.prediction_time)
-    ).length;
-  });
-
-  return Object.values(pairData)
-    .filter(p => p.count >= 1)
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 15);
-}
-
 function buildPointsMatrix(
   matches: Match[],
   predictions: Prediction[],
@@ -569,8 +495,6 @@ function buildGhostVoters(matches: Match[], predictions: Prediction[]) {
       const pred = predictions.find(pr => pr.match_id === match.id && pr.participant_id === p.id);
       if (!pred) {
         missedMatches.push({ matchId: match.id, homeTeam: match.home_team, awayTeam: match.away_team, matchDate: match.match_date, reason: 'no_vote' });
-      } else if (isPredictionLate(pred.prediction_time, match.match_date, match.start_time)) {
-        missedMatches.push({ matchId: match.id, homeTeam: match.home_team, awayTeam: match.away_team, matchDate: match.match_date, reason: 'late' });
       }
     });
     return {
@@ -578,7 +502,7 @@ function buildGhostVoters(matches: Match[], predictions: Prediction[]) {
       color: p.avatar_color,
       missedCount: missedMatches.length,
       noVoteCount: missedMatches.filter(m => m.reason === 'no_vote').length,
-      lateCount: missedMatches.filter(m => m.reason === 'late').length,
+      lateCount: 0,
       participationRate: totalCompleted > 0 ? ((totalCompleted - missedMatches.length) / totalCompleted) * 100 : 100,
       totalMatches: totalCompleted,
       missedMatches,
@@ -618,9 +542,8 @@ function buildTeamVoteTotals(matches: Match[], predictions: Prediction[]) {
 function buildVoteSplits(matches: Match[], predictions: Prediction[]) {
   return matches.map(match => {
     const matchPreds = predictions.filter(p => p.match_id === match.id);
-    const validPreds = matchPreds.filter(p => !isPredictionLate(p.prediction_time, match.match_date, match.start_time));
-    const homePicks = validPreds.filter(p => p.predicted_team === match.home_team).length;
-    const awayPicks = validPreds.filter(p => p.predicted_team === match.away_team).length;
+    const homePicks = matchPreds.filter(p => p.predicted_team === match.home_team).length;
+    const awayPicks = matchPreds.filter(p => p.predicted_team === match.away_team).length;
     const totalVotes = homePicks + awayPicks;
     const majorityPct = totalVotes > 0 ? (Math.max(homePicks, awayPicks) / totalVotes) * 100 : 0;
     const majorityTeam = homePicks >= awayPicks ? match.home_team : match.away_team;
@@ -647,10 +570,8 @@ function buildParticipationRate(matches: Match[], predictions: Prediction[]) {
     return d !== 0 ? d : a.start_time.localeCompare(b.start_time);
   });
   return sorted.map((match, i) => {
-    const validPreds = predictions.filter(p =>
-      p.match_id === match.id && !isPredictionLate(p.prediction_time, match.match_date, match.start_time)
-    );
-    const rate = (validPreds.length / totalParticipants) * 100;
+    const matchPreds = predictions.filter(p => p.match_id === match.id);
+    const rate = (matchPreds.length / totalParticipants) * 100;
     runningTotal += rate;
     return {
       matchId: match.id,
@@ -658,7 +579,7 @@ function buildParticipationRate(matches: Match[], predictions: Prediction[]) {
       homeTeam: match.home_team,
       awayTeam: match.away_team,
       matchDate: match.match_date,
-      voterCount: validPreds.length,
+      voterCount: matchPreds.length,
       totalParticipants,
       rate,
       runningAvg: runningTotal / (i + 1),
@@ -674,7 +595,6 @@ function buildHomeAwayBias(matches: Match[], predictions: Prediction[]) {
     matches.forEach(match => {
       const pred = predictions.find(pr => pr.match_id === match.id && pr.participant_id === p.id);
       if (!pred) return;
-      if (isPredictionLate(pred.prediction_time, match.match_date, match.start_time)) return;
       if (pred.predicted_team === match.home_team) homePicks++;
       else awayPicks++;
     });

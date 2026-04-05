@@ -14,17 +14,16 @@ import {
   XCircle,
   Loader2,
   Users,
-  AlarmClock,
 } from 'lucide-react';
 import { TEAMS, PARTICIPANTS } from '@/lib/constants';
-import { matchTimeToIrish, predictionTimeToIrish, isPredictionLate } from '@/lib/utils';
+import { matchTimeToIrish } from '@/lib/utils';
 import { Match, Prediction } from '@/lib/types';
 
 interface MatchWithPredictions extends Match {
   predictions: Prediction[];
 }
 
-type SortBy = 'name' | 'prediction_time' | 'correct';
+type SortBy = 'name' | 'correct';
 
 function TeamBadge({ team, size = 'sm' }: { team: string; size?: 'sm' | 'lg' }) {
   const teamConfig = TEAMS[team];
@@ -82,37 +81,29 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
   const homeTeamConfig = TEAMS[match.home_team];
   const awayTeamConfig = TEAMS[match.away_team];
 
-  // Exclude late predictions from consensus and accuracy stats
-  const validPredictions = predictions.filter(
-    (p) => !isPredictionLate(p.prediction_time, match.match_date, match.start_time)
-  );
-
-  // Prediction consensus (only valid/on-time predictions)
-  const homePicks = validPredictions.filter((p) => p.predicted_team === match.home_team).length;
-  const awayPicks = validPredictions.filter((p) => p.predicted_team === match.away_team).length;
-  const totalPicks = validPredictions.length;
+  // Prediction consensus (all predictions)
+  const homePicks = predictions.filter((p) => p.predicted_team === match.home_team).length;
+  const awayPicks = predictions.filter((p) => p.predicted_team === match.away_team).length;
+  const totalPicks = predictions.length;
   const homePct = totalPicks > 0 ? (homePicks / totalPicks) * 100 : 50;
   const awayPct = totalPicks > 0 ? (awayPicks / totalPicks) * 100 : 50;
 
-  // Accuracy stats (only if completed, only valid predictions)
+  // Accuracy stats (only if completed)
   const correctPicks = match.is_completed && match.winner
-    ? validPredictions.filter((p) => p.predicted_team === match.winner).length
+    ? predictions.filter((p) => p.predicted_team === match.winner).length
     : 0;
   const accuracy = totalPicks > 0 && match.is_completed ? (correctPicks / totalPicks) * 100 : 0;
 
   // Enriched predictions with participant data
   const enrichedPredictions = PARTICIPANTS.map((participant) => {
     const pred = predictions.find((p) => p.participant_id === participant.id);
-    const isLate = pred ? isPredictionLate(pred.prediction_time, match.match_date, match.start_time) : false;
-    const isCorrect = match.is_completed && match.winner && pred && !isLate
+    const isCorrect = match.is_completed && match.winner && pred
       ? pred.predicted_team === match.winner
       : null;
     return {
       ...participant,
       predictedTeam: pred?.predicted_team || null,
-      predictionTime: pred?.prediction_time || null,
       isCorrect,
-      isLate,
     };
   });
 
@@ -121,11 +112,6 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
     switch (sortBy) {
       case 'name':
         return a.name.localeCompare(b.name);
-      case 'prediction_time':
-        if (!a.predictionTime && !b.predictionTime) return 0;
-        if (!a.predictionTime) return 1;
-        if (!b.predictionTime) return -1;
-        return a.predictionTime.localeCompare(b.predictionTime);
       case 'correct':
         if (a.isCorrect === b.isCorrect) return a.name.localeCompare(b.name);
         if (a.isCorrect === true) return -1;
@@ -286,7 +272,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
             All Predictions ({totalPicks}/{PARTICIPANTS.length})
           </h2>
           <div className="flex gap-1">
-            {(['name', 'prediction_time', 'correct'] as SortBy[]).map((s) => (
+            {(['name', 'correct'] as SortBy[]).map((s) => (
               <button
                 key={s}
                 onClick={() => setSortBy(s)}
@@ -296,7 +282,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
                     : 'text-[var(--app-text-tertiary)] hover:text-[var(--app-text)]'
                 }`}
               >
-                {s === 'name' ? 'Name' : s === 'prediction_time' ? 'Time' : 'Result'}
+                {s === 'name' ? 'Name' : 'Result'}
               </button>
             ))}
           </div>
@@ -314,25 +300,14 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="text-sm font-medium text-[var(--app-text)] block truncate">{pred.name}</span>
-                  {pred.predictionTime && (
-                    <span className="text-[10px] text-[var(--app-text-tertiary)]">
-                      {predictionTimeToIrish(pred.predictionTime)}
-                    </span>
-                  )}
                 </div>
                 <div className="flex items-center gap-2">
-                  {pred.isLate && (
-                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 text-[9px] font-bold uppercase">
-                      <AlarmClock className="h-2.5 w-2.5" />
-                      Late
-                    </span>
-                  )}
                   {pred.predictedTeam ? (
                     <TeamBadge team={pred.predictedTeam} />
                   ) : (
                     <span className="text-xs text-[var(--app-text-tertiary)] italic">No pick</span>
                   )}
-                  {match.is_completed && match.winner && pred.predictedTeam && !pred.isLate && (
+                  {match.is_completed && match.winner && pred.predictedTeam && (
                     pred.isCorrect ? (
                       <CheckCircle className="h-4 w-4 text-emerald-400" />
                     ) : (

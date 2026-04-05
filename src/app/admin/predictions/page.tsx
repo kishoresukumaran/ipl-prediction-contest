@@ -8,14 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { TEAMS, PARTICIPANTS } from '@/lib/constants';
-import { Match, Prediction, BonusQuestion } from '@/lib/types';
-import { toIrishDatetimeLocal } from '@/lib/utils';
-import { Gift } from 'lucide-react';
+import { Match, Prediction } from '@/lib/types';
 
 interface PredictionEntry {
   participant_id: string;
   predicted_team: string;
-  prediction_time: string;
 }
 
 export default function AdminPredictionsPage() {
@@ -25,11 +22,6 @@ export default function AdminPredictionsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
-
-  // Bonus question state
-  const [bonusQuestion, setBonusQuestion] = useState<BonusQuestion | null>(null);
-  const [bonusResponses, setBonusResponses] = useState<Record<string, string>>({});
-  const [savingBonus, setSavingBonus] = useState(false);
 
   const fetchMatches = useCallback(async () => {
     try {
@@ -60,7 +52,6 @@ export default function AdminPredictionsPage() {
         predMap[p.id] = {
           participant_id: p.id,
           predicted_team: '',
-          prediction_time: '',
         };
       });
 
@@ -69,52 +60,13 @@ export default function AdminPredictionsPage() {
           predMap[pred.participant_id] = {
             participant_id: pred.participant_id,
             predicted_team: pred.predicted_team || '',
-            prediction_time: pred.prediction_time
-              ? toIrishDatetimeLocal(pred.prediction_time)
-              : '',
           };
         });
       }
 
       setPredictions(predMap);
-
-      // Load bonus question for this match
-      const bonusRes = await fetch(`/api/bonus?match_id=${matchId}`);
-      const bonusData = await bonusRes.json();
-      if (bonusData.questions?.length > 0) {
-        setBonusQuestion(bonusData.questions[0]);
-        const respMap: Record<string, string> = {};
-        (bonusData.responses || []).forEach((r: { participant_id: string; selected_option: string }) => {
-          respMap[r.participant_id] = r.selected_option;
-        });
-        setBonusResponses(respMap);
-      } else {
-        setBonusQuestion(null);
-        setBonusResponses({});
-      }
     } catch (err) {
       console.error('Failed to load predictions:', err);
-    }
-  };
-
-  const handleSaveBonusResponses = async () => {
-    if (!bonusQuestion) return;
-    setSavingBonus(true);
-    try {
-      const responses = Object.entries(bonusResponses)
-        .filter(([, opt]) => opt)
-        .map(([pid, opt]) => ({ participant_id: pid, selected_option: opt }));
-
-      await fetch('/api/bonus', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bonus_question_id: bonusQuestion.id, responses }),
-      });
-      setSaveMessage('Bonus responses saved!');
-    } catch {
-      setSaveMessage('Failed to save bonus responses');
-    } finally {
-      setSavingBonus(false);
     }
   };
 
@@ -128,29 +80,15 @@ export default function AdminPredictionsPage() {
     }));
   };
 
-  const handleTimeChange = (participantId: string, time: string) => {
-    setPredictions((prev) => ({
-      ...prev,
-      [participantId]: {
-        ...prev[participantId],
-        prediction_time: time,
-      },
-    }));
-  };
-
   const handleSaveAll = async () => {
     if (!selectedMatchId) return;
     setSaving(true);
     setSaveMessage('');
 
-    // Convert local datetime-local values to ISO UTC strings before sending
     const predArray = Object.values(predictions)
       .filter((p) => p.predicted_team)
       .map((p) => ({
         ...p,
-        prediction_time: p.prediction_time
-          ? new Date(p.prediction_time).toISOString()
-          : null,
       }));
 
     try {
@@ -308,61 +246,12 @@ export default function AdminPredictionsPage() {
                           {selectedMatch.away_team}
                         </Button>
                       </div>
-
-                      {/* Prediction Time */}
-                      <div className="flex-1 min-w-0">
-                        <Input
-                          type="datetime-local"
-                          value={pred?.prediction_time || ''}
-                          onChange={(e) => handleTimeChange(participant.id, e.target.value)}
-                          className="bg-[var(--admin-input-bg)] border-[var(--admin-border)] text-[var(--app-text)] h-10 text-sm [color-scheme:dark]"
-                          title="Enter time as shown in your WhatsApp (your local timezone)"
-                        />
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
               );
             })}
           </div>
-
-          <Separator className="bg-[var(--admin-border)]" />
-
-          {/* Bonus Question Responses */}
-          {bonusQuestion && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Gift className="h-4 w-4 text-amber-400" />
-                <h3 className="text-sm font-semibold text-amber-400">Bonus: {bonusQuestion.question}</h3>
-                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs">+{bonusQuestion.points} pt</Badge>
-              </div>
-
-              <div className="grid gap-2">
-                {PARTICIPANTS.map((participant) => (
-                  <div key={participant.id} className="flex items-center gap-3 bg-[var(--admin-surface)]/40 rounded-lg px-3 py-2">
-                    <span className="text-sm text-[var(--app-text-secondary)] w-24 truncate">{participant.name}</span>
-                    <div className="flex gap-1 flex-wrap">
-                      {(bonusQuestion.options || []).map((opt: string) => (
-                        <Button
-                          key={opt}
-                          size="sm"
-                          variant={bonusResponses[participant.id] === opt ? 'default' : 'outline'}
-                          onClick={() => setBonusResponses(prev => ({ ...prev, [participant.id]: prev[participant.id] === opt ? '' : opt }))}
-                          className={`h-8 text-xs ${bonusResponses[participant.id] === opt ? 'bg-amber-600 text-white' : 'border-[var(--admin-border)] text-[var(--app-text-secondary)] hover:bg-[var(--admin-input-bg)]'}`}
-                        >
-                          {opt}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <Button onClick={handleSaveBonusResponses} disabled={savingBonus} className="bg-amber-600 hover:bg-amber-700 text-white w-full">
-                {savingBonus ? 'Saving...' : 'Save Bonus Responses'}
-              </Button>
-            </div>
-          )}
 
           <Separator className="bg-[var(--admin-border)]" />
 

@@ -9,8 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { TEAMS } from '@/lib/constants';
-import { Match, BonusQuestion } from '@/lib/types';
-import { Plus, X, Gift } from 'lucide-react';
+import { Match } from '@/lib/types';
+import { Plus, X } from 'lucide-react';
 
 export default function AdminMatchesPage() {
   const [matches, setMatches] = useState<Match[]>([]);
@@ -22,15 +22,6 @@ export default function AdminMatchesPage() {
   const [editPowerMatch, setEditPowerMatch] = useState(false);
   const [editUnderdog, setEditUnderdog] = useState<string | null>(null);
   const [editCompleted, setEditCompleted] = useState(false);
-
-  // Bonus question state
-  const [bonusQuestions, setBonusQuestions] = useState<Record<number, BonusQuestion | null>>({});
-  const [showBonusForm, setShowBonusForm] = useState(false);
-  const [bonusQuestion, setBonusQuestion] = useState('');
-  const [bonusOptions, setBonusOptions] = useState<string[]>(['', '']);
-  const [bonusCorrectAnswer, setBonusCorrectAnswer] = useState('');
-  const [bonusPoints, setBonusPointsVal] = useState(1);
-  const [savingBonus, setSavingBonus] = useState(false);
 
   const fetchMatches = useCallback(async () => {
     try {
@@ -48,31 +39,6 @@ export default function AdminMatchesPage() {
     fetchMatches();
   }, [fetchMatches]);
 
-  const loadBonusQuestion = async (matchId: number) => {
-    try {
-      const res = await fetch(`/api/bonus?match_id=${matchId}`);
-      const data = await res.json();
-      if (data.questions?.length > 0) {
-        const q = data.questions[0];
-        setBonusQuestions(prev => ({ ...prev, [matchId]: q }));
-        setBonusQuestion(q.question);
-        setBonusOptions(q.options || ['', '']);
-        setBonusCorrectAnswer(q.correct_answer || '');
-        setBonusPointsVal(q.points || 1);
-        setShowBonusForm(true);
-      } else {
-        setBonusQuestions(prev => ({ ...prev, [matchId]: null }));
-        setBonusQuestion('');
-        setBonusOptions(['', '']);
-        setBonusCorrectAnswer('');
-        setBonusPointsVal(1);
-        setShowBonusForm(false);
-      }
-    } catch {
-      // ignore
-    }
-  };
-
   const handleExpand = (match: Match) => {
     if (expandedId === match.id) {
       setExpandedId(null);
@@ -83,7 +49,6 @@ export default function AdminMatchesPage() {
     setEditPowerMatch(match.is_power_match);
     setEditUnderdog(match.underdog_team);
     setEditCompleted(match.is_completed);
-    loadBonusQuestion(match.id);
   };
 
   const handleSave = async (matchId: number) => {
@@ -115,42 +80,6 @@ export default function AdminMatchesPage() {
     }
   };
 
-  const handleSaveBonus = async (matchId: number) => {
-    setSavingBonus(true);
-    const filteredOptions = bonusOptions.filter(o => o.trim());
-    try {
-      const res = await fetch('/api/bonus', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          match_id: matchId,
-          question: bonusQuestion,
-          options: filteredOptions,
-          correct_answer: bonusCorrectAnswer || null,
-          points: bonusPoints,
-        }),
-      });
-      if (res.ok) {
-        await loadBonusQuestion(matchId);
-      }
-    } catch {
-      alert('Failed to save bonus question');
-    } finally {
-      setSavingBonus(false);
-    }
-  };
-
-  const handleDeleteBonus = async (matchId: number) => {
-    const bq = bonusQuestions[matchId];
-    if (!bq) return;
-    await fetch(`/api/bonus?id=${bq.id}`, { method: 'DELETE' });
-    setBonusQuestions(prev => ({ ...prev, [matchId]: null }));
-    setShowBonusForm(false);
-    setBonusQuestion('');
-    setBonusOptions(['', '']);
-    setBonusCorrectAnswer('');
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -163,7 +92,7 @@ export default function AdminMatchesPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-[var(--app-text)]">Match Management</h1>
-        <p className="text-[var(--app-text-secondary)] mt-1">Set winners, power matches, underdogs, and bonus questions</p>
+        <p className="text-[var(--app-text-secondary)] mt-1">Set winners, power matches, and underdogs</p>
       </div>
 
       <div className="space-y-3">
@@ -171,7 +100,6 @@ export default function AdminMatchesPage() {
           const homeTeam = TEAMS[match.home_team];
           const awayTeam = TEAMS[match.away_team];
           const isExpanded = expandedId === match.id;
-          const hasBonusQ = !!bonusQuestions[match.id];
 
           return (
             <Card
@@ -263,93 +191,6 @@ export default function AdminMatchesPage() {
                     <Button variant="outline" onClick={() => setExpandedId(null)} className="border-[var(--admin-border)] text-[var(--app-text-secondary)] hover:bg-[var(--admin-input-bg)]">Cancel</Button>
                   </div>
 
-                  <Separator className="bg-[var(--admin-border)]" />
-
-                  {/* Bonus Question Section */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-amber-400 text-sm font-medium flex items-center gap-2">
-                        <Gift className="h-4 w-4" /> Bonus Question
-                      </Label>
-                      {!showBonusForm && !hasBonusQ && (
-                        <Button size="sm" variant="outline" onClick={() => setShowBonusForm(true)} className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10">
-                          <Plus className="h-3 w-3 mr-1" /> Add Bonus
-                        </Button>
-                      )}
-                      {hasBonusQ && !showBonusForm && (
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => setShowBonusForm(true)} className="border-[var(--admin-border)] text-[var(--app-text-secondary)] hover:bg-[var(--admin-input-bg)]">Edit</Button>
-                          <Button size="sm" variant="outline" onClick={() => handleDeleteBonus(match.id)} className="border-red-500/30 text-red-400 hover:bg-red-500/10">Remove</Button>
-                        </div>
-                      )}
-                    </div>
-
-                    {hasBonusQ && !showBonusForm && (
-                      <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-sm">
-                        <p className="text-amber-300 font-medium">{bonusQuestions[match.id]!.question}</p>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {(bonusQuestions[match.id]!.options || []).map((opt: string, i: number) => (
-                            <span key={i} className={`px-2 py-1 rounded text-xs ${opt === bonusQuestions[match.id]!.correct_answer ? 'bg-green-500/20 text-green-400 ring-1 ring-green-500/50' : 'bg-[var(--admin-surface-alt)] text-[var(--app-text-secondary)]'}`}>
-                              {opt} {opt === bonusQuestions[match.id]!.correct_answer && '✓'}
-                            </span>
-                          ))}
-                        </div>
-                        <p className="text-xs text-[var(--app-text-tertiary)] mt-1">+{bonusQuestions[match.id]!.points} point(s)</p>
-                      </div>
-                    )}
-
-                    {showBonusForm && (
-                      <div className="bg-[var(--admin-input-bg)]/50 rounded-lg p-4 space-y-3">
-                        <div>
-                          <Label className="text-[var(--app-text-secondary)] text-xs">Question</Label>
-                          <Input value={bonusQuestion} onChange={e => setBonusQuestion(e.target.value)} placeholder="e.g. Which team will hit more sixes?" className="bg-[var(--admin-input-bg)] border-[var(--admin-border)] text-[var(--app-text)] mt-1" />
-                        </div>
-
-                        <div>
-                          <Label className="text-[var(--app-text-secondary)] text-xs">Options</Label>
-                          {bonusOptions.map((opt, i) => (
-                            <div key={i} className="flex gap-2 mt-1">
-                              <Input value={opt} onChange={e => { const newOpts = [...bonusOptions]; newOpts[i] = e.target.value; setBonusOptions(newOpts); }} placeholder={`Option ${i + 1}`} className="bg-[var(--admin-input-bg)] border-[var(--admin-border)] text-[var(--app-text)]" />
-                              {bonusOptions.length > 2 && (
-                                <Button size="sm" variant="ghost" onClick={() => setBonusOptions(bonusOptions.filter((_, j) => j !== i))} className="text-red-400 hover:bg-red-500/10 px-2">
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          ))}
-                          <Button size="sm" variant="ghost" onClick={() => setBonusOptions([...bonusOptions, ''])} className="text-[var(--app-text-secondary)] hover:text-[var(--app-text)] mt-1">
-                            <Plus className="h-3 w-3 mr-1" /> Add Option
-                          </Button>
-                        </div>
-
-                        <div>
-                          <Label className="text-[var(--app-text-secondary)] text-xs">Correct Answer</Label>
-                          <div className="flex flex-wrap gap-2 mt-1">
-                            {bonusOptions.filter(o => o.trim()).map((opt, i) => (
-                              <Button key={i} size="sm" variant={bonusCorrectAnswer === opt ? 'default' : 'outline'}
-                                onClick={() => setBonusCorrectAnswer(opt)}
-                                className={bonusCorrectAnswer === opt ? 'bg-green-600 text-white' : 'border-[var(--admin-border)] text-[var(--app-text-secondary)] hover:bg-[var(--admin-input-bg)]'}>
-                                {opt}
-                              </Button>
-                            ))}
-                            <Button size="sm" variant="outline" onClick={() => setBonusCorrectAnswer('')} className="border-[var(--admin-border)] text-[var(--app-text-secondary)] hover:bg-[var(--admin-input-bg)]">Clear</Button>
-                          </div>
-                        </div>
-
-                        <div>
-                          <Label className="text-[var(--app-text-secondary)] text-xs">Points for correct answer</Label>
-                          <Input type="number" min={1} max={10} value={bonusPoints} onChange={e => setBonusPointsVal(Number(e.target.value))} className="bg-[var(--admin-input-bg)] border-[var(--admin-border)] text-[var(--app-text)] mt-1 w-24" />
-                        </div>
-
-                        <div className="flex gap-2">
-                          <Button size="sm" onClick={() => handleSaveBonus(match.id)} disabled={savingBonus || !bonusQuestion.trim()} className="bg-amber-600 hover:bg-amber-700 text-white">
-                            {savingBonus ? 'Saving...' : 'Save Bonus Question'}
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => setShowBonusForm(false)} className="border-[var(--admin-border)] text-[var(--app-text-secondary)]">Cancel</Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
                 </CardContent>
               )}
             </Card>

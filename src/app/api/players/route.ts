@@ -7,13 +7,11 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const [matchesRes, predictionsRes, jokersRes, triviaRes, bonusQRes, bonusRRes] = await Promise.all([
+    const [matchesRes, predictionsRes, jokersRes, triviaRes] = await Promise.all([
       supabase.from('matches').select('*').order('match_date').order('start_time'),
       supabase.from('predictions').select('*'),
       supabase.from('jokers').select('*'),
       supabase.from('trivia_responses').select('*'),
-      supabase.from('bonus_questions').select('*'),
-      supabase.from('bonus_responses').select('*'),
     ]);
 
     if (matchesRes.error) {
@@ -33,16 +31,12 @@ export async function GET() {
     const predictions = predictionsRes.data || [];
     const jokers = jokersRes.data || [];
     const triviaResponses = triviaRes.data || [];
-    const bonusQuestions = bonusQRes.data || [];
-    const bonusResponses = bonusRRes.data || [];
 
     const leaderboard = calculateAllPlayerPoints(PARTICIPANTS, {
       matches,
       predictions,
       jokers,
       triviaResponses,
-      bonusQuestions,
-      bonusResponses,
     });
 
     const players = leaderboard.map((player) => {
@@ -78,7 +72,6 @@ export async function GET() {
           winner: match.winner,
           predictedTeam: pred?.predicted_team || null,
           isCorrect: pred ? pred.predicted_team === match.winner : false,
-          predictionTime: pred?.prediction_time || null,
         };
       });
 
@@ -107,31 +100,6 @@ export async function GET() {
         .sort((a, b) => b[1] - a[1])
         .map(([team, points]) => ({ team, points }));
 
-      // Bonus question history — one entry per question, regardless of whether the player answered
-      const playerBonusResponses = bonusResponses.filter(
-        (r: any) => r.participant_id === player.participantId
-      );
-      const bonusHistory = bonusQuestions
-        .map((question: any) => {
-          const match = matches.find((m: any) => m.id === question.match_id);
-          const response = playerBonusResponses.find(
-            (r: any) => r.bonus_question_id === question.id
-          );
-          return {
-            questionId: question.id as number,
-            questionText: question.question as string,
-            options: (question.options || []) as string[],
-            matchId: question.match_id as number,
-            homeTeam: match?.home_team || '',
-            awayTeam: match?.away_team || '',
-            selectedOption: response ? (response.selected_option as string) : null,
-            correctAnswer: question.correct_answer as string | null,
-            isCorrect: response ? (response.is_correct as boolean) : false,
-            points: response?.is_correct ? (question.points ?? 1) : 0,
-          };
-        })
-        .sort((a: any, b: any) => a.matchId - b.matchId);
-
       return {
         ...player,
         avatarColor: participant?.avatar_color || '#666',
@@ -141,7 +109,6 @@ export async function GET() {
         hatedTeams,
         profitableTeams,
         predictionHistory,
-        bonusHistory,
       };
     });
 
