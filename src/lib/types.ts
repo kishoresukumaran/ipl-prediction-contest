@@ -25,7 +25,6 @@ export interface Prediction {
   match_id: number;
   participant_id: string;
   predicted_team: string;
-  prediction_time: string | null;
 }
 
 export interface Joker {
@@ -49,22 +48,6 @@ export interface TriviaResponse {
   is_correct: boolean;
 }
 
-export interface BonusQuestion {
-  id: number;
-  match_id: number;
-  question: string;
-  options: string[];
-  correct_answer: string | null;
-  points: number;
-}
-
-export interface BonusResponse {
-  id: number;
-  bonus_question_id: number;
-  participant_id: string;
-  selected_option: string;
-  is_correct: boolean;
-}
 
 export interface StreakInfo {
   start: number; // match id
@@ -83,7 +66,6 @@ export interface PlayerPointsBreakdown {
   doubleHeaderBonus: number;
   streakBonus: number;
   triviaPoints: number;
-  bonusPoints: number;
   correctPredictions: number;
   totalPredictions: number;
   accuracy: number;
@@ -109,6 +91,5 @@ export interface InsightsData {
   pointsRace: { matchId: number; matchDate: string; [playerId: string]: number | string }[];
   teamPopularity: { team: string; correct: number; wrong: number; total: number }[];
   accuracyByPlayer: { id: string; name: string; accuracy: number; correct: number; total: number }[];
-  predictionTimings: { id: string; name: string; avgMinutesBefore: number }[];
   weeklyPoints: { week: string; [playerId: string]: number | string }[];
 }

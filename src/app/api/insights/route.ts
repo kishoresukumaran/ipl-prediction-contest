@@ -3,39 +3,33 @@ import { supabase } from '@/lib/supabase';
 import { calculateAllPlayerPoints } from '@/lib/scoring';
 import { PARTICIPANTS, TEAMS, POINTS_CONFIG, getMatchPoints } from '@/lib/constants';
 import { Match, Prediction } from '@/lib/types';
-import { isPredictionLate } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const [matchesRes, predictionsRes, jokersRes, triviaRes, bonusQRes, bonusRRes] = await Promise.all([
+    const [matchesRes, predictionsRes, jokersRes, triviaRes] = await Promise.all([
       supabase.from('matches').select('*').order('match_date').order('start_time'),
       supabase.from('predictions').select('*'),
       supabase.from('jokers').select('*'),
       supabase.from('trivia_responses').select('*'),
-      supabase.from('bonus_questions').select('*'),
-      supabase.from('bonus_responses').select('*'),
     ]);
 
     const matches: Match[] = matchesRes.data || [];
     const predictions: Prediction[] = predictionsRes.data || [];
     const jokers = jokersRes.data || [];
     const triviaResponses = triviaRes.data || [];
-    const bonusQuestions = bonusQRes.data || [];
-    const bonusResponses = bonusRRes.data || [];
 
-    const leaderboard = calculateAllPlayerPoints(PARTICIPANTS, { matches, predictions, jokers, triviaResponses, bonusQuestions, bonusResponses });
+    const leaderboard = calculateAllPlayerPoints(PARTICIPANTS, { matches, predictions, jokers, triviaResponses });
     const completedMatches = matches.filter(m => m.is_completed && m.winner);
 
-    const pointsRace = buildPointsRace(completedMatches, predictions, jokers, triviaResponses, bonusQuestions, bonusResponses);
+    const pointsRace = buildPointsRace(completedMatches, predictions, jokers, triviaResponses);
     const teamPopularity = buildTeamPopularity(completedMatches, predictions);
     const accuracyByPlayer = leaderboard.map(p => ({
       id: p.participantId, name: p.participantName,
       accuracy: p.accuracy, correct: p.correctPredictions, total: p.totalPredictions,
     }));
-    const predictionTimings = buildPredictionTimings(matches, predictions);
-    const weeklyPoints = buildWeeklyPoints(completedMatches, predictions, jokers, triviaResponses, bonusQuestions, bonusResponses);
+    const weeklyPoints = buildWeeklyPoints(completedMatches, predictions, jokers, triviaResponses);
     const crowdWisdom = buildCrowdWisdom(completedMatches, predictions);
     const contrarianData = buildContrarianData(completedMatches, predictions);
     const matchDifficulty = buildMatchDifficulty(completedMatches, predictions);
@@ -52,9 +46,6 @@ export async function GET() {
       color: PARTICIPANTS.find(pp => pp.id === p.participantId)?.avatar_color || '#666',
     }));
 
-    // Bonus question accuracy per player
-    const bonusAccuracy = buildBonusAccuracy(bonusQuestions, bonusResponses);
-
     // Wall of Shame data
     const wallOfShame = buildWallOfShame(completedMatches, predictions, jokers);
 
@@ -62,16 +53,7 @@ export async function GET() {
     const copycats = buildCopycats(completedMatches, predictions);
 
     // Points matrix
-    const pointsMatrix = buildPointsMatrix(completedMatches, predictions, jokers, bonusQuestions, bonusResponses);
-
-    // Late voters
-    const lateVoters = buildLateVoters(completedMatches, predictions);
-
-    // Crowd trap: bonus questions where the majority got it wrong
-    const crowdTrap = buildCrowdTrap(bonusQuestions, bonusResponses, matches);
-
-    // Bonus matrix: per-player per-question 0/1 correctness grid
-    const bonusMatrix = buildBonusMatrix(bonusQuestions, bonusResponses);
+    const pointsMatrix = buildPointsMatrix(completedMatches, predictions, jokers);
 
     // Votes tab data
     const ghostVoters = buildGhostVoters(completedMatches, predictions);
@@ -82,10 +64,10 @@ export async function GET() {
 
     return NextResponse.json({
       leaderboard, matches, predictions, pointsRace, teamPopularity,
-      accuracyByPlayer, predictionTimings, weeklyPoints, crowdWisdom,
+      accuracyByPlayer, weeklyPoints, crowdWisdom,
       contrarianData, matchDifficulty, formData, winRateByTeam,
-      doubleHeaderData, doubleHeaderHeroes, heatmapData, streakData, bonusAccuracy, wallOfShame, copycats,
-      pointsMatrix, lateVoters, crowdTrap, bonusMatrix,
+      doubleHeaderData, doubleHeaderHeroes, heatmapData, streakData, wallOfShame, copycats,
+      pointsMatrix,
       ghostVoters, teamVoteTotals, voteSplits, participationRate, homeAwayBias,
     });
   } catch (error) {
@@ -94,14 +76,14 @@ export async function GET() {
   }
 }
 
-function buildPointsRace(matches: Match[], predictions: Prediction[], jokers: any[], triviaResponses: any[], bonusQuestions: any[] = [], bonusResponses: any[] = []) {
+function buildPointsRace(matches: Match[], predictions: Prediction[], jokers: any[], triviaResponses: any[]) {
   const result: any[] = [];
   for (let i = 1; i <= matches.length; i++) {
     const subMatches = matches.slice(0, i);
     const matchIds = new Set(subMatches.map(m => m.id));
     const subPredictions = predictions.filter(p => matchIds.has(p.match_id));
     const scores = calculateAllPlayerPoints(PARTICIPANTS, {
-      matches: subMatches, predictions: subPredictions, jokers, triviaResponses, bonusQuestions, bonusResponses,
+      matches: subMatches, predictions: subPredictions, jokers, triviaResponses,
     });
     const entry: any = { matchId: matches[i - 1].id, matchDate: matches[i - 1].match_date };
     scores.forEach(s => { entry[s.participantId] = s.totalPoints; });
@@ -124,24 +106,7 @@ function buildTeamPopularity(matches: Match[], predictions: Prediction[]) {
   });
 }
 
-function buildPredictionTimings(matches: Match[], predictions: Prediction[]) {
-  return PARTICIPANTS.map(participant => {
-    const preds = predictions.filter(p => p.participant_id === participant.id && p.prediction_time);
-    if (preds.length === 0) return { id: participant.id, name: participant.name, avgMinutesBefore: 0 };
-    let totalMinutes = 0, count = 0;
-    preds.forEach(p => {
-      const match = matches.find(m => m.id === p.match_id);
-      if (!match || !p.prediction_time) return;
-      const matchTime = new Date(`${match.match_date}T${match.start_time}:00+05:30`);
-      const predTime = new Date(p.prediction_time);
-      const diff = (matchTime.getTime() - predTime.getTime()) / 60000;
-      if (diff > 0) { totalMinutes += diff; count++; }
-    });
-    return { id: participant.id, name: participant.name, avgMinutesBefore: count > 0 ? totalMinutes / count : 0 };
-  });
-}
-
-function buildWeeklyPoints(matches: Match[], predictions: Prediction[], jokers: any[], triviaResponses: any[], bonusQuestions: any[] = [], bonusResponses: any[] = []) {
+function buildWeeklyPoints(matches: Match[], predictions: Prediction[], jokers: any[], triviaResponses: any[]) {
   const weeks: Record<string, Match[]> = {};
   matches.forEach(m => {
     const date = new Date(m.match_date);
@@ -348,105 +313,6 @@ function buildHeatmapData(matches: Match[], predictions: Prediction[]) {
   };
 }
 
-function buildBonusAccuracy(bonusQuestions: any[], bonusResponses: any[]) {
-  if (!bonusQuestions.length) return [];
-
-  return PARTICIPANTS.map(p => {
-    const responses = bonusResponses.filter((r: any) => r.participant_id === p.id);
-    const correct = responses.filter((r: any) => r.is_correct).length;
-    const total = responses.length;
-
-    // Calculate total bonus points earned
-    let points = 0;
-    responses.forEach((r: any) => {
-      if (r.is_correct) {
-        const q = bonusQuestions.find((q: any) => q.id === r.bonus_question_id);
-        points += q?.points || 1;
-      }
-    });
-
-    return {
-      name: p.name,
-      correct,
-      total,
-      accuracy: total > 0 ? (correct / total) * 100 : 0,
-      points,
-      color: p.avatar_color,
-    };
-  });
-}
-
-function buildBonusMatrix(bonusQuestions: any[], bonusResponses: any[]) {
-  if (!bonusQuestions.length) return { questions: [], matrix: {} };
-
-  const sorted = [...bonusQuestions].sort((a: any, b: any) =>
-    a.match_id !== b.match_id ? a.match_id - b.match_id : a.id - b.id
-  );
-
-  const matrix: Record<string, Record<number, number>> = {};
-  for (const p of PARTICIPANTS) {
-    matrix[p.id] = {};
-    const playerResponses = bonusResponses.filter((r: any) => r.participant_id === p.id);
-    for (const q of sorted) {
-      const response = playerResponses.find((r: any) => r.bonus_question_id === q.id);
-      matrix[p.id][q.id] = response?.is_correct ? 1 : 0;
-    }
-  }
-
-  return {
-    questions: sorted.map((q: any) => ({
-      id: q.id as number,
-      questionText: q.question as string,
-      correctAnswer: q.correct_answer as string | null,
-      matchId: q.match_id as number,
-      points: (q.points || 1) as number,
-    })),
-    matrix,
-  };
-}
-
-function buildCrowdTrap(bonusQuestions: any[], bonusResponses: any[], matches: Match[]) {
-  if (!bonusQuestions.length) return [];
-
-  const traps = bonusQuestions
-    .filter((q: any) => q.correct_answer)
-    .map((q: any) => {
-      const responses = bonusResponses.filter((r: any) => r.bonus_question_id === q.id);
-      if (responses.length === 0) return null;
-
-      const wrongResponses = responses.filter((r: any) => !r.is_correct);
-      const wrongPct = (wrongResponses.length / responses.length) * 100;
-
-      // Find most popular wrong answer
-      const wrongCounts: Record<string, number> = {};
-      wrongResponses.forEach((r: any) => {
-        wrongCounts[r.selected_option] = (wrongCounts[r.selected_option] || 0) + 1;
-      });
-      const topWrong = Object.entries(wrongCounts).sort((a, b) => b[1] - a[1])[0];
-
-      const match = matches.find((m) => m.id === q.match_id);
-
-      return {
-        questionId: q.id as number,
-        questionText: q.question as string,
-        matchId: q.match_id as number,
-        homeTeam: match?.home_team || '',
-        awayTeam: match?.away_team || '',
-        correctAnswer: q.correct_answer as string,
-        totalResponses: responses.length as number,
-        wrongCount: wrongResponses.length as number,
-        correctCount: (responses.length - wrongResponses.length) as number,
-        wrongPct,
-        mostPopularWrongAnswer: topWrong?.[0] || '',
-        mostPopularWrongCount: topWrong?.[1] || 0,
-      };
-    })
-    .filter((q): q is NonNullable<typeof q> => q !== null && q.wrongPct > 50)
-    .sort((a, b) => b.wrongPct - a.wrongPct);
-
-  return traps;
-}
-
 function buildWallOfShame(matches: Match[], predictions: Prediction[], jokers: any[]) {
   // 1. Wasted Jokers
   const wastedJokers: { name: string; matchId: number; homeTeam: string; awayTeam: string; picked: string; winner: string; color: string }[] = [];
@@ -598,9 +464,7 @@ function buildCopycats(matches: Match[], predictions: Prediction[]) {
 function buildPointsMatrix(
   matches: Match[],
   predictions: Prediction[],
-  jokers: any[],
-  bonusQuestions: any[],
-  bonusResponses: any[]
+  jokers: any[]
 ) {
   const sorted = [...matches].sort((a, b) => {
     const d = a.match_date.localeCompare(b.match_date);
@@ -618,7 +482,6 @@ function buildPointsMatrix(
     matrix[p.id] = {};
     const playerPreds = predictions.filter(pr => pr.participant_id === p.id);
     const playerJoker = jokers.find((j: any) => j.participant_id === p.id);
-    const playerBonusResponses = bonusResponses.filter((b: any) => b.participant_id === p.id);
 
     let currentStreak = 0;
     let streakStart: number | null = null;
@@ -662,15 +525,6 @@ function buildPointsMatrix(
         }
         currentStreak = 0;
         streakStart = null;
-      }
-
-      // Bonus question points for this match
-      const matchBonusQs = bonusQuestions.filter((q: any) => q.match_id === match.id);
-      for (const bq of matchBonusQs) {
-        const resp = playerBonusResponses.find((r: any) => r.bonus_question_id === bq.id);
-        if (resp && resp.is_correct) {
-          matchPoints += bq.points || 1;
-        }
       }
 
       matrix[p.id][match.id] = matchPoints;
@@ -839,45 +693,4 @@ function buildHomeAwayBias(matches: Match[], predictions: Prediction[]) {
 
   const groupAvg = groupTotalPicks > 0 ? (groupHomePicks / groupTotalPicks) * 100 : 50;
   return { players: perPlayer, groupAvg };
-}
-
-function buildLateVoters(matches: Match[], predictions: Prediction[]) {
-  const byParticipant: Record<string, {
-    id: string;
-    name: string;
-    color: string;
-    lateCount: number;
-    matches: { matchId: number; homeTeam: string; awayTeam: string; matchDate: string; minutesLate: number }[];
-  }> = {};
-
-  matches.forEach(match => {
-    predictions
-      .filter(p => p.match_id === match.id && isPredictionLate(p.prediction_time, match.match_date, match.start_time))
-      .forEach(p => {
-        if (!byParticipant[p.participant_id]) {
-          const participant = PARTICIPANTS.find(pp => pp.id === p.participant_id);
-          byParticipant[p.participant_id] = {
-            id: p.participant_id,
-            name: participant?.name || p.participant_id,
-            color: participant?.avatar_color || '#666',
-            lateCount: 0,
-            matches: [],
-          };
-        }
-        const matchStart = new Date(`${match.match_date}T${match.start_time}:00+05:30`);
-        const predTime = new Date(p.prediction_time!);
-        const minutesLate = Math.round((predTime.getTime() - matchStart.getTime()) / 60000);
-
-        byParticipant[p.participant_id].lateCount++;
-        byParticipant[p.participant_id].matches.push({
-          matchId: match.id,
-          homeTeam: match.home_team,
-          awayTeam: match.away_team,
-          matchDate: match.match_date,
-          minutesLate,
-        });
-      });
-  });
-
-  return Object.values(byParticipant).sort((a, b) => b.lateCount - a.lateCount);
 }

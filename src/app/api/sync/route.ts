@@ -16,15 +16,32 @@ interface SyncPrediction {
   joker?: boolean;
 }
 
+interface SyncTrivia {
+  id: number;
+  date?: string;
+  question: string;
+  correct_answer: string;
+}
+
+interface SyncTriviaPrediction {
+  player: string;
+  trivia_id: number;
+  prediction: string;
+}
+
 interface SyncPayload {
   matches?: SyncMatch[];
   predictions?: SyncPrediction[];
+  trivia?: SyncTrivia[];
+  trivia_predictions?: SyncTriviaPrediction[];
 }
 
 interface SyncSummary {
   matches: { updated: number; skipped: number };
   predictions: { upserted: number };
   jokers: { upserted: number };
+  trivia: { upserted: number };
+  trivia_responses: { upserted: number };
 }
 
 /**
@@ -52,6 +69,8 @@ export async function POST(request: NextRequest) {
       matches: { updated: 0, skipped: 0 },
       predictions: { upserted: 0 },
       jokers: { upserted: 0 },
+      trivia: { upserted: 0 },
+      trivia_responses: { upserted: 0 },
     };
 
     // ============ SYNC MATCHES ============
@@ -143,7 +162,6 @@ export async function POST(request: NextRequest) {
               match_id,
               participant_id: participantId,
               predicted_team: predictedTeamAbbr,
-              prediction_time: new Date().toISOString(),
             },
             { onConflict: 'match_id,participant_id' }
           );
@@ -174,6 +192,84 @@ export async function POST(request: NextRequest) {
             summary.jokers.upserted++;
           }
         }
+      }
+    }
+
+    // ============ SYNC TRIVIA ============
+    const triviaMap: Record<number, SyncTrivia> = {};
+    if (payload.trivia && Array.isArray(payload.trivia)) {
+      for (const trivia of payload.trivia) {
+        const { id, question, correct_answer } = trivia;
+
+        if (!question || question.trim() === '') {
+          continue;
+        }
+
+        triviaMap[id] = trivia;
+
+        const { error: triviaError } = await admin
+          .from('trivia')
+          .upsert(
+            {
+              id,
+              question,
+              correct_answer,
+            },
+            { onConflict: 'id' }
+          );
+
+        if (triviaError) {
+          errors.push(`Failed to upsert trivia ${id}: ${triviaError.message}`);
+        } else {
+          summary.trivia.upserted++;
+        }
+      }
+    }
+
+    // ============ SYNC TRIVIA PREDICTIONS ============
+    if (payload.trivia_predictions && Array.isArray(payload.trivia_predictions)) {
+      for (const triviaPred of payload.trivia_predictions) {
+        const { player, trivia_id, prediction } = triviaPred;
+
+        // Resolve player ID
+        const participantId = resolvePlayerId(player);
+        if (!participantId) {
+          errors.push(`Unknown player: '${player}' in trivia ${trivia_id}`);
+          continue;
+        }
+
+        // Find the trivia to get correct answer
+        const trivia = triviaMap[trivia_id];
+        if (!trivia) {
+          errors.push(`Trivia ${trivia_id} not found or has no correct answer`);
+          continue;
+        }
+
+        // Check if prediction is correct
+        const isCorrect =
+          prediction &&
+          prediction.toString().trim().toLowerCase() ===
+            trivia.correct_answer.toString().trim().toLowerCase();
+
+        // Upsert trivia response
+        const { error: triviaRespError } = await admin
+          .from('trivia_responses')
+          .upsert(
+            {
+              trivia_id,
+              participant_id: participantId,
+              response: prediction,
+              is_correct: isCorrect,
+            },
+            { onConflict: 'trivia_id,participant_id' }
+          );
+
+        if (triviaRespError) {
+          errors.push(`Failed to upsert trivia response for ${player} in trivia ${trivia_id}: ${triviaRespError.message}`);
+          continue;
+        }
+
+        summary.trivia_responses.upserted++;
       }
     }
 

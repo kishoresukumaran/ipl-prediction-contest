@@ -1,14 +1,11 @@
-import { Match, Prediction, Joker, TriviaResponse, BonusResponse, BonusQuestion, PlayerPointsBreakdown, StreakInfo } from './types';
+import { Match, Prediction, Joker, TriviaResponse, PlayerPointsBreakdown, StreakInfo } from './types';
 import { POINTS_CONFIG, getMatchPoints } from './constants';
-import { isPredictionLate } from './utils';
 
 export interface ScoringData {
   matches: Match[];
   predictions: Prediction[];
   jokers: Joker[];
   triviaResponses: TriviaResponse[];
-  bonusQuestions?: BonusQuestion[];
-  bonusResponses?: BonusResponse[];
 }
 
 export function calculatePlayerPoints(
@@ -16,7 +13,7 @@ export function calculatePlayerPoints(
   participantName: string,
   data: ScoringData
 ): PlayerPointsBreakdown {
-  const { matches, predictions, jokers, triviaResponses, bonusQuestions = [], bonusResponses = [] } = data;
+  const { matches, predictions, jokers, triviaResponses } = data;
 
   const completedMatches = matches
     .filter(m => m.is_completed && m.winner)
@@ -29,7 +26,6 @@ export function calculatePlayerPoints(
   const playerPredictions = predictions.filter(p => p.participant_id === participantId);
   const playerJoker = jokers.find(j => j.participant_id === participantId);
   const playerTriviaResponses = triviaResponses.filter(t => t.participant_id === participantId);
-  const playerBonusResponses = bonusResponses.filter(b => b.participant_id === participantId);
 
   let basePoints = 0;
   let powerMatchPoints = 0;
@@ -54,9 +50,8 @@ export function calculatePlayerPoints(
 
   for (const match of completedMatches) {
     const prediction = playerPredictions.find(p => p.match_id === match.id);
-    const isLate = prediction && isPredictionLate(prediction.prediction_time, match.match_date, match.start_time);
 
-    if (!prediction || isLate) {
+    if (!prediction) {
       if (currentStreak >= POINTS_CONFIG.minStreak) {
         streakBonus += currentStreak;
         streaks.push({ start: streakStart!, end: match.id, length: currentStreak });
@@ -118,17 +113,8 @@ export function calculatePlayerPoints(
 
   const triviaPoints = playerTriviaResponses.filter(t => t.is_correct).length * POINTS_CONFIG.triviaCorrect;
 
-  // Bonus question points
-  let bonusPoints = 0;
-  for (const response of playerBonusResponses) {
-    if (response.is_correct) {
-      const question = bonusQuestions.find(q => q.id === response.bonus_question_id);
-      bonusPoints += question?.points || 1;
-    }
-  }
-
   const totalPoints = basePoints + powerMatchPoints + underdogBonus + jokerBonus +
-    doubleHeaderBonus + streakBonus + triviaPoints + bonusPoints;
+    doubleHeaderBonus + streakBonus + triviaPoints;
 
   return {
     participantId,
@@ -141,7 +127,6 @@ export function calculatePlayerPoints(
     doubleHeaderBonus,
     streakBonus,
     triviaPoints,
-    bonusPoints,
     correctPredictions,
     totalPredictions,
     accuracy: totalPredictions > 0 ? (correctPredictions / totalPredictions) * 100 : 0,

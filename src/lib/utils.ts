@@ -49,29 +49,3 @@ export function toIrishDatetimeLocal(isoString: string): string {
   return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`;
 }
 
-/**
- * Check if a prediction was submitted after the match start time.
- * Returns false if prediction_time is null (benefit of the doubt).
- */
-export function isPredictionLate(predictionTime: string | null, matchDate: string, startTime: string): boolean {
-  if (!predictionTime) return false;
-  const matchStart = new Date(`${matchDate}T${startTime}:00+05:30`);
-  const predTime = new Date(predictionTime);
-  return predTime.getTime() > matchStart.getTime();
-}
-
-/**
- * Format a UTC/ISO prediction timestamp for display in Irish time.
- * Returns a human-readable string like "Mar 29, 2:15 PM".
- */
-export function predictionTimeToIrish(isoString: string): string {
-  const date = new Date(isoString);
-  if (isNaN(date.getTime())) return '';
-  return date.toLocaleString('en-US', {
-    timeZone: 'Europe/Dublin',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-}
