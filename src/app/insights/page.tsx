@@ -51,7 +51,7 @@ interface InsightsAPIData {
   streakData: { name: string; longestStreak: number; currentStreak: number; color: string }[];
   wallOfShame: {
     wastedJokers: { name: string; matchId: number; homeTeam: string; awayTeam: string; picked: string; winner: string; color: string }[];
-    jinxers: { name: string; pickedFavorite: number; favoriteWon: number; favoriteLost: number; jinxRate: number; color: string }[];
+    jinxers: { name: string; pickedFavorite: number; favoriteWon: number; favoriteLost: number; jinxRate: number; color: string; jinxMatches: { matchId: number; homeTeam: string; awayTeam: string; favorite: string; winner: string | null; jinxed: boolean; voteShare: number; totalVotes: number }[] }[];
     losingStreaks: { name: string; currentLosingStreak: number; longestLosingStreak: number; color: string }[];
   };
   copycats: { copier: string; copierName: string; copierColor: string; target: string; targetName: string; targetColor: string; count: number; matches: number; instances: { matchId: number; homeTeam: string; awayTeam: string; team: string; targetTime: string; copierTime: string; gapMinutes: number }[] }[];

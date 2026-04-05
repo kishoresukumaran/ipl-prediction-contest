@@ -338,6 +338,7 @@ function buildWallOfShame(matches: Match[], predictions: Prediction[], jokers: a
   const jinxers = PARTICIPANTS.map(p => {
     let pickedFavorite = 0;
     let favoriteWon = 0;
+    const jinxMatches: { matchId: number; homeTeam: string; awayTeam: string; favorite: string; winner: string | null; jinxed: boolean; voteShare: number; totalVotes: number }[] = [];
     matches.forEach(match => {
       const matchPreds = predictions.filter(pr => pr.match_id === match.id);
       const playerPred = matchPreds.find(pr => pr.participant_id === p.id);
@@ -345,9 +346,22 @@ function buildWallOfShame(matches: Match[], predictions: Prediction[], jokers: a
       const homePicks = matchPreds.filter(pr => pr.predicted_team === match.home_team).length;
       const awayPicks = matchPreds.filter(pr => pr.predicted_team === match.away_team).length;
       const favorite = homePicks >= awayPicks ? match.home_team : match.away_team;
+      const favoriteVotes = Math.max(homePicks, awayPicks);
+      const totalVotes = matchPreds.length;
       if (playerPred.predicted_team === favorite) {
         pickedFavorite++;
-        if (match.winner === favorite) favoriteWon++;
+        const won = match.winner === favorite;
+        if (won) favoriteWon++;
+        jinxMatches.push({
+          matchId: match.id,
+          homeTeam: match.home_team,
+          awayTeam: match.away_team,
+          favorite,
+          winner: match.winner || null,
+          jinxed: !won,
+          voteShare: totalVotes > 0 ? Math.round((favoriteVotes / totalVotes) * 100) : 0,
+          totalVotes,
+        });
       }
     });
     return {
@@ -357,6 +371,7 @@ function buildWallOfShame(matches: Match[], predictions: Prediction[], jokers: a
       favoriteLost: pickedFavorite - favoriteWon,
       jinxRate: pickedFavorite > 0 ? ((pickedFavorite - favoriteWon) / pickedFavorite) * 100 : 0,
       color: p.avatar_color,
+      jinxMatches,
     };
   }).filter(j => j.pickedFavorite > 0).sort((a, b) => b.jinxRate - a.jinxRate);
 
