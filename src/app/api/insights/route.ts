@@ -419,8 +419,8 @@ function buildPointsMatrix(
     matchCountByDate[m.match_date] = (matchCountByDate[m.match_date] || 0) + 1;
   });
 
-  const emptyCell = () => ({ total: 0, base: 0, underdog: 0, joker: 0, streak: 0, doubleHeader: 0 });
-  const matrix: Record<string, Record<number, { total: number; base: number; underdog: number; joker: number; streak: number; doubleHeader: number }>> = {};
+  const emptyCell = () => ({ total: 0, base: 0, powerMatch: 0, underdog: 0, joker: 0, streak: 0, doubleHeader: 0 });
+  const matrix: Record<string, Record<number, { total: number; base: number; powerMatch: number; underdog: number; joker: number; streak: number; doubleHeader: number }>> = {};
 
   for (const p of PARTICIPANTS) {
     matrix[p.id] = {};
@@ -449,7 +449,12 @@ function buildPointsMatrix(
       const isCorrect = pred.predicted_team === match.winner;
 
       if (isCorrect) {
-        cell.base = getMatchPoints(match.match_type, match.is_power_match);
+        const matchPts = getMatchPoints(match.match_type, match.is_power_match);
+        if (match.is_power_match && match.match_type === 'league') {
+          cell.powerMatch = matchPts;
+        } else {
+          cell.base = matchPts;
+        }
 
         if (match.underdog_team && pred.predicted_team === match.underdog_team) {
           cell.underdog = POINTS_CONFIG.underdogBonus;
@@ -472,7 +477,7 @@ function buildPointsMatrix(
         streakStart = null;
       }
 
-      cell.total = cell.base + cell.underdog + cell.joker + cell.streak;
+      cell.total = cell.base + cell.powerMatch + cell.underdog + cell.joker + cell.streak;
       matrix[p.id][match.id] = cell;
     }
 

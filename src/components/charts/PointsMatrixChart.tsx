@@ -15,6 +15,7 @@ interface MatrixMatch {
 interface CellBreakdown {
   total: number;
   base: number;
+  powerMatch: number;
   underdog: number;
   joker: number;
   streak: number;
@@ -29,6 +30,7 @@ interface PointsMatrixData {
 
 const BREAKDOWN_ROWS = [
   { key: 'base' as const, label: 'Base', color: 'text-blue-400 dark:text-blue-300' },
+  { key: 'powerMatch' as const, label: 'Power Match', color: 'text-orange-400 dark:text-orange-300' },
   { key: 'underdog' as const, label: 'Underdog', color: 'text-emerald-500 dark:text-emerald-300' },
   { key: 'joker' as const, label: 'Joker', color: 'text-amber-500 dark:text-amber-300' },
   { key: 'streak' as const, label: 'Streak', color: 'text-purple-500 dark:text-purple-300' },
