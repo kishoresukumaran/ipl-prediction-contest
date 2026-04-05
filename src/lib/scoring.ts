@@ -1,11 +1,11 @@
-import { Match, Prediction, Joker, TriviaResponse, PlayerPointsBreakdown, StreakInfo } from './types';
+import { Match, Prediction, Joker, TriviaPoints, PlayerPointsBreakdown, StreakInfo } from './types';
 import { POINTS_CONFIG, getMatchPoints } from './constants';
 
 export interface ScoringData {
   matches: Match[];
   predictions: Prediction[];
   jokers: Joker[];
-  triviaResponses: TriviaResponse[];
+  triviaPoints: TriviaPoints[];
 }
 
 export function calculatePlayerPoints(
@@ -13,7 +13,7 @@ export function calculatePlayerPoints(
   participantName: string,
   data: ScoringData
 ): PlayerPointsBreakdown {
-  const { matches, predictions, jokers, triviaResponses } = data;
+  const { matches, predictions, jokers, triviaPoints } = data;
 
   const completedMatches = matches
     .filter(m => m.is_completed && m.winner)
@@ -25,7 +25,7 @@ export function calculatePlayerPoints(
 
   const playerPredictions = predictions.filter(p => p.participant_id === participantId);
   const playerJoker = jokers.find(j => j.participant_id === participantId);
-  const playerTriviaResponses = triviaResponses.filter(t => t.participant_id === participantId);
+  const playerTriviaPoints = triviaPoints.filter(t => t.player === participantName);
 
   let basePoints = 0;
   let powerMatchPoints = 0;
@@ -111,10 +111,10 @@ export function calculatePlayerPoints(
     }
   }
 
-  const triviaPoints = playerTriviaResponses.filter(t => t.is_correct).length * POINTS_CONFIG.triviaCorrect;
+  const triviaPointsTotal = playerTriviaPoints.reduce((sum, t) => sum + t.points_earned, 0);
 
   const totalPoints = basePoints + powerMatchPoints + underdogBonus + jokerBonus +
-    doubleHeaderBonus + streakBonus + triviaPoints;
+    doubleHeaderBonus + streakBonus + triviaPointsTotal;
 
   return {
     participantId,
@@ -126,7 +126,7 @@ export function calculatePlayerPoints(
     jokerBonus,
     doubleHeaderBonus,
     streakBonus,
-    triviaPoints,
+    triviaPoints: triviaPointsTotal,
     correctPredictions,
     totalPredictions,
     accuracy: totalPredictions > 0 ? (correctPredictions / totalPredictions) * 100 : 0,

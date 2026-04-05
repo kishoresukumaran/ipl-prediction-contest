@@ -48,6 +48,16 @@ export interface TriviaResponse {
   is_correct: boolean;
 }
 
+export interface TriviaPoints {
+  id: number;
+  player: string;
+  trivia_id: number;
+  prediction: string;
+  correct_answer: string;
+  correct_check: number; // 1 for correct, 0 for incorrect
+  points_earned: number;
+}
+
 
 export interface StreakInfo {
   start: number; // match id

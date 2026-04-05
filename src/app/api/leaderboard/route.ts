@@ -7,11 +7,11 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const [matchesRes, predictionsRes, jokersRes, triviaRes] = await Promise.all([
+    const [matchesRes, predictionsRes, jokersRes, triviaPtsRes] = await Promise.all([
       supabase.from('matches').select('*').order('match_date').order('start_time'),
       supabase.from('predictions').select('*'),
       supabase.from('jokers').select('*'),
-      supabase.from('trivia_responses').select('*'),
+      supabase.from('trivia_points').select('*'),
     ]);
 
     if (matchesRes.error) {
@@ -23,20 +23,20 @@ export async function GET() {
     if (jokersRes.error) {
       return NextResponse.json({ error: jokersRes.error.message }, { status: 500 });
     }
-    if (triviaRes.error) {
-      return NextResponse.json({ error: triviaRes.error.message }, { status: 500 });
+    if (triviaPtsRes.error) {
+      return NextResponse.json({ error: triviaPtsRes.error.message }, { status: 500 });
     }
 
     const matches = matchesRes.data || [];
     const predictions = predictionsRes.data || [];
     const jokers = jokersRes.data || [];
-    const triviaResponses = triviaRes.data || [];
+    const triviaPoints = triviaPtsRes.data || [];
 
     const leaderboard = calculateAllPlayerPoints(PARTICIPANTS, {
       matches,
       predictions,
       jokers,
-      triviaResponses,
+      triviaPoints,
     });
 
     // Add avatar color and last 5 match results for each player

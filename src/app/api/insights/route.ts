@@ -8,28 +8,28 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const [matchesRes, predictionsRes, jokersRes, triviaRes] = await Promise.all([
+    const [matchesRes, predictionsRes, jokersRes, triviaPtsRes] = await Promise.all([
       supabase.from('matches').select('*').order('match_date').order('start_time'),
       supabase.from('predictions').select('*'),
       supabase.from('jokers').select('*'),
-      supabase.from('trivia_responses').select('*'),
+      supabase.from('trivia_points').select('*'),
     ]);
 
     const matches: Match[] = matchesRes.data || [];
     const predictions: Prediction[] = predictionsRes.data || [];
     const jokers = jokersRes.data || [];
-    const triviaResponses = triviaRes.data || [];
+    const triviaPoints = triviaPtsRes.data || [];
 
-    const leaderboard = calculateAllPlayerPoints(PARTICIPANTS, { matches, predictions, jokers, triviaResponses });
+    const leaderboard = calculateAllPlayerPoints(PARTICIPANTS, { matches, predictions, jokers, triviaPoints });
     const completedMatches = matches.filter(m => m.is_completed && m.winner);
 
-    const pointsRace = buildPointsRace(completedMatches, predictions, jokers, triviaResponses);
+    const pointsRace = buildPointsRace(completedMatches, predictions, jokers, triviaPoints);
     const teamPopularity = buildTeamPopularity(completedMatches, predictions);
     const accuracyByPlayer = leaderboard.map(p => ({
       id: p.participantId, name: p.participantName,
       accuracy: p.accuracy, correct: p.correctPredictions, total: p.totalPredictions,
     }));
-    const weeklyPoints = buildWeeklyPoints(completedMatches, predictions, jokers, triviaResponses);
+    const weeklyPoints = buildWeeklyPoints(completedMatches, predictions, jokers, triviaPoints);
     const crowdWisdom = buildCrowdWisdom(completedMatches, predictions);
     const contrarianData = buildContrarianData(completedMatches, predictions);
     const matchDifficulty = buildMatchDifficulty(completedMatches, predictions);
@@ -73,14 +73,14 @@ export async function GET() {
   }
 }
 
-function buildPointsRace(matches: Match[], predictions: Prediction[], jokers: any[], triviaResponses: any[]) {
+function buildPointsRace(matches: Match[], predictions: Prediction[], jokers: any[], triviaPoints: any[]) {
   const result: any[] = [];
   for (let i = 1; i <= matches.length; i++) {
     const subMatches = matches.slice(0, i);
     const matchIds = new Set(subMatches.map(m => m.id));
     const subPredictions = predictions.filter(p => matchIds.has(p.match_id));
     const scores = calculateAllPlayerPoints(PARTICIPANTS, {
-      matches: subMatches, predictions: subPredictions, jokers, triviaResponses,
+      matches: subMatches, predictions: subPredictions, jokers, triviaPoints,
     });
     const entry: any = { matchId: matches[i - 1].id, matchDate: matches[i - 1].match_date };
     scores.forEach(s => { entry[s.participantId] = s.totalPoints; });
@@ -103,7 +103,7 @@ function buildTeamPopularity(matches: Match[], predictions: Prediction[]) {
   });
 }
 
-function buildWeeklyPoints(matches: Match[], predictions: Prediction[], jokers: any[], triviaResponses: any[]) {
+function buildWeeklyPoints(matches: Match[], predictions: Prediction[], jokers: any[], triviaPoints: any[]) {
   const weeks: Record<string, Match[]> = {};
   matches.forEach(m => {
     const date = new Date(m.match_date);
@@ -117,7 +117,7 @@ function buildWeeklyPoints(matches: Match[], predictions: Prediction[], jokers: 
     const matchIds = new Set(weekMatches.map(m => m.id));
     const weekPreds = predictions.filter(p => matchIds.has(p.match_id));
     const scores = calculateAllPlayerPoints(PARTICIPANTS, {
-      matches: weekMatches, predictions: weekPreds, jokers: [], triviaResponses: [],
+      matches: weekMatches, predictions: weekPreds, jokers: [], triviaPoints: [],
     });
     const entry: any = { week: new Date(week).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) };
     scores.forEach(s => { entry[s.participantId] = s.totalPoints; });
