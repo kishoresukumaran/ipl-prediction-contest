@@ -57,7 +57,8 @@ interface InsightsAPIData {
   copycats: { copier: string; copierName: string; copierColor: string; target: string; targetName: string; targetColor: string; count: number; matches: number; instances: { matchId: number; homeTeam: string; awayTeam: string; team: string; targetTime: string; copierTime: string; gapMinutes: number }[] }[];
   pointsMatrix: {
     matches: { id: number; home_team: string; away_team: string; match_type: string; is_power_match: boolean }[];
-    matrix: Record<string, Record<number, number>>;
+    matrix: Record<string, Record<number, { total: number; base: number; underdog: number; joker: number; streak: number; doubleHeader: number }>>;
+    triviaByPlayer: Record<string, number>;
   };
   ghostVoters: { name: string; color: string; missedCount: number; noVoteCount: number; lateCount: number; participationRate: number; totalMatches: number; missedMatches: { matchId: number; homeTeam: string; awayTeam: string; matchDate: string; reason: 'no_vote' | 'late' }[] }[];
   teamVoteTotals: { team: string; teamName: string; color: string; textColor: string; total: number; correct: number; wrong: number; pending: number; winRate: number }[];

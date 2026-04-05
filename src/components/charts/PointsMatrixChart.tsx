@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { PARTICIPANTS } from '@/lib/constants';
 import { PlayerPointsBreakdown } from '@/lib/types';
 
@@ -12,10 +12,28 @@ interface MatrixMatch {
   is_power_match: boolean;
 }
 
+interface CellBreakdown {
+  total: number;
+  base: number;
+  underdog: number;
+  joker: number;
+  streak: number;
+  doubleHeader: number;
+}
+
 interface PointsMatrixData {
   matches: MatrixMatch[];
-  matrix: Record<string, Record<number, number>>;
+  matrix: Record<string, Record<number, CellBreakdown>>;
+  triviaByPlayer: Record<string, number>;
 }
+
+const BREAKDOWN_ROWS = [
+  { key: 'base' as const, label: 'Base', color: 'text-blue-400 dark:text-blue-300' },
+  { key: 'underdog' as const, label: 'Underdog', color: 'text-emerald-500 dark:text-emerald-300' },
+  { key: 'joker' as const, label: 'Joker', color: 'text-amber-500 dark:text-amber-300' },
+  { key: 'streak' as const, label: 'Streak', color: 'text-purple-500 dark:text-purple-300' },
+  { key: 'doubleHeader' as const, label: 'DH Bonus', color: 'text-pink-500 dark:text-pink-300' },
+] as const;
 
 function cellColor(pts: number, isDark: boolean): string {
   if (pts === 0) return '';
@@ -33,6 +51,7 @@ export function PointsMatrixChart({
   leaderboard: PlayerPointsBreakdown[];
 }) {
   const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+  const [expandedPlayer, setExpandedPlayer] = useState<string | null>(null);
 
   const sortedPlayers = useMemo(() => {
     return [...leaderboard]
@@ -59,13 +78,13 @@ export function PointsMatrixChart({
   const headerBg = 'bg-[#f0ecf6] dark:bg-[#1a1040]';
   const stickyColBg = 'bg-[#eeeaf4] dark:bg-[#1a1040]';
   const stickyColBgAlt = 'bg-[#e8e3ef] dark:bg-[#1e1348]';
+  const subRowBg = 'bg-[#f5f2fa] dark:bg-[#150e30]';
 
   return (
     <div className="relative overflow-auto rounded-lg border border-[var(--app-border)]" style={{ maxHeight: '70vh' }}>
       <table className="border-collapse text-[11px] w-max min-w-full">
         <thead className="sticky top-0 z-20">
           <tr>
-            {/* Top-left corner cell — player header */}
             <th
               className={`sticky left-0 z-30 ${headerBg} border-b-2 border-r border-[var(--app-border)] px-2 text-left text-[var(--app-text-secondary)] font-semibold`}
               style={{ minWidth: 110, verticalAlign: 'bottom', height: 90, paddingBottom: 6 }}
@@ -73,7 +92,6 @@ export function PointsMatrixChart({
               Player
             </th>
 
-            {/* Match columns — slanted headers */}
             {data.matches.map(m => (
               <th
                 key={m.id}
@@ -90,7 +108,6 @@ export function PointsMatrixChart({
               </th>
             ))}
 
-            {/* Total column */}
             <th
               className={`sticky right-0 z-30 ${headerBg} border-b-2 border-l border-[var(--app-border)] px-2 text-center text-amber-600 dark:text-amber-400 font-bold`}
               style={{ minWidth: 48, verticalAlign: 'bottom', height: 90, paddingBottom: 6 }}
@@ -104,45 +121,109 @@ export function PointsMatrixChart({
           {sortedPlayers.map((player, rowIdx) => {
             const isAlt = rowIdx % 2 !== 0;
             const rowBg = isAlt ? 'bg-[var(--app-surface-alt)]' : '';
+            const isExpanded = expandedPlayer === player.id;
+
             return (
-              <tr key={player.id} className={`${rowBg} hover:bg-[var(--app-surface-hover)] transition-colors`}>
-                {/* Sticky player name column */}
-                <td className={`sticky left-0 z-10 border-r border-[var(--app-border)] px-2 py-1.5 whitespace-nowrap ${isAlt ? stickyColBgAlt : stickyColBg}`}>
-                  <div className="flex items-center gap-1.5">
-                    <span
-                      className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
-                      style={{ backgroundColor: player.color }}
-                    >
-                      {player.name.charAt(0)}
-                    </span>
-                    <span className="text-[var(--app-text)] font-medium truncate max-w-[80px]">
-                      {player.name}
-                    </span>
-                  </div>
-                </td>
+              <Fragment key={player.id}>
+                {/* Main player row */}
+                <tr
+                  className={`${rowBg} hover:bg-[var(--app-surface-hover)] transition-colors cursor-pointer select-none`}
+                  onClick={() => setExpandedPlayer(isExpanded ? null : player.id)}
+                >
+                  <td className={`sticky left-0 z-10 border-r border-[var(--app-border)] px-2 py-1.5 whitespace-nowrap ${isAlt ? stickyColBgAlt : stickyColBg}`}>
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={`text-[9px] text-[var(--app-text-tertiary)] transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+                      >
+                        ▶
+                      </span>
+                      <span
+                        className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
+                        style={{ backgroundColor: player.color }}
+                      >
+                        {player.name.charAt(0)}
+                      </span>
+                      <span className="text-[var(--app-text)] font-medium truncate max-w-[80px]">
+                        {player.name}
+                      </span>
+                    </div>
+                  </td>
 
-                {/* Points cells */}
-                {data.matches.map(m => {
-                  const pts = data.matrix[player.id]?.[m.id] ?? 0;
-                  const colorClass = cellColor(pts, isDark);
-                  return (
-                    <td
-                      key={m.id}
-                      className={`text-center px-0 py-1.5 border-[var(--app-border)] ${colorClass} ${
-                        pts === 0 ? 'text-[var(--app-text-tertiary)]' : ''
-                      }`}
-                      style={{ minWidth: 32 }}
-                    >
-                      {pts}
-                    </td>
-                  );
-                })}
+                  {data.matches.map(m => {
+                    const cell = data.matrix[player.id]?.[m.id];
+                    const pts = cell?.total ?? 0;
+                    const colorClass = cellColor(pts, isDark);
+                    return (
+                      <td
+                        key={m.id}
+                        className={`text-center px-0 py-1.5 border-[var(--app-border)] ${colorClass} ${
+                          pts === 0 ? 'text-[var(--app-text-tertiary)]' : ''
+                        }`}
+                        style={{ minWidth: 32 }}
+                      >
+                        {pts}
+                      </td>
+                    );
+                  })}
 
-                {/* Sticky total column */}
-                <td className={`sticky right-0 z-10 border-l border-[var(--app-border)] px-2 py-1.5 text-center font-bold text-amber-600 dark:text-amber-400 ${isAlt ? stickyColBgAlt : stickyColBg}`}>
-                  {player.total}
-                </td>
-              </tr>
+                  <td className={`sticky right-0 z-10 border-l border-[var(--app-border)] px-2 py-1.5 text-center font-bold text-amber-600 dark:text-amber-400 ${isAlt ? stickyColBgAlt : stickyColBg}`}>
+                    {player.total}
+                  </td>
+                </tr>
+
+                {/* Expanded breakdown sub-rows */}
+                {isExpanded && (
+                  <>
+                    {BREAKDOWN_ROWS.map(({ key, label, color }) => {
+                      const rowTotal = data.matches.reduce((sum, m) => {
+                        const cell = data.matrix[player.id]?.[m.id];
+                        return sum + (cell?.[key] ?? 0);
+                      }, 0);
+                      return (
+                        <tr key={key} className={`${subRowBg} text-[10px]`}>
+                          <td className={`sticky left-0 z-10 border-r border-[var(--app-border)] pl-9 pr-2 py-1 whitespace-nowrap ${subRowBg}`}>
+                            <span className={`${color} font-medium`}>{label}</span>
+                          </td>
+                          {data.matches.map(m => {
+                            const val = data.matrix[player.id]?.[m.id]?.[key] ?? 0;
+                            return (
+                              <td
+                                key={m.id}
+                                className={`text-center px-0 py-1 ${val > 0 ? color : 'text-[var(--app-text-tertiary)]'}`}
+                                style={{ minWidth: 32, opacity: val > 0 ? 1 : 0.3 }}
+                              >
+                                {val > 0 ? val : '-'}
+                              </td>
+                            );
+                          })}
+                          <td className={`sticky right-0 z-10 border-l border-[var(--app-border)] px-2 py-1 text-center font-semibold ${color} ${subRowBg}`}>
+                            {rowTotal > 0 ? rowTotal : '-'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+
+                    {/* Trivia sub-row */}
+                    <tr className={`${subRowBg} text-[10px] border-b border-[var(--app-border)]`}>
+                      <td className={`sticky left-0 z-10 border-r border-[var(--app-border)] pl-9 pr-2 py-1 whitespace-nowrap ${subRowBg}`}>
+                        <span className="text-cyan-500 dark:text-cyan-300 font-medium">Trivia</span>
+                      </td>
+                      {data.matches.map(m => (
+                        <td
+                          key={m.id}
+                          className="text-center px-0 py-1 text-[var(--app-text-tertiary)]"
+                          style={{ minWidth: 32, opacity: 0.3 }}
+                        >
+                          -
+                        </td>
+                      ))}
+                      <td className={`sticky right-0 z-10 border-l border-[var(--app-border)] px-2 py-1 text-center font-semibold text-cyan-500 dark:text-cyan-300 ${subRowBg}`}>
+                        {data.triviaByPlayer?.[player.id] || '-'}
+                      </td>
+                    </tr>
+                  </>
+                )}
+              </Fragment>
             );
           })}
         </tbody>

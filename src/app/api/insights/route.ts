@@ -51,7 +51,7 @@ export async function GET() {
     const wallOfShame = buildWallOfShame(completedMatches, predictions, jokers);
 
     // Points matrix
-    const pointsMatrix = buildPointsMatrix(completedMatches, predictions, jokers);
+    const pointsMatrix = buildPointsMatrix(completedMatches, predictions, jokers, triviaPoints);
 
     // Votes tab data
     const ghostVoters = buildGhostVoters(completedMatches, predictions);
@@ -391,7 +391,8 @@ function buildWallOfShame(matches: Match[], predictions: Prediction[], jokers: a
 function buildPointsMatrix(
   matches: Match[],
   predictions: Prediction[],
-  jokers: any[]
+  jokers: any[],
+  triviaPoints: any[]
 ) {
   const sorted = [...matches].sort((a, b) => {
     const d = a.match_date.localeCompare(b.match_date);
@@ -403,7 +404,8 @@ function buildPointsMatrix(
     matchCountByDate[m.match_date] = (matchCountByDate[m.match_date] || 0) + 1;
   });
 
-  const matrix: Record<string, Record<number, number>> = {};
+  const emptyCell = () => ({ total: 0, base: 0, underdog: 0, joker: 0, streak: 0, doubleHeader: 0 });
+  const matrix: Record<string, Record<number, { total: number; base: number; underdog: number; joker: number; streak: number; doubleHeader: number }>> = {};
 
   for (const p of PARTICIPANTS) {
     matrix[p.id] = {};
@@ -415,30 +417,31 @@ function buildPointsMatrix(
     const correctByDate: Record<string, number[]> = {};
 
     for (const match of sorted) {
-      let matchPoints = 0;
+      const cell = emptyCell();
       const pred = playerPreds.find(pr => pr.match_id === match.id);
 
       if (!pred) {
         if (currentStreak >= POINTS_CONFIG.minStreak) {
-          matrix[p.id][match.id] = (matrix[p.id][match.id] || 0) + currentStreak;
+          cell.streak = currentStreak;
+          cell.total = currentStreak;
         }
         currentStreak = 0;
         streakStart = null;
-        matrix[p.id][match.id] = matrix[p.id][match.id] || 0;
+        matrix[p.id][match.id] = cell;
         continue;
       }
 
       const isCorrect = pred.predicted_team === match.winner;
 
       if (isCorrect) {
-        matchPoints += getMatchPoints(match.match_type, match.is_power_match);
+        cell.base = getMatchPoints(match.match_type, match.is_power_match);
 
         if (match.underdog_team && pred.predicted_team === match.underdog_team) {
-          matchPoints += POINTS_CONFIG.underdogBonus;
+          cell.underdog = POINTS_CONFIG.underdogBonus;
         }
 
         if (playerJoker && playerJoker.match_id === match.id) {
-          matchPoints += POINTS_CONFIG.jokerBonus;
+          cell.joker = POINTS_CONFIG.jokerBonus;
         }
 
         if (!correctByDate[match.match_date]) correctByDate[match.match_date] = [];
@@ -448,19 +451,22 @@ function buildPointsMatrix(
         if (currentStreak === 1) streakStart = match.id;
       } else {
         if (currentStreak >= POINTS_CONFIG.minStreak) {
-          matchPoints += currentStreak;
+          cell.streak = currentStreak;
         }
         currentStreak = 0;
         streakStart = null;
       }
 
-      matrix[p.id][match.id] = matchPoints;
+      cell.total = cell.base + cell.underdog + cell.joker + cell.streak;
+      matrix[p.id][match.id] = cell;
     }
 
     // Ongoing streak at the end — attribute to last match
     if (currentStreak >= POINTS_CONFIG.minStreak && sorted.length > 0) {
       const lastMatch = sorted[sorted.length - 1];
-      matrix[p.id][lastMatch.id] = (matrix[p.id][lastMatch.id] || 0) + currentStreak;
+      const cell = matrix[p.id][lastMatch.id];
+      cell.streak += currentStreak;
+      cell.total += currentStreak;
     }
 
     // Double header bonus — attribute to 2nd match of the DH day
@@ -470,10 +476,22 @@ function buildPointsMatrix(
         const dayMatches = sorted.filter(m => m.match_date === date);
         const secondMatch = dayMatches[dayMatches.length - 1];
         if (secondMatch) {
-          matrix[p.id][secondMatch.id] = (matrix[p.id][secondMatch.id] || 0) + POINTS_CONFIG.doubleHeaderBonus;
+          const cell = matrix[p.id][secondMatch.id];
+          cell.doubleHeader += POINTS_CONFIG.doubleHeaderBonus;
+          cell.total += POINTS_CONFIG.doubleHeaderBonus;
         }
       }
     }
+  }
+
+  // Build trivia totals per player (keyed by participant id)
+  const triviaByPlayer: Record<string, number> = {};
+  for (const p of PARTICIPANTS) {
+    const playerTrivia = triviaPoints.filter(
+      (tp: any) => tp.player?.toLowerCase() === p.name.toLowerCase()
+    );
+    const total = playerTrivia.reduce((sum: number, tp: any) => sum + (tp.points_earned || 0), 0);
+    if (total > 0) triviaByPlayer[p.id] = total;
   }
 
   return {
@@ -485,6 +503,7 @@ function buildPointsMatrix(
       is_power_match: m.is_power_match,
     })),
     matrix,
+    triviaByPlayer,
   };
 }
 
