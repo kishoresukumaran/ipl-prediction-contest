@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, LabelList, ResponsiveContainer, Text } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, LabelList, ResponsiveContainer } from 'recharts';
 import { PARTICIPANTS } from '@/lib/constants';
 import { PlayerPointsBreakdown } from '@/lib/types';
 import { useChartTheme } from '@/hooks/useChartTheme';
@@ -126,74 +126,62 @@ export function PowerRankingsChart({ data }: PowerRankingsChartProps) {
     );
   };
 
-  const CustomLabel = ({ x, y, width, value, index }: any) => {
+  const CustomLabel = ({ x, y, width, height, value, index }: any) => {
     const player = sorted[index];
     if (!player) return null;
-    const cx = x + width / 2;
+    const labelX = x + width + 6;
+    const cy = y + height / 2;
+    const dimmed = hasHighlight && highlighted !== player.id;
     return (
       <g>
-        {/* Point value */}
-        <text x={cx} y={y - 6} textAnchor="middle" fontSize={11} fontWeight={600} fill={hasHighlight && highlighted !== player.id ? chartTheme.axis : chartTheme.label}>
-          {value}
-        </text>
-        {/* Rank badge */}
-        <text x={cx} y={y - 20} textAnchor="middle" fontSize={9} fill={hasHighlight && highlighted !== player.id ? chartTheme.axis + '60' : chartTheme.axis}>
+        <text x={labelX} y={cy - 5} textAnchor="start" fontSize={9} fill={dimmed ? chartTheme.axis + '60' : chartTheme.axis}>
           {player.rank < 3 ? MEDAL_LABELS[player.rank] : `#${player.rank + 1}`}
+        </text>
+        <text x={labelX} y={cy + 6} textAnchor="start" fontSize={11} fontWeight={600} fill={dimmed ? chartTheme.axis : chartTheme.label}>
+          {value}
         </text>
       </g>
     );
   };
 
-  const BAR_PX = 48;
-  const chartWidth = Math.max(sorted.length * BAR_PX + 40, 480);
-
-  const AngledXTick = ({ x, y, payload }: any) => (
-    <Text
-      x={x}
-      y={y + 6}
-      textAnchor="end"
-      angle={-35}
-      fontSize={10}
-      fill={chartTheme.axis}
-      style={{ userSelect: 'none' }}
-    >
-      {payload.value}
-    </Text>
-  );
+  const chartHeight = Math.max(sorted.length * 36 + 60, 200);
 
   return (
     <div>
-      {/* Horizontally scrollable chart */}
-      <div className="overflow-x-auto -mx-1 px-1 scrollbar-hide">
-        <div style={{ minWidth: chartWidth, height: 360 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={sorted} margin={{ top: 36, right: 16, left: -20, bottom: 48 }} barCategoryGap="20%">
-              <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} vertical={false} />
-              <XAxis
-                dataKey="name"
-                stroke={chartTheme.axis}
-                tick={<AngledXTick />}
-                interval={0}
-                height={56}
-              />
-              <YAxis stroke={chartTheme.axis} tick={{ fontSize: 11 }} />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
-              <Bar dataKey="totalPoints" radius={[4, 4, 0, 0]}>
-                {sorted.map((p, i) => (
-                  <Cell
-                    key={p.id}
-                    fill={barFill(p.color, i, highlighted === p.id, hasHighlight)}
-                    stroke={i < 3 ? MEDAL_COLORS[i] : 'transparent'}
-                    strokeWidth={i < 3 ? 2 : 0}
-                    style={{ cursor: 'pointer', transition: 'opacity 0.2s' }}
-                    onClick={() => setHighlighted(prev => prev === p.id ? null : p.id)}
-                  />
-                ))}
-                <LabelList content={<CustomLabel />} />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+      <div style={{ height: chartHeight }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            layout="vertical"
+            data={sorted}
+            margin={{ top: 8, right: 64, left: 8, bottom: 8 }}
+            barCategoryGap="25%"
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} horizontal={false} />
+            <XAxis type="number" stroke={chartTheme.axis} tick={{ fontSize: 11 }} />
+            <YAxis
+              type="category"
+              dataKey="name"
+              stroke={chartTheme.axis}
+              tick={{ fontSize: 11, fill: chartTheme.axis }}
+              width={80}
+              interval={0}
+            />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+            <Bar dataKey="totalPoints" radius={[0, 4, 4, 0]}>
+              {sorted.map((p, i) => (
+                <Cell
+                  key={p.id}
+                  fill={barFill(p.color, i, highlighted === p.id, hasHighlight)}
+                  stroke={i < 3 ? MEDAL_COLORS[i] : 'transparent'}
+                  strokeWidth={i < 3 ? 2 : 0}
+                  style={{ cursor: 'pointer', transition: 'opacity 0.2s' }}
+                  onClick={() => setHighlighted(prev => prev === p.id ? null : p.id)}
+                />
+              ))}
+              <LabelList content={<CustomLabel />} />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
       </div>
 
       {/* Player legend pills */}
