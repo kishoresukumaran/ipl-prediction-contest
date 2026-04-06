@@ -179,6 +179,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
             <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-400/20 text-slate-400 text-sm font-bold">
               Match Abandoned
             </span>
+            <p className="mt-2 text-xs text-slate-400">Everyone gets +2 points</p>
           </div>
         )}
         {match.is_completed && match.winner && match.winner !== 'ABANDONED' && (
