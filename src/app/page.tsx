@@ -369,7 +369,11 @@ export default function Home() {
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    {match.is_completed && match.winner ? (
+                    {match.is_completed && match.winner === 'ABANDONED' ? (
+                      <span className="text-xs font-bold text-slate-400">
+                        Abandoned
+                      </span>
+                    ) : match.is_completed && match.winner ? (
                       <span className="text-xs font-bold text-emerald-400">
                         {match.winner} won
                       </span>
@@ -560,11 +564,15 @@ export default function Home() {
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span
-                      className="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/20 text-emerald-400"
-                    >
-                      {match.winner}
-                    </span>
+                    {match.winner === 'ABANDONED' ? (
+                      <span className="px-2 py-0.5 rounded text-xs font-bold bg-slate-400/20 text-slate-400">
+                        Abandoned
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/20 text-emerald-400">
+                        {match.winner}
+                      </span>
+                    )}
                     <ChevronRight className="h-3 w-3 text-[var(--app-text-tertiary)]" />
                   </div>
                 </div>
