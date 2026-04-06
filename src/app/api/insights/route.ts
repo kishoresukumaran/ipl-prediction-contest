@@ -98,6 +98,8 @@ function buildTeamPopularity(matches: Match[], predictions: Prediction[]) {
       if (p.predicted_team !== team) return;
       const match = matches.find(m => m.id === p.match_id);
       if (!match) return;
+      // Skip abandoned matches from accuracy calculation
+      if (match.winner === 'ABANDONED') return;
       if (match.winner === team) correct++; else wrong++;
     });
     return { team, correct, wrong, total: correct + wrong };
@@ -127,8 +129,9 @@ function buildWeeklyPoints(matches: Match[], predictions: Prediction[], jokers: 
 }
 
 function buildCrowdWisdom(matches: Match[], predictions: Prediction[]) {
+  const nonAbandonedMatches = matches.filter(m => m.winner !== 'ABANDONED');
   let runningCorrect = 0;
-  return matches.map((match, i) => {
+  return nonAbandonedMatches.map((match, i) => {
     const matchPreds = predictions.filter(p => p.match_id === match.id);
     const homePicks = matchPreds.filter(p => p.predicted_team === match.home_team).length;
     const awayPicks = matchPreds.filter(p => p.predicted_team === match.away_team).length;
@@ -141,9 +144,10 @@ function buildCrowdWisdom(matches: Match[], predictions: Prediction[]) {
 }
 
 function buildContrarianData(matches: Match[], predictions: Prediction[]) {
+  const nonAbandonedMatches = matches.filter(m => m.winner !== 'ABANDONED');
   return PARTICIPANTS.map(p => {
     let contrarianPicks = 0, contrarianCorrect = 0, totalPreds = 0;
-    matches.forEach(match => {
+    nonAbandonedMatches.forEach(match => {
       const matchPreds = predictions.filter(pr => pr.match_id === match.id);
       const playerPred = matchPreds.find(pr => pr.participant_id === p.id);
       if (!playerPred) return;
@@ -166,7 +170,8 @@ function buildContrarianData(matches: Match[], predictions: Prediction[]) {
 }
 
 function buildMatchDifficulty(matches: Match[], predictions: Prediction[]) {
-  return matches.map(match => {
+  const nonAbandonedMatches = matches.filter(m => m.winner !== 'ABANDONED');
+  return nonAbandonedMatches.map(match => {
     const matchPreds = predictions.filter(p => p.match_id === match.id);
     const correct = matchPreds.filter(p => p.predicted_team === match.winner).length;
     return {
@@ -179,11 +184,12 @@ function buildMatchDifficulty(matches: Match[], predictions: Prediction[]) {
 
 function buildFormData(matches: Match[], predictions: Prediction[]) {
   const windowSize = 5;
-  return matches.map((_, i) => {
-    const entry: any = { matchId: matches[i].id };
+  const nonAbandonedMatches = matches.filter(m => m.winner !== 'ABANDONED');
+  return nonAbandonedMatches.map((_, i) => {
+    const entry: any = { matchId: nonAbandonedMatches[i].id };
     PARTICIPANTS.forEach(p => {
       const start = Math.max(0, i - windowSize + 1);
-      const window = matches.slice(start, i + 1);
+      const window = nonAbandonedMatches.slice(start, i + 1);
       let correct = 0, total = 0;
       window.forEach(m => {
         const pred = predictions.find(pr => pr.match_id === m.id && pr.participant_id === p.id);
@@ -205,7 +211,8 @@ function buildWinRateByTeam(matches: Match[], predictions: Prediction[]) {
       let correct = 0;
       preds.forEach(pr => {
         const match = matches.find(m => m.id === pr.match_id);
-        if (match && match.winner === team) correct++;
+        // Skip abandoned matches from win rate calculation
+        if (match && match.winner !== 'ABANDONED' && match.winner === team) correct++;
       });
       data[p.id][team] = { correct, total: preds.length, rate: preds.length > 0 ? (correct / preds.length) * 100 : 0 };
     });
@@ -294,19 +301,29 @@ function buildDoubleHeaderHeroes(matches: Match[], predictions: Prediction[]) {
 
 function buildHeatmapData(matches: Match[], predictions: Prediction[]) {
   const relevantMatches = matches.filter(m => m.is_completed || predictions.some(p => p.match_id === m.id));
-  const predMap: Record<string, Record<number, { predicted: string; correct: boolean | null }>> = {};
+  const predMap: Record<string, Record<number, { predicted: string; correct: boolean | null | 'abandoned' }>> = {};
   PARTICIPANTS.forEach(p => {
     predMap[p.id] = {};
     relevantMatches.forEach(m => {
       const pred = predictions.find(pr => pr.match_id === m.id && pr.participant_id === p.id);
       if (pred) {
-        predMap[p.id][m.id] = { predicted: pred.predicted_team, correct: m.is_completed ? pred.predicted_team === m.winner : null };
+        let correct: boolean | null | 'abandoned';
+        if (m.is_completed) {
+          if (m.winner === 'ABANDONED') {
+            correct = 'abandoned';
+          } else {
+            correct = pred.predicted_team === m.winner;
+          }
+        } else {
+          correct = null;
+        }
+        predMap[p.id][m.id] = { predicted: pred.predicted_team, correct };
       }
     });
   });
   return {
     participants: PARTICIPANTS.map(p => ({ id: p.id, name: p.name })),
-    matches: relevantMatches.map(m => ({ id: m.id, home_team: m.home_team, away_team: m.away_team })),
+    matches: relevantMatches.map(m => ({ id: m.id, home_team: m.home_team, away_team: m.away_team, is_abandoned: m.winner === 'ABANDONED' })),
     predictions: predMap,
   };
 }
@@ -318,6 +335,8 @@ function buildWallOfShame(matches: Match[], predictions: Prediction[], jokers: a
     if (!j.match_id) return;
     const match = matches.find(m => m.id === j.match_id);
     if (!match || !match.is_completed) return;
+    // Skip abandoned matches (joker is invalidated, not wasted)
+    if (match.winner === 'ABANDONED') return;
     const pred = predictions.find(p => p.match_id === j.match_id && p.participant_id === j.participant_id);
     if (!pred) return;
     if (pred.predicted_team !== match.winner) {
@@ -403,12 +422,27 @@ function buildWallOfShame(matches: Match[], predictions: Prediction[], jokers: a
   return { wastedJokers, jinxers, losingStreaks };
 }
 
+interface CellData {
+  total: number;
+  base: number;
+  powerMatch: number;
+  underdog: number;
+  joker: number;
+  streak: number;
+  doubleHeader: number;
+  abandoned: number;
+}
+
 function buildPointsMatrix(
   matches: Match[],
   predictions: Prediction[],
   jokers: any[],
   triviaPoints: any[]
-) {
+): {
+  matches: Array<{ id: number; home_team: string; away_team: string; match_type: string; is_power_match: boolean; is_abandoned: boolean }>;
+  matrix: Record<string, Record<number, CellData>>;
+  triviaByPlayer: Record<string, number>;
+} {
   const sorted = [...matches].sort((a, b) => {
     const d = a.match_date.localeCompare(b.match_date);
     return d !== 0 ? d : a.start_time.localeCompare(b.start_time);
@@ -419,8 +453,8 @@ function buildPointsMatrix(
     matchCountByDate[m.match_date] = (matchCountByDate[m.match_date] || 0) + 1;
   });
 
-  const emptyCell = () => ({ total: 0, base: 0, powerMatch: 0, underdog: 0, joker: 0, streak: 0, doubleHeader: 0 });
-  const matrix: Record<string, Record<number, { total: number; base: number; powerMatch: number; underdog: number; joker: number; streak: number; doubleHeader: number }>> = {};
+  const emptyCell = (): CellData => ({ total: 0, base: 0, powerMatch: 0, underdog: 0, joker: 0, streak: 0, doubleHeader: 0, abandoned: 0 });
+  const matrix: Record<string, Record<number, CellData>> = {};
 
   for (const p of PARTICIPANTS) {
     matrix[p.id] = {};
@@ -434,6 +468,22 @@ function buildPointsMatrix(
     for (const match of sorted) {
       const cell = emptyCell();
       const pred = playerPreds.find(pr => pr.match_id === match.id);
+
+      // Handle abandoned matches: all players get 2 points
+      if (match.winner === 'ABANDONED') {
+        cell.abandoned = 2;
+        cell.total = 2;
+
+        currentStreak++;
+        if (currentStreak === 1) streakStart = match.id;
+
+        // Counts as correct for double header bonus
+        if (!correctByDate[match.match_date]) correctByDate[match.match_date] = [];
+        correctByDate[match.match_date].push(match.id);
+
+        matrix[p.id][match.id] = cell;
+        continue;
+      }
 
       if (!pred) {
         if (currentStreak >= POINTS_CONFIG.minStreak) {
@@ -521,6 +571,7 @@ function buildPointsMatrix(
       away_team: m.away_team,
       match_type: m.match_type,
       is_power_match: m.is_power_match,
+      is_abandoned: m.winner === 'ABANDONED',
     })),
     matrix,
     triviaByPlayer,

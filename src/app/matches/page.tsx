@@ -70,7 +70,12 @@ function MatchCard({ match, isDoubleHeader }: { match: Match; isDoubleHeader: bo
             <span className="text-[var(--app-text-tertiary)] text-sm font-medium">vs</span>
             <TeamBadge team={match.away_team} />
           </div>
-          {match.is_completed && match.winner && (
+          {match.is_completed && match.winner === 'ABANDONED' && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-400/20 text-slate-600 dark:text-slate-400 text-xs font-bold">
+              Abandoned
+            </span>
+          )}
+          {match.is_completed && match.winner && match.winner !== 'ABANDONED' && (
             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
               <Trophy className="h-3 w-3" />
               {match.winner}

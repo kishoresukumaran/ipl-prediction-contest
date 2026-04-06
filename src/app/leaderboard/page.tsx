@@ -64,6 +64,8 @@ function Last5Dots({ results }: { results: string[] }) {
               ? 'bg-emerald-400'
               : r === 'wrong'
               ? 'bg-red-400'
+              : r === 'abandoned'
+              ? 'bg-slate-400'
               : 'bg-slate-600'
           }`}
           title={r}

@@ -88,18 +88,24 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
   const homePct = totalPicks > 0 ? (homePicks / totalPicks) * 100 : 50;
   const awayPct = totalPicks > 0 ? (awayPicks / totalPicks) * 100 : 50;
 
-  // Accuracy stats (only if completed)
-  const correctPicks = match.is_completed && match.winner
+  // Accuracy stats (only if completed, excluding abandoned matches)
+  const isAbandoned = match.is_completed && match.winner === 'ABANDONED';
+  const correctPicks = match.is_completed && match.winner && match.winner !== 'ABANDONED'
     ? predictions.filter((p) => p.predicted_team === match.winner).length
     : 0;
-  const accuracy = totalPicks > 0 && match.is_completed ? (correctPicks / totalPicks) * 100 : 0;
+  const accuracy = totalPicks > 0 && match.is_completed && !isAbandoned ? (correctPicks / totalPicks) * 100 : 0;
 
   // Enriched predictions with participant data
   const enrichedPredictions = PARTICIPANTS.map((participant) => {
     const pred = predictions.find((p) => p.participant_id === participant.id);
-    const isCorrect = match.is_completed && match.winner && pred
-      ? pred.predicted_team === match.winner
-      : null;
+    let isCorrect: boolean | null | 'abandoned' = null;
+    if (match.is_completed && match.winner && pred) {
+      if (match.winner === 'ABANDONED') {
+        isCorrect = 'abandoned';
+      } else {
+        isCorrect = pred.predicted_team === match.winner;
+      }
+    }
     return {
       ...participant,
       predictedTeam: pred?.predicted_team || null,
@@ -168,7 +174,14 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
         </div>
 
         {/* Result */}
-        {match.is_completed && match.winner && (
+        {match.is_completed && match.winner === 'ABANDONED' && (
+          <div className="text-center mb-4">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-400/20 text-slate-400 text-sm font-bold">
+              Match Abandoned
+            </span>
+          </div>
+        )}
+        {match.is_completed && match.winner && match.winner !== 'ABANDONED' && (
           <div className="text-center mb-4">
             <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/20 text-emerald-400 text-sm font-bold">
               <Trophy className="h-4 w-4" />
@@ -237,7 +250,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
             />
           </div>
 
-          {match.is_completed && (
+          {match.is_completed && !isAbandoned && (
             <div className="flex items-center justify-between mt-3 pt-3 border-t border-[var(--app-border)]">
               <span className="text-xs text-[var(--app-text-secondary)]">Group Accuracy</span>
               <span className="text-sm font-bold text-emerald-400">{accuracy.toFixed(0)}%</span>
@@ -308,7 +321,9 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
                     <span className="text-xs text-[var(--app-text-tertiary)] italic">No pick</span>
                   )}
                   {match.is_completed && match.winner && pred.predictedTeam && (
-                    pred.isCorrect ? (
+                    pred.isCorrect === 'abandoned' ? (
+                      <span className="text-xs text-slate-400 font-medium">~</span>
+                    ) : pred.isCorrect ? (
                       <CheckCircle className="h-4 w-4 text-emerald-400" />
                     ) : (
                       <XCircle className="h-4 w-4 text-red-400" />

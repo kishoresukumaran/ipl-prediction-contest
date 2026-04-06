@@ -5,8 +5,8 @@ import { TEAMS } from '@/lib/constants';
 
 interface HeatmapData {
   participants: { id: string; name: string }[];
-  matches: { id: number; home_team: string; away_team: string }[];
-  predictions: Record<string, Record<number, { predicted: string; correct: boolean | null }>>;
+  matches: { id: number; home_team: string; away_team: string; is_abandoned?: boolean }[];
+  predictions: Record<string, Record<number, { predicted: string; correct: boolean | null | 'abandoned' }>>;
 }
 
 export function PredictionHeatmap({ data }: { data: HeatmapData }) {
@@ -70,12 +70,13 @@ export function PredictionHeatmap({ data }: { data: HeatmapData }) {
                 const pred = data.predictions[p.id]?.[m.id];
                 let bgColor = 'bg-slate-200 dark:bg-slate-800'; // no prediction
                 if (pred) {
-                  if (pred.correct === true) bgColor = 'bg-emerald-500';
+                  if (pred.correct === 'abandoned') bgColor = 'bg-slate-400 dark:bg-slate-600';
+                  else if (pred.correct === true) bgColor = 'bg-emerald-500';
                   else if (pred.correct === false) bgColor = 'bg-red-500';
                   else bgColor = 'bg-amber-500/50'; // pending
                 }
                 const detail = pred
-                  ? `Picked ${pred.predicted}${pred.correct === true ? ' ✓' : pred.correct === false ? ' ✗' : ' (pending)'}`
+                  ? `Picked ${pred.predicted}${pred.correct === 'abandoned' ? ' (abandoned)' : pred.correct === true ? ' ✓' : pred.correct === false ? ' ✗' : ' (pending)'}`
                   : 'No prediction';
                 const tipText = `${p.name} - Match #${m.id} (${m.home_team} v ${m.away_team}): ${detail}`;
                 return (
@@ -94,6 +95,7 @@ export function PredictionHeatmap({ data }: { data: HeatmapData }) {
           <div className="flex gap-4 mt-3 text-[10px] text-[var(--app-text-secondary)]">
             <span className="flex items-center gap-1"><span className="w-3 h-3 bg-emerald-500 rounded-sm" /> Correct</span>
             <span className="flex items-center gap-1"><span className="w-3 h-3 bg-red-500 rounded-sm" /> Wrong</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-slate-400 dark:bg-slate-600 rounded-sm" /> Abandoned</span>
             <span className="flex items-center gap-1"><span className="w-3 h-3 bg-amber-500/50 rounded-sm" /> Pending</span>
             <span className="flex items-center gap-1"><span className="w-3 h-3 bg-slate-200 dark:bg-slate-800 rounded-sm" /> None</span>
           </div>
@@ -106,7 +108,7 @@ export function PredictionHeatmap({ data }: { data: HeatmapData }) {
 function getAccuracy(participantId: string, data: HeatmapData): number {
   const preds = data.predictions[participantId];
   if (!preds) return 0;
-  const entries = Object.values(preds).filter(p => p.correct !== null);
+  const entries = Object.values(preds).filter(p => p.correct !== null && p.correct !== 'abandoned');
   if (entries.length === 0) return 0;
-  return entries.filter(p => p.correct).length / entries.length;
+  return entries.filter(p => p.correct === true).length / entries.length;
 }

@@ -27,7 +27,7 @@ interface PredictionHistoryItem {
   awayTeam: string;
   winner: string | null;
   predictedTeam: string | null;
-  isCorrect: boolean;
+  isCorrect: boolean | 'abandoned';
   predictionTime: string | null;
 }
 
@@ -344,7 +344,9 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
                 <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-[var(--app-surface)] transition-all">
                   <div className="shrink-0">
                     {ph.predictedTeam ? (
-                      ph.isCorrect ? (
+                      ph.isCorrect === 'abandoned' ? (
+                        <span className="text-sm text-slate-400 font-medium">~</span>
+                      ) : ph.isCorrect ? (
                         <CheckCircle className="h-5 w-5 text-emerald-400" />
                       ) : (
                         <XCircle className="h-5 w-5 text-red-400" />

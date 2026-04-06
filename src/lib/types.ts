@@ -75,6 +75,7 @@ export interface PlayerPointsBreakdown {
   jokerBonus: number;
   doubleHeaderBonus: number;
   streakBonus: number;
+  abandonedPoints: number;
   triviaPoints: number;
   correctPredictions: number;
   totalPredictions: number;

@@ -48,7 +48,7 @@ interface InsightsAPIData {
   winRateByTeam: { participants: { id: string; name: string }[]; teams: string[]; data: Record<string, Record<string, { correct: number; total: number; rate: number }>> };
   doubleHeaderData: { name: string; totalDoubleHeaders: number; bothCorrect: number; successRate: number; color: string }[];
   doubleHeaderHeroes: { name: string; color: string; totalDays: number; sweptDays: number; totalBonusPoints: number; successRate: number; instances: { date: string; matches: { matchId: number; homeTeam: string; awayTeam: string; predicted: string; winner: string; correct: boolean }[]; swept: boolean }[] }[];
-  heatmapData: { participants: { id: string; name: string }[]; matches: { id: number; home_team: string; away_team: string }[]; predictions: Record<string, Record<number, { predicted: string; correct: boolean | null }>> };
+  heatmapData: { participants: { id: string; name: string }[]; matches: { id: number; home_team: string; away_team: string; is_abandoned?: boolean }[]; predictions: Record<string, Record<number, { predicted: string; correct: boolean | null | 'abandoned' }>> };
   streakData: { name: string; longestStreak: number; currentStreak: number; color: string }[];
   wallOfShame: {
     wastedJokers: { name: string; matchId: number; homeTeam: string; awayTeam: string; picked: string; winner: string; color: string }[];
@@ -57,8 +57,8 @@ interface InsightsAPIData {
   };
   copycats: { copier: string; copierName: string; copierColor: string; target: string; targetName: string; targetColor: string; count: number; matches: number; instances: { matchId: number; homeTeam: string; awayTeam: string; team: string; targetTime: string; copierTime: string; gapMinutes: number }[] }[];
   pointsMatrix: {
-    matches: { id: number; home_team: string; away_team: string; match_type: string; is_power_match: boolean }[];
-    matrix: Record<string, Record<number, { total: number; base: number; powerMatch: number; underdog: number; joker: number; streak: number; doubleHeader: number }>>;
+    matches: { id: number; home_team: string; away_team: string; match_type: string; is_power_match: boolean; is_abandoned?: boolean }[];
+    matrix: Record<string, Record<number, { total: number; base: number; powerMatch: number; underdog: number; joker: number; streak: number; doubleHeader: number; abandoned: number }>>;
     triviaByPlayer: Record<string, number>;
   };
   ghostVoters: { name: string; color: string; missedCount: number; noVoteCount: number; lateCount: number; participationRate: number; totalMatches: number; missedMatches: { matchId: number; homeTeam: string; awayTeam: string; matchDate: string; reason: 'no_vote' | 'late' }[] }[];

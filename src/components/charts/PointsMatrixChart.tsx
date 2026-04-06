@@ -10,6 +10,7 @@ interface MatrixMatch {
   away_team: string;
   match_type: string;
   is_power_match: boolean;
+  is_abandoned?: boolean;
 }
 
 interface CellBreakdown {
@@ -20,6 +21,7 @@ interface CellBreakdown {
   joker: number;
   streak: number;
   doubleHeader: number;
+  abandoned: number;
 }
 
 interface PointsMatrixData {
@@ -35,6 +37,7 @@ const BREAKDOWN_ROWS = [
   { key: 'joker' as const, label: 'Joker', color: 'text-amber-500 dark:text-amber-300' },
   { key: 'streak' as const, label: 'Streak', color: 'text-purple-500 dark:text-purple-300' },
   { key: 'doubleHeader' as const, label: 'DH Bonus', color: 'text-pink-500 dark:text-pink-300' },
+  { key: 'abandoned' as const, label: 'Abandoned', color: 'text-slate-500 dark:text-slate-400' },
 ] as const;
 
 function cellColor(pts: number, isDark: boolean): string {
@@ -104,7 +107,9 @@ export function PointsMatrixChart({
                   className="absolute bottom-2 left-[50%] origin-bottom-left whitespace-nowrap"
                   style={{ transform: 'rotate(-55deg) translateX(-2px)', fontSize: 9, lineHeight: 1.2 }}
                 >
-                  <span className="font-bold text-[var(--app-text)]">#{m.id}</span>{' '}
+                  <span className="font-bold text-[var(--app-text)]">#{m.id}</span>
+                  {m.is_abandoned && <span className="ml-1 inline-block px-1 py-0 bg-slate-400/30 rounded text-[8px] text-slate-600 dark:text-slate-400 font-semibold">A</span>}
+                  {' '}
                   <span className="text-[var(--app-text-tertiary)]">{m.home_team} v {m.away_team}</span>
                 </div>
               </th>

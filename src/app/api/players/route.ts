@@ -65,6 +65,14 @@ export async function GET() {
 
       const predictionHistory = completedMatches.map((match) => {
         const pred = playerPreds.find((p) => p.match_id === match.id);
+        let isCorrect: boolean | 'abandoned' = false;
+        if (pred) {
+          if (match.winner === 'ABANDONED') {
+            isCorrect = 'abandoned';
+          } else {
+            isCorrect = pred.predicted_team === match.winner;
+          }
+        }
         return {
           matchId: match.id,
           matchDate: match.match_date,
@@ -72,7 +80,7 @@ export async function GET() {
           awayTeam: match.away_team,
           winner: match.winner,
           predictedTeam: pred?.predicted_team || null,
-          isCorrect: pred ? pred.predicted_team === match.winner : false,
+          isCorrect,
         };
       });
 

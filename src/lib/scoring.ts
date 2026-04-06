@@ -33,6 +33,7 @@ export function calculatePlayerPoints(
   let jokerBonus = 0;
   let streakBonus = 0;
   let doubleHeaderBonus = 0;
+  let abandonedPoints = 0;
   let correctPredictions = 0;
   let totalPredictions = 0;
 
@@ -49,6 +50,21 @@ export function calculatePlayerPoints(
   }
 
   for (const match of completedMatches) {
+    // Handle abandoned matches: all players get 2 points, streak advances, counts for double header
+    if (match.winner === 'ABANDONED') {
+      abandonedPoints += 2;
+
+      currentStreak++;
+      if (currentStreak === 1) streakStart = match.id;
+      if (currentStreak > longestStreak) longestStreak = currentStreak;
+
+      // Also counts as "correct" for double header bonus
+      if (!correctByDate[match.match_date]) correctByDate[match.match_date] = [];
+      correctByDate[match.match_date].push(match.id);
+
+      continue;
+    }
+
     const prediction = playerPredictions.find(p => p.match_id === match.id);
 
     if (!prediction) {
@@ -114,7 +130,7 @@ export function calculatePlayerPoints(
   const triviaPointsTotal = playerTriviaPoints.reduce((sum, t) => sum + t.points_earned, 0);
 
   const totalPoints = basePoints + powerMatchPoints + underdogBonus + jokerBonus +
-    doubleHeaderBonus + streakBonus + triviaPointsTotal;
+    doubleHeaderBonus + streakBonus + abandonedPoints + triviaPointsTotal;
 
   return {
     participantId,
@@ -126,6 +142,7 @@ export function calculatePlayerPoints(
     jokerBonus,
     doubleHeaderBonus,
     streakBonus,
+    abandonedPoints,
     triviaPoints: triviaPointsTotal,
     correctPredictions,
     totalPredictions,

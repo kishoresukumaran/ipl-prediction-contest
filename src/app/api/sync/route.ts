@@ -78,12 +78,18 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // Resolve team abbreviation
-        const winnerAbbr = TEAM_NAME_TO_ABBR[winner];
-        if (!winnerAbbr) {
-          errors.push(`Unknown team: '${winner}' for match ${id}`);
-          summary.matches.skipped++;
-          continue;
+        // Check if match is abandoned
+        let winnerAbbr: string;
+        if (winner.toLowerCase() === 'abandoned') {
+          winnerAbbr = 'ABANDONED';
+        } else {
+          // Resolve team abbreviation
+          winnerAbbr = TEAM_NAME_TO_ABBR[winner];
+          if (!winnerAbbr) {
+            errors.push(`Unknown team: '${winner}' for match ${id}`);
+            summary.matches.skipped++;
+            continue;
+          }
         }
 
         // Resolve underdog team if provided
@@ -145,11 +151,17 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // Resolve predicted team
-        const predictedTeamAbbr = TEAM_NAME_TO_ABBR[prediction];
-        if (!predictedTeamAbbr) {
-          errors.push(`Unknown team: '${prediction}' predicted by ${player} in match ${match_id}`);
-          continue;
+        // Check if prediction is abandoned
+        let predictedTeamAbbr: string;
+        if (prediction.toLowerCase() === 'abandoned') {
+          predictedTeamAbbr = 'ABANDONED';
+        } else {
+          // Resolve predicted team
+          predictedTeamAbbr = TEAM_NAME_TO_ABBR[prediction];
+          if (!predictedTeamAbbr) {
+            errors.push(`Unknown team: '${prediction}' predicted by ${player} in match ${match_id}`);
+            continue;
+          }
         }
 
         // Upsert prediction

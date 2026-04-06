@@ -54,10 +54,11 @@ export async function GET() {
       const participant = PARTICIPANTS.find((p) => p.id === player.participantId);
       const playerPreds = predictions.filter((p) => p.participant_id === player.participantId);
 
-      // Last 5 completed matches result (correct/wrong/no prediction)
+      // Last 5 completed matches result (correct/wrong/abandoned/no prediction)
       const last5 = completedMatches.slice(-5).map((match) => {
         const pred = playerPreds.find((p) => p.match_id === match.id);
         if (!pred) return 'none';
+        if (match.winner === 'ABANDONED') return 'abandoned';
         return pred.predicted_team === match.winner ? 'correct' : 'wrong';
       });
 
