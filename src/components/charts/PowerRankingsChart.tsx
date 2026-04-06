@@ -144,7 +144,7 @@ export function PowerRankingsChart({ data }: PowerRankingsChartProps) {
     );
   };
 
-  const chartHeight = Math.max(sorted.length * 26 + 48, 160);
+  const chartHeight = Math.max(sorted.length * 20 + 48, 140);
 
   return (
     <div>
