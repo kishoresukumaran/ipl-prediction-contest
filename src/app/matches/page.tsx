@@ -108,6 +108,7 @@ export default function MatchesPage() {
   const [matches, setMatches] = useState<Match[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
+  const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/matches')
@@ -130,16 +131,20 @@ export default function MatchesPage() {
 
   const filtered = matches
     ? matches.filter((m) => {
+        let tabMatch = true;
         switch (activeTab) {
           case 'upcoming':
-            return !m.is_completed;
+            tabMatch = !m.is_completed;
+            break;
           case 'completed':
-            return m.is_completed;
+            tabMatch = m.is_completed;
+            break;
           case 'double':
-            return doubleHeaderDates.has(m.match_date);
-          default:
-            return true;
+            tabMatch = doubleHeaderDates.has(m.match_date);
+            break;
         }
+        const teamMatch = !selectedTeam || m.home_team === selectedTeam || m.away_team === selectedTeam;
+        return tabMatch && teamMatch;
       })
     : [];
 
@@ -194,12 +199,48 @@ export default function MatchesPage() {
         ))}
       </div>
 
+      {/* Team Filter */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+        {Object.keys(TEAMS).map((abbr) => {
+          const team = TEAMS[abbr];
+          const isActive = selectedTeam === abbr;
+          return (
+            <button
+              key={abbr}
+              onClick={() => setSelectedTeam(isActive ? null : abbr)}
+              className="shrink-0 transition-all"
+              style={{
+                padding: '4px 10px',
+                borderRadius: '6px',
+                fontSize: '11px',
+                fontWeight: 700,
+                backgroundColor: team.color,
+                color: team.textColor,
+                outline: isActive ? `2px solid white` : '2px solid transparent',
+                outlineOffset: '2px',
+                opacity: selectedTeam && !isActive ? 0.45 : 1,
+              }}
+            >
+              {abbr}
+            </button>
+          );
+        })}
+        {selectedTeam && (
+          <button
+            onClick={() => setSelectedTeam(null)}
+            className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-[var(--app-surface)] border border-[var(--app-border)] text-[var(--app-text-secondary)] hover:bg-[var(--app-surface-alt)] transition-all whitespace-nowrap"
+          >
+            × Clear
+          </button>
+        )}
+      </div>
+
       {/* Match List */}
       <div className="space-y-3">
         {filtered.length === 0 ? (
           <div className="text-center py-12 text-[var(--app-text-secondary)]">
             <Calendar className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p className="text-sm">No matches found</p>
+            <p className="text-sm">No matches found{selectedTeam ? ` for ${selectedTeam}` : ''}</p>
           </div>
         ) : (
           filtered.map((match) => (
