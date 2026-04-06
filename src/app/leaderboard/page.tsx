@@ -126,6 +126,7 @@ function PointsBreakdownRow({ player }: { player: LeaderboardEntry }) {
     { label: 'Joker', value: player.jokerBonus, color: 'bg-red-400' },
     { label: 'Double', value: player.doubleHeaderBonus, color: 'bg-emerald-400' },
     { label: 'Streak', value: player.streakBonus, color: 'bg-orange-400' },
+    { label: 'Abandoned', value: player.abandonedPoints, color: 'bg-slate-400' },
     { label: 'Trivia', value: player.triviaPoints, color: 'bg-pink-400' },
   ].filter((s) => s.value > 0);
 
