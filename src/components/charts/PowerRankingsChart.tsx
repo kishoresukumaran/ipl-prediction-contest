@@ -144,7 +144,7 @@ export function PowerRankingsChart({ data }: PowerRankingsChartProps) {
     );
   };
 
-  const chartHeight = Math.max(sorted.length * 36 + 60, 200);
+  const chartHeight = Math.max(sorted.length * 26 + 48, 160);
 
   return (
     <div>
@@ -154,7 +154,7 @@ export function PowerRankingsChart({ data }: PowerRankingsChartProps) {
             layout="vertical"
             data={sorted}
             margin={{ top: 8, right: 64, left: 8, bottom: 8 }}
-            barCategoryGap="25%"
+            barCategoryGap="12%"
           >
             <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} horizontal={false} />
             <XAxis type="number" stroke={chartTheme.axis} tick={{ fontSize: 11 }} />
