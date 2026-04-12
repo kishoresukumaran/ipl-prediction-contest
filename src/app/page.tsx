@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Trophy, Calendar, Clock, ChevronRight, TrendingUp, Zap, Star, Target, Layers } from 'lucide-react';
+import { Trophy, Calendar, Clock, ChevronRight, TrendingUp, Zap, Star, Target, Layers, Users, ChevronDown, ChevronUp } from 'lucide-react';
 import { TEAMS, PARTICIPANTS } from '@/lib/constants';
 import { matchTimeToIrish, matchDateTimeUTC } from '@/lib/utils';
 import { Match, PlayerPointsBreakdown } from '@/lib/types';
@@ -114,6 +114,7 @@ export default function Home() {
   const [matches, setMatches] = useState<Match[] | null>(null);
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showGroupBreakdown, setShowGroupBreakdown] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -158,6 +159,22 @@ export default function Home() {
 
   const leaders = leaderboardData?.leaderboard?.filter(p => p.rank === 1) || [];
   const top5 = leaderboardData?.leaderboard?.filter(p => (p.rank || 0) <= 5) || [];
+
+  const leaderboard = leaderboardData?.leaderboard || [];
+  const groupTotalPoints = leaderboard.reduce((s, p) => s + p.totalPoints, 0);
+  const groupCorrect     = leaderboard.reduce((s, p) => s + p.correctPredictions, 0);
+  const groupTotalPreds  = leaderboard.reduce((s, p) => s + p.totalPredictions, 0);
+  const groupAccuracy    = groupTotalPreds > 0 ? Math.round((groupCorrect / groupTotalPreds) * 100) : 0;
+  const groupBreakdown = [
+    { label: 'Base',      value: leaderboard.reduce((s, p) => s + p.basePoints, 0) },
+    { label: 'Power',     value: leaderboard.reduce((s, p) => s + p.powerMatchPoints, 0) },
+    { label: 'Underdog',  value: leaderboard.reduce((s, p) => s + p.underdogBonus, 0) },
+    { label: 'Joker',     value: leaderboard.reduce((s, p) => s + p.jokerBonus, 0) },
+    { label: 'Streak',    value: leaderboard.reduce((s, p) => s + p.streakBonus, 0) },
+    { label: 'DH Bonus',  value: leaderboard.reduce((s, p) => s + p.doubleHeaderBonus, 0) },
+    { label: 'Abandoned', value: leaderboard.reduce((s, p) => s + p.abandonedPoints, 0) },
+    { label: 'Trivia',    value: leaderboard.reduce((s, p) => s + p.triviaPoints, 0) },
+  ].filter(c => c.value > 0);
 
   const totalMatches = leaderboardData?.totalMatches || 0;
   const completedCount = leaderboardData?.completedMatches || 0;
@@ -387,6 +404,51 @@ export default function Home() {
             </Link>
           ))}
         </div>
+      )}
+
+      {/* Group Stats Card */}
+      {!loading && leaderboard.length > 0 && (
+        <button
+          onClick={() => setShowGroupBreakdown(v => !v)}
+          className="w-full text-left bg-gradient-to-br from-teal-500/15 to-emerald-600/10 backdrop-blur-sm border border-teal-400/30 rounded-xl p-4 shadow-sm active:scale-[0.99] transition-transform"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-teal-500 dark:text-teal-400" />
+              <span className="text-xs font-medium text-teal-600 dark:text-teal-300">Group Stats</span>
+            </div>
+            {showGroupBreakdown
+              ? <ChevronUp className="h-4 w-4 text-teal-500 dark:text-teal-400" />
+              : <ChevronDown className="h-4 w-4 text-teal-500 dark:text-teal-400" />
+            }
+          </div>
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div>
+              <p className="text-2xl font-bold text-[var(--app-text)]">{groupTotalPoints.toLocaleString()}</p>
+              <p className="text-xs text-[var(--app-text-secondary)] mt-0.5">Total Points</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-[var(--app-text)]">{groupAccuracy}%</p>
+              <p className="text-xs text-[var(--app-text-secondary)] mt-0.5">Group Accuracy</p>
+            </div>
+          </div>
+          <p className="text-xs text-[var(--app-text-tertiary)]">
+            {leaderboard.length} players · {groupCorrect.toLocaleString()} correct picks
+          </p>
+          {showGroupBreakdown && groupBreakdown.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-teal-400/20">
+              <p className="text-xs text-[var(--app-text-tertiary)] mb-2">Points breakdown</p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                {groupBreakdown.map(c => (
+                  <div key={c.label} className="flex items-center justify-between">
+                    <span className="text-xs text-[var(--app-text-secondary)]">{c.label}</span>
+                    <span className="text-xs font-bold text-[var(--app-text)]">{c.value.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </button>
       )}
 
       {/* Current Leader Spotlight */}
