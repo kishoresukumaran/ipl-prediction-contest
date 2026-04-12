@@ -9,17 +9,21 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const admin = getSupabaseAdmin();
-    const [matchesRes, predictionsRes, jokersRes, triviaPtsRes] = await Promise.all([
+    const [matchesRes, predictionsRes, jokersRes, triviaPtsRes, triviaRes] = await Promise.all([
       admin.from('matches').select('*').order('match_date').order('start_time'),
       admin.from('predictions').select('*'),
       admin.from('jokers').select('*'),
       admin.from('trivia_points').select('*'),
+      admin.from('trivia').select('id, trivia_date'),
     ]);
 
     const matches: Match[] = matchesRes.data || [];
     const predictions: Prediction[] = predictionsRes.data || [];
     const jokers = jokersRes.data || [];
     const triviaPoints = triviaPtsRes.data || [];
+    const triviaDateMap = new Map<number, string>(
+      (triviaRes.data || []).map((t: { id: number; trivia_date: string }) => [t.id, t.trivia_date])
+    );
 
     const leaderboard = calculateAllPlayerPoints(PARTICIPANTS, { matches, predictions, jokers, triviaPoints });
     const completedMatches = matches.filter(m => m.is_completed && m.winner);
@@ -30,7 +34,7 @@ export async function GET() {
       id: p.participantId, name: p.participantName,
       accuracy: p.accuracy, correct: p.correctPredictions, total: p.totalPredictions,
     }));
-    const weeklyPoints = buildWeeklyPoints(completedMatches, predictions, jokers, triviaPoints);
+    const weeklyPoints = buildWeeklyPoints(completedMatches, predictions, jokers, triviaPoints, triviaDateMap);
     const crowdWisdom = buildCrowdWisdom(completedMatches, predictions);
     const contrarianData = buildContrarianData(completedMatches, predictions);
     const matchDifficulty = buildMatchDifficulty(completedMatches, predictions);
@@ -109,7 +113,19 @@ function buildTeamPopularity(matches: Match[], predictions: Prediction[]) {
   });
 }
 
-function buildWeeklyPoints(matches: Match[], predictions: Prediction[], jokers: any[], triviaPoints: any[]) {
+const WEEKLY_CATEGORIES = [
+  'basePoints', 'powerMatchPoints', 'underdogBonus', 'jokerBonus',
+  'streakBonus', 'doubleHeaderBonus', 'abandonedPoints', 'triviaPoints',
+] as const;
+
+function buildWeeklyPoints(
+  matches: Match[],
+  predictions: Prediction[],
+  jokers: any[],
+  triviaPoints: any[],
+  triviaDateMap: Map<number, string>,
+) {
+  // Group matches by week (Sunday start)
   const weeks: Record<string, Match[]> = {};
   matches.forEach(m => {
     const date = new Date(m.match_date);
@@ -119,16 +135,58 @@ function buildWeeklyPoints(matches: Match[], predictions: Prediction[], jokers: 
     if (!weeks[key]) weeks[key] = [];
     weeks[key].push(m);
   });
-  return Object.entries(weeks).map(([week, weekMatches]) => {
-    const matchIds = new Set(weekMatches.map(m => m.id));
-    const weekPreds = predictions.filter(p => matchIds.has(p.match_id));
+
+  // Group trivia points by week using the trivia date map
+  const weeklyTriviaMap: Record<string, any[]> = {};
+  for (const tp of triviaPoints) {
+    const date = triviaDateMap.get(tp.trivia_id);
+    if (!date) continue;
+    const d = new Date(date);
+    d.setDate(d.getDate() - d.getDay());
+    const key = d.toISOString().split('T')[0];
+    if (!weeklyTriviaMap[key]) weeklyTriviaMap[key] = [];
+    weeklyTriviaMap[key].push(tp);
+  }
+
+  // Cumulative diff: correctly handles cross-week streaks, jokers, and now trivia.
+  // Each week's points = total with all data up to this week minus previous week's cumulative total.
+  const sortedWeekKeys = Object.keys(weeks).sort();
+  const result = [];
+  let cumulativeMatches: Match[] = [];
+  let cumulativeTriviaPoints: any[] = [];
+  const prevTotals: Record<string, number> = {};
+  const prevCatTotals: Record<string, number> = {};
+
+  for (const weekKey of sortedWeekKeys) {
+    cumulativeMatches = [...cumulativeMatches, ...weeks[weekKey]];
+    cumulativeTriviaPoints = [...cumulativeTriviaPoints, ...(weeklyTriviaMap[weekKey] || [])];
+
+    const matchIds = new Set(cumulativeMatches.map(m => m.id));
+    const cumulativePreds = predictions.filter(p => matchIds.has(p.match_id));
     const scores = calculateAllPlayerPoints(PARTICIPANTS, {
-      matches: weekMatches, predictions: weekPreds, jokers: [], triviaPoints: [],
+      matches: cumulativeMatches, predictions: cumulativePreds, jokers,
+      triviaPoints: cumulativeTriviaPoints,
     });
-    const entry: any = { week: new Date(week).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) };
-    scores.forEach(s => { entry[s.participantId] = s.totalPoints; });
-    return entry;
-  });
+
+    const entry: any = { week: new Date(weekKey).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) };
+
+    // Per-player point diffs
+    scores.forEach(s => {
+      entry[s.participantId] = s.totalPoints - (prevTotals[s.participantId] || 0);
+      prevTotals[s.participantId] = s.totalPoints;
+    });
+
+    // Per-category totals across all players (underscore-prefixed; Recharts ignores them for rendering)
+    for (const cat of WEEKLY_CATEGORIES) {
+      const cumTotal = scores.reduce((sum, s) => sum + ((s as any)[cat] || 0), 0);
+      entry[`_${cat}`] = cumTotal - (prevCatTotals[cat] || 0);
+      prevCatTotals[cat] = cumTotal;
+    }
+
+    result.push(entry);
+  }
+
+  return result;
 }
 
 function buildCrowdWisdom(matches: Match[], predictions: Prediction[]) {

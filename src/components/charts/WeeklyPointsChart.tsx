@@ -110,6 +110,17 @@ export function WeeklyPointsChart({ data }: { data: WeeklyData[] }) {
                 const items = hasSelection
                   ? sorted.filter(p => selected.has(p.dataKey as string))
                   : sorted;
+                const weekData = payload[0]?.payload as any;
+                const categoryBreakdown = [
+                  { key: '_basePoints',        label: 'Base' },
+                  { key: '_powerMatchPoints',  label: 'Power' },
+                  { key: '_underdogBonus',     label: 'Underdog' },
+                  { key: '_jokerBonus',        label: 'Joker' },
+                  { key: '_streakBonus',       label: 'Streak' },
+                  { key: '_doubleHeaderBonus', label: 'DH Bonus' },
+                  { key: '_abandonedPoints',   label: 'Abandoned' },
+                  { key: '_triviaPoints',      label: 'Trivia' },
+                ].filter(c => (weekData?.[c.key] || 0) > 0);
                 return (
                   <div className="bg-white dark:bg-slate-800 border border-[var(--app-border)] rounded-lg text-xs text-[var(--app-text)] shadow-xl p-2.5">
                     <p className="font-bold mb-1.5">Week of {label}</p>
@@ -122,6 +133,19 @@ export function WeeklyPointsChart({ data }: { data: WeeklyData[] }) {
                         </div>
                       ))}
                     </div>
+                    {categoryBreakdown.length > 0 && (
+                      <div className="mt-2 pt-2 border-t border-[var(--app-border)]">
+                        <p className="text-[var(--app-text-tertiary)] mb-1">Points breakdown</p>
+                        <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                          {categoryBreakdown.map(c => (
+                            <span key={c.key} className="whitespace-nowrap">
+                              <span className="text-[var(--app-text-secondary)]">{c.label} </span>
+                              <span className="font-bold">{weekData[c.key]}</span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               }}
