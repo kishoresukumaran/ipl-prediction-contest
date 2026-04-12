@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { BarChart3, TrendingUp, Users, Zap, Target, Trophy, Flame, Skull, Vote } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, Zap, Target, Trophy, Flame, Skull, Vote, Star } from 'lucide-react';
 import { PlayerPointsBreakdown, Match, Prediction } from '@/lib/types';
 import { TEAMS, PARTICIPANTS } from '@/lib/constants';
 
@@ -73,7 +73,8 @@ const TABS = [
   { id: 'leaderboard', label: 'Points & Rank', icon: Trophy },
   { id: 'accuracy', label: 'Accuracy', icon: Target },
   { id: 'teams', label: 'Teams', icon: Users },
-  { id: 'streaks', label: 'Streaks & Bonus', icon: Flame },
+  { id: 'streaks', label: 'Streaks', icon: Flame },
+  { id: 'bonus', label: 'Bonus', icon: Star },
   { id: 'behavior', label: 'Behavior', icon: Zap },
   { id: 'h2h', label: 'Head to Head', icon: TrendingUp },
   { id: 'matches', label: 'Match Analysis', icon: BarChart3 },
@@ -176,14 +177,19 @@ export default function InsightsPage() {
             <ChartCard title="Winning Streaks" subtitle="Longest and current streaks">
               <StreakChart data={data.streakData} />
             </ChartCard>
-            <ChartCard title="Double Header Success" subtitle="Both matches correct on same day">
-              <DoubleHeaderChart data={data.doubleHeaderData} />
+          </>
+        )}
+
+        {activeTab === 'bonus' && (
+          <>
+            <ChartCard title="Double Down Diary 📅" subtitle="Every double header day has a story. Pick a date, see who came prepared and who got caught out.">
+              <DoubleHeaderDayViewChart data={data.doubleHeaderHeroes} />
             </ChartCard>
             <ChartCard title="The Clean Sweep Club 🧹" subtitle="Two matches, one day, all correct — that's the double header sweep. Click a player to see exactly which days they nailed it and which ones got away.">
               <DoubleHeaderHeroesChart data={data.doubleHeaderHeroes} />
             </ChartCard>
-            <ChartCard title="Double Down Diary 📅" subtitle="Every double header day has a story. Pick a date, see who came prepared and who got caught out.">
-              <DoubleHeaderDayViewChart data={data.doubleHeaderHeroes} />
+            <ChartCard title="Double Header Success" subtitle="Both matches correct on same day">
+              <DoubleHeaderChart data={data.doubleHeaderData} />
             </ChartCard>
           </>
         )}
