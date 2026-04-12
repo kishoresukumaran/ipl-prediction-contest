@@ -26,6 +26,7 @@ const PointsMatrixChart = dynamic(() => import('@/components/charts/PointsMatrix
 const CrowdTrapChart = dynamic(() => import('@/components/charts/CrowdTrapChart').then(m => ({ default: m.CrowdTrapChart })), { ssr: false });
 const OnFireIceCold = dynamic(() => import('@/components/charts/OnFireIceCold').then(m => ({ default: m.OnFireIceCold })), { ssr: false });
 const DoubleHeaderHeroesChart = dynamic(() => import('@/components/charts/DoubleHeaderHeroesChart').then(m => ({ default: m.DoubleHeaderHeroesChart })), { ssr: false });
+const DoubleHeaderDayViewChart = dynamic(() => import('@/components/charts/DoubleHeaderDayViewChart').then(m => ({ default: m.DoubleHeaderDayViewChart })), { ssr: false });
 const GhostVotersChart = dynamic(() => import('@/components/charts/GhostVotersChart').then(m => ({ default: m.GhostVotersChart })), { ssr: false });
 const TeamVoteTotalsChart = dynamic(() => import('@/components/charts/TeamVoteTotalsChart').then(m => ({ default: m.TeamVoteTotalsChart })), { ssr: false });
 const VoteSplitChart = dynamic(() => import('@/components/charts/VoteSplitChart').then(m => ({ default: m.VoteSplitChart })), { ssr: false });
@@ -180,6 +181,9 @@ export default function InsightsPage() {
             </ChartCard>
             <ChartCard title="The Clean Sweep Club 🧹" subtitle="Two matches, one day, all correct — that's the double header sweep. Click a player to see exactly which days they nailed it and which ones got away.">
               <DoubleHeaderHeroesChart data={data.doubleHeaderHeroes} />
+            </ChartCard>
+            <ChartCard title="Double Down Diary 📅" subtitle="Every double header day has a story. Pick a date, see who came prepared and who got caught out.">
+              <DoubleHeaderDayViewChart data={data.doubleHeaderHeroes} />
             </ChartCard>
           </>
         )}
