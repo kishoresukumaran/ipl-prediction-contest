@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Customized } from 'recharts';
 import { X } from 'lucide-react';
 import { PARTICIPANTS } from '@/lib/constants';
 import { useChartTheme } from '@/hooks/useChartTheme';
@@ -9,6 +9,56 @@ import { useChartTheme } from '@/hooks/useChartTheme';
 interface WeeklyData {
   week: string;
   [playerId: string]: number | string;
+}
+
+// Renders total labels above each stacked bar column using actual rendered Y positions.
+// This avoids the Recharts LabelList limitation where labels disappear when the last
+// bar segment has zero height for a given data point.
+function StackTotalLabels({ formattedGraphicalItems, chartData, labelFill }: {
+  formattedGraphicalItems?: any[];
+  chartData: (WeeklyData & { _total: number })[];
+  labelFill: string;
+}) {
+  if (!formattedGraphicalItems?.length || !chartData?.length) return null;
+
+  return (
+    <g>
+      {chartData.map((entry, dataIndex) => {
+        const total = entry._total;
+        if (!total) return null;
+
+        let topY = Infinity;
+        let barX = 0;
+        let barWidth = 0;
+
+        for (const item of formattedGraphicalItems) {
+          const barData = item.props?.data?.[dataIndex];
+          if (!barData || barData.height === 0) continue;
+          if (barData.y < topY) {
+            topY = barData.y;
+            barX = barData.x;
+            barWidth = barData.width;
+          }
+        }
+
+        if (topY === Infinity) return null;
+
+        return (
+          <text
+            key={dataIndex}
+            x={barX + barWidth / 2}
+            y={topY - 6}
+            textAnchor="middle"
+            fontSize={11}
+            fontWeight={600}
+            fill={labelFill}
+          >
+            {total}
+          </text>
+        );
+      })}
+    </g>
+  );
 }
 
 export function WeeklyPointsChart({ data }: { data: WeeklyData[] }) {
@@ -135,13 +185,13 @@ export function WeeklyPointsChart({ data }: { data: WeeklyData[] }) {
                     </div>
                     {categoryBreakdown.length > 0 && (
                       <div className="mt-2 pt-2 border-t border-[var(--app-border)]">
-                        <p className="text-[var(--app-text-tertiary)] mb-1">Points breakdown</p>
-                        <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                        <p className="text-[var(--app-text-tertiary)] mb-1.5">Points breakdown</p>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                           {categoryBreakdown.map(c => (
-                            <span key={c.key} className="whitespace-nowrap">
-                              <span className="text-[var(--app-text-secondary)]">{c.label} </span>
+                            <div key={c.key} className="flex items-center justify-between gap-2">
+                              <span className="text-[var(--app-text-secondary)]">{c.label}</span>
                               <span className="font-bold">{weekData[c.key]}</span>
-                            </span>
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -150,9 +200,8 @@ export function WeeklyPointsChart({ data }: { data: WeeklyData[] }) {
                 );
               }}
             />
-            {sortedParticipants.map((p, index) => {
+            {sortedParticipants.map(p => {
               const isSelected = selected.has(p.id);
-              const isLast = index === sortedParticipants.length - 1;
               return (
                 <Bar
                   key={p.id}
@@ -161,17 +210,12 @@ export function WeeklyPointsChart({ data }: { data: WeeklyData[] }) {
                   stackId="a"
                   fill={p.avatar_color}
                   fillOpacity={hasSelection ? (isSelected ? 1 : 0.1) : 0.85}
-                >
-                  {isLast && (
-                    <LabelList
-                      dataKey="_total"
-                      position="top"
-                      style={{ fontSize: 11, fontWeight: 600, fill: chartTheme.label }}
-                    />
-                  )}
-                </Bar>
+                />
               );
             })}
+            <Customized component={(props: any) => (
+              <StackTotalLabels {...props} chartData={chartData} labelFill={chartTheme.label} />
+            )} />
           </BarChart>
         </ResponsiveContainer>
       </div>
