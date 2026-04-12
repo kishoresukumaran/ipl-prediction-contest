@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
 import { X } from 'lucide-react';
 import { PARTICIPANTS } from '@/lib/constants';
 import { useChartTheme } from '@/hooks/useChartTheme';
@@ -45,6 +45,12 @@ export function WeeklyPointsChart({ data }: { data: WeeklyData[] }) {
   const sortedParticipants = [...PARTICIPANTS].sort(
     (a, b) => (totalByPlayer[b.id] || 0) - (totalByPlayer[a.id] || 0)
   );
+
+  const chartData = data.map(weekEntry => {
+    const playersToSum = hasSelection ? PARTICIPANTS.filter(p => selected.has(p.id)) : PARTICIPANTS;
+    const total = playersToSum.reduce((sum, p) => sum + ((weekEntry[p.id] as number) || 0), 0);
+    return { ...weekEntry, _total: total };
+  });
 
   const selectedPlayers = sortedParticipants.filter(p => selected.has(p.id));
 
@@ -91,7 +97,7 @@ export function WeeklyPointsChart({ data }: { data: WeeklyData[] }) {
 
       <div className="w-full h-[400px]">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 5, right: 5, left: -10, bottom: 20 }}>
+          <BarChart data={chartData} margin={{ top: 24, right: 5, left: -10, bottom: 20 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
             <XAxis dataKey="week" stroke={chartTheme.axis} tick={{ fontSize: 10 }} />
             <YAxis stroke={chartTheme.axis} tick={{ fontSize: 11 }} label={{ value: 'Points gained this week', angle: -90, position: 'insideLeft', fill: chartTheme.label, fontSize: 11, offset: 15 }} />
@@ -120,8 +126,9 @@ export function WeeklyPointsChart({ data }: { data: WeeklyData[] }) {
                 );
               }}
             />
-            {sortedParticipants.map(p => {
+            {sortedParticipants.map((p, index) => {
               const isSelected = selected.has(p.id);
+              const isLast = index === sortedParticipants.length - 1;
               return (
                 <Bar
                   key={p.id}
@@ -130,7 +137,15 @@ export function WeeklyPointsChart({ data }: { data: WeeklyData[] }) {
                   stackId="a"
                   fill={p.avatar_color}
                   fillOpacity={hasSelection ? (isSelected ? 1 : 0.1) : 0.85}
-                />
+                >
+                  {isLast && (
+                    <LabelList
+                      dataKey="_total"
+                      position="top"
+                      style={{ fontSize: 11, fontWeight: 600, fill: chartTheme.label }}
+                    />
+                  )}
+                </Bar>
               );
             })}
           </BarChart>
