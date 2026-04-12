@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Customized } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, useXAxisScale, useYAxisScale } from 'recharts';
 import { X } from 'lucide-react';
 import { PARTICIPANTS } from '@/lib/constants';
 import { useChartTheme } from '@/hooks/useChartTheme';
@@ -11,43 +11,34 @@ interface WeeklyData {
   [playerId: string]: number | string;
 }
 
-// Renders total labels above each stacked bar column using actual rendered Y positions.
-// This avoids the Recharts LabelList limitation where labels disappear when the last
-// bar segment has zero height for a given data point.
-function StackTotalLabels({ formattedGraphicalItems, chartData, labelFill }: {
-  formattedGraphicalItems?: any[];
+// Renders total labels above each stacked bar column.
+// Uses Recharts v3 hooks (useXAxisScale, useYAxisScale) for correct pixel positioning,
+// rendered directly inside BarChart without needing the deprecated Customized wrapper.
+function StackTotalLabels({ chartData, labelFill }: {
   chartData: (WeeklyData & { _total: number })[];
   labelFill: string;
 }) {
-  if (!formattedGraphicalItems?.length || !chartData?.length) return null;
+  const xScale = useXAxisScale();
+  const yScale = useYAxisScale();
+
+  if (!xScale || !yScale || !chartData?.length) return null;
 
   return (
     <g>
-      {chartData.map((entry, dataIndex) => {
+      {chartData.map((entry, i) => {
         const total = entry._total;
         if (!total) return null;
 
-        let topY = Infinity;
-        let barX = 0;
-        let barWidth = 0;
+        const x = xScale(entry.week, { position: 'middle' });
+        const y = yScale(total);
 
-        for (const item of formattedGraphicalItems) {
-          const barData = item.props?.data?.[dataIndex];
-          if (!barData || barData.height === 0) continue;
-          if (barData.y < topY) {
-            topY = barData.y;
-            barX = barData.x;
-            barWidth = barData.width;
-          }
-        }
-
-        if (topY === Infinity) return null;
+        if (x == null || y == null) return null;
 
         return (
           <text
-            key={dataIndex}
-            x={barX + barWidth / 2}
-            y={topY - 6}
+            key={i}
+            x={x}
+            y={y - 6}
             textAnchor="middle"
             fontSize={11}
             fontWeight={600}
@@ -213,9 +204,7 @@ export function WeeklyPointsChart({ data }: { data: WeeklyData[] }) {
                 />
               );
             })}
-            <Customized component={(props: any) => (
-              <StackTotalLabels {...props} chartData={chartData} labelFill={chartTheme.label} />
-            )} />
+            <StackTotalLabels chartData={chartData} labelFill={chartTheme.label} />
           </BarChart>
         </ResponsiveContainer>
       </div>
