@@ -53,6 +53,9 @@ export async function GET() {
     // Points matrix
     const pointsMatrix = buildPointsMatrix(completedMatches, predictions, jokers, triviaPoints);
 
+    // Trivia stats
+    const triviaStats = buildTriviaStats(triviaPoints);
+
     // Votes tab data
     const ghostVoters = buildGhostVoters(completedMatches, predictions);
     const teamVoteTotals = buildTeamVoteTotals(matches, predictions);
@@ -65,7 +68,7 @@ export async function GET() {
       accuracyByPlayer, weeklyPoints, crowdWisdom,
       contrarianData, matchDifficulty, formData, winRateByTeam,
       doubleHeaderData, doubleHeaderHeroes, heatmapData, streakData, wallOfShame,
-      pointsMatrix,
+      pointsMatrix, triviaStats,
       ghostVoters, teamVoteTotals, voteSplits, participationRate, homeAwayBias,
     });
   } catch (error) {
@@ -676,6 +679,103 @@ function buildParticipationRate(matches: Match[], predictions: Prediction[]) {
       runningAvg: runningTotal / (i + 1),
     };
   });
+}
+
+function buildTriviaStats(triviaPoints: any[]) {
+  // byPlayer
+  const playerMap: Record<string, {
+    name: string;
+    color: string;
+    total: number;
+    correct: number;
+    attempted: number;
+    rounds: { triviaId: number; prediction: string; correctAnswer: string; correct: boolean; points: number }[];
+  }> = {};
+
+  for (const p of PARTICIPANTS) {
+    playerMap[p.name.toLowerCase()] = {
+      name: p.name,
+      color: p.avatar_color,
+      total: 0,
+      correct: 0,
+      attempted: 0,
+      rounds: [],
+    };
+  }
+
+  for (const row of triviaPoints) {
+    const key = (row.player || '').toLowerCase();
+    if (!playerMap[key]) continue;
+    const entry = playerMap[key];
+    entry.attempted++;
+    entry.total += row.points_earned || 0;
+    const isCorrect = row.correct_check === 1;
+    if (isCorrect) entry.correct++;
+    entry.rounds.push({
+      triviaId: row.trivia_id,
+      prediction: row.prediction || '',
+      correctAnswer: row.correct_answer || '',
+      correct: isCorrect,
+      points: row.points_earned || 0,
+    });
+  }
+
+  const byPlayer = Object.values(playerMap)
+    .map(p => ({
+      ...p,
+      accuracy: p.attempted > 0 ? (p.correct / p.attempted) * 100 : 0,
+      allCorrect: p.attempted > 0 && p.correct === p.attempted,
+      rounds: p.rounds.sort((a, b) => a.triviaId - b.triviaId),
+    }))
+    .sort((a, b) => b.total - a.total || b.correct - a.correct);
+
+  // byQuestion
+  const questionMap: Record<number, {
+    triviaId: number;
+    correctAnswer: string;
+    results: { name: string; color: string; prediction: string; correct: boolean; points: number }[];
+  }> = {};
+
+  for (const row of triviaPoints) {
+    const qid = row.trivia_id;
+    if (!questionMap[qid]) {
+      questionMap[qid] = {
+        triviaId: qid,
+        correctAnswer: row.correct_answer || '',
+        results: [],
+      };
+    }
+    // Prefer whichever row has a non-empty correct_answer
+    if (row.correct_answer && !questionMap[qid].correctAnswer) {
+      questionMap[qid].correctAnswer = row.correct_answer;
+    }
+    const participant = PARTICIPANTS.find(p => p.name.toLowerCase() === (row.player || '').toLowerCase());
+    if (!participant) continue;
+    questionMap[qid].results.push({
+      name: participant.name,
+      color: participant.avatar_color,
+      prediction: row.prediction || '',
+      correct: row.correct_check === 1,
+      points: row.points_earned || 0,
+    });
+  }
+
+  const byQuestion = Object.values(questionMap)
+    .map(q => {
+      const attempted = q.results.length;
+      const correctCount = q.results.filter(r => r.correct).length;
+      return {
+        ...q,
+        totalAttempted: attempted,
+        correctCount,
+        stumpedEveryone: attempted > 0 && correctCount === 0,
+        easyRound: attempted > 0 && correctCount === attempted,
+        results: q.results.sort((a, b) => Number(b.correct) - Number(a.correct) || b.points - a.points),
+      };
+    })
+    .sort((a, b) => a.triviaId - b.triviaId);
+
+  return { byPlayer, byQuestion };
 }
 
 function buildHomeAwayBias(matches: Match[], predictions: Prediction[]) {

@@ -27,6 +27,9 @@ const CrowdTrapChart = dynamic(() => import('@/components/charts/CrowdTrapChart'
 const OnFireIceCold = dynamic(() => import('@/components/charts/OnFireIceCold').then(m => ({ default: m.OnFireIceCold })), { ssr: false });
 const DoubleHeaderHeroesChart = dynamic(() => import('@/components/charts/DoubleHeaderHeroesChart').then(m => ({ default: m.DoubleHeaderHeroesChart })), { ssr: false });
 const DoubleHeaderDayViewChart = dynamic(() => import('@/components/charts/DoubleHeaderDayViewChart').then(m => ({ default: m.DoubleHeaderDayViewChart })), { ssr: false });
+const JokerFilesChart = dynamic(() => import('@/components/charts/JokerFilesChart').then(m => ({ default: m.JokerFilesChart })), { ssr: false });
+const TriviaThrone = dynamic(() => import('@/components/charts/TriviaThrone').then(m => ({ default: m.TriviaThrone })), { ssr: false });
+const TriviaInterrogationRoom = dynamic(() => import('@/components/charts/TriviaInterrogationRoom').then(m => ({ default: m.TriviaInterrogationRoom })), { ssr: false });
 const GhostVotersChart = dynamic(() => import('@/components/charts/GhostVotersChart').then(m => ({ default: m.GhostVotersChart })), { ssr: false });
 const TeamVoteTotalsChart = dynamic(() => import('@/components/charts/TeamVoteTotalsChart').then(m => ({ default: m.TeamVoteTotalsChart })), { ssr: false });
 const VoteSplitChart = dynamic(() => import('@/components/charts/VoteSplitChart').then(m => ({ default: m.VoteSplitChart })), { ssr: false });
@@ -67,6 +70,27 @@ interface InsightsAPIData {
   voteSplits: { matchId: number; homeTeam: string; awayTeam: string; homePicks: number; awayPicks: number; totalVotes: number; consensusPct: number; majorityTeam: string; majorityCorrect: boolean; winner: string | null }[];
   participationRate: { matchId: number; matchLabel: string; homeTeam: string; awayTeam: string; matchDate: string; voterCount: number; totalParticipants: number; rate: number; runningAvg: number }[];
   homeAwayBias: { players: { name: string; color: string; homePicks: number; awayPicks: number; total: number; homeBias: number }[]; groupAvg: number };
+  triviaStats: {
+    byPlayer: {
+      name: string;
+      color: string;
+      total: number;
+      correct: number;
+      attempted: number;
+      accuracy: number;
+      allCorrect: boolean;
+      rounds: { triviaId: number; prediction: string; correctAnswer: string; correct: boolean; points: number }[];
+    }[];
+    byQuestion: {
+      triviaId: number;
+      correctAnswer: string;
+      totalAttempted: number;
+      correctCount: number;
+      stumpedEveryone: boolean;
+      easyRound: boolean;
+      results: { name: string; color: string; prediction: string; correct: boolean; points: number }[];
+    }[];
+  };
 }
 
 const TABS = [
@@ -182,6 +206,16 @@ export default function InsightsPage() {
 
         {activeTab === 'bonus' && (
           <>
+            <ChartCard title="The Joker Files 🃏" subtitle="Ten points on the line. Who played their wild card right — and who burned it?">
+              <JokerFilesChart
+                leaderboard={data.leaderboard}
+                predictions={data.predictions}
+                matches={data.matches}
+                pointsMatrix={data.pointsMatrix}
+                wastedJokers={data.wallOfShame.wastedJokers}
+                ghostVoters={data.ghostVoters}
+              />
+            </ChartCard>
             <ChartCard title="Double Down Diary 📅" subtitle="Every double header day has a story. Pick a date, see who came prepared and who got caught out.">
               <DoubleHeaderDayViewChart data={data.doubleHeaderHeroes} />
             </ChartCard>
@@ -190,6 +224,12 @@ export default function InsightsPage() {
             </ChartCard>
             <ChartCard title="Double Header Success" subtitle="Both matches correct on same day">
               <DoubleHeaderChart data={data.doubleHeaderData} />
+            </ChartCard>
+            <ChartCard title="The Trivia Throne 👑" subtitle="Who rules the knowledge game? Total trivia points earned across all rounds — click a player to see their question-by-question record.">
+              <TriviaThrone data={data.triviaStats.byPlayer} />
+            </ChartCard>
+            <ChartCard title="The Interrogation Room 🔍" subtitle="Pick a question, crack the room open. See the correct answer, who got it right, and what the rest got hilariously wrong.">
+              <TriviaInterrogationRoom data={data.triviaStats.byQuestion} />
             </ChartCard>
           </>
         )}
