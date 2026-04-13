@@ -66,21 +66,22 @@ const BREAKDOWN_COLORS: Record<string, string> = {
 
 // ─── Card wrapper ────────────────────────────────────────────────────────────
 function SectionCard({
-  icon: Icon, title, subtitle, accent, children,
+  icon: Icon, title, subtitle, accent, iconColor, children,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   title: string; subtitle: string;
-  accent: string; // tailwind gradient classes
+  accent: string; // background gradient only
+  iconColor: string; // e.g. "text-indigo-500 dark:text-indigo-400"
   children: React.ReactNode;
 }) {
   return (
     <div className="bg-[var(--app-surface)] rounded-xl border border-[var(--app-border)] overflow-hidden">
       <div className={`px-4 py-3 ${accent} border-b border-[var(--app-border)]`}>
         <div className="flex items-center gap-2 mb-0.5">
-          <Icon className="h-4 w-4 opacity-80" />
-          <h3 className="text-sm font-semibold">{title}</h3>
+          <Icon className={`h-4 w-4 ${iconColor}`} />
+          <h3 className="text-sm font-semibold text-[var(--app-text)]">{title}</h3>
         </div>
-        <p className="text-xs opacity-70">{subtitle}</p>
+        <p className="text-xs text-[var(--app-text-secondary)]">{subtitle}</p>
       </div>
       <div className="p-4">{children}</div>
     </div>
@@ -288,7 +289,8 @@ export function GroupStatsPanel({
         icon={Zap}
         title="Group Pulse"
         subtitle="The heartbeat of the squad — your collective stats at a glance."
-        accent="bg-gradient-to-r from-indigo-500/20 to-violet-500/10 text-indigo-200"
+        accent="bg-gradient-to-r from-indigo-500/15 to-violet-500/10"
+        iconColor="text-indigo-500 dark:text-indigo-400"
       >
         <div className="grid grid-cols-3 gap-2 mb-3">
           <StatTile label="Total Points" value={metrics.groupTotalPoints.toLocaleString()} highlight="text-indigo-400" />
@@ -317,7 +319,8 @@ export function GroupStatsPanel({
         icon={Trophy}
         title="Group Milestones"
         subtitle="Collective goals for the whole squad. Unlock them together."
-        accent="bg-gradient-to-r from-amber-500/20 to-orange-500/10 text-amber-200"
+        accent="bg-gradient-to-r from-amber-500/15 to-orange-500/10"
+        iconColor="text-amber-500 dark:text-amber-400"
       >
         <div className="space-y-4">
           {milestones.map(m => (
@@ -332,10 +335,11 @@ export function GroupStatsPanel({
       {/* ─── 3. The Hive Mind ───────────────────────────────────────────── */}
       {hive && (
         <SectionCard
-          icon={Brain}
-          title="The Hive Mind"
-          subtitle="When the group votes together, do they win together? The collective intelligence report."
-          accent="bg-gradient-to-r from-teal-500/20 to-emerald-500/10 text-teal-200"
+        icon={Brain}
+        title="The Hive Mind"
+        subtitle="When the group votes together, do they win together? The collective intelligence report."
+        accent="bg-gradient-to-r from-teal-500/15 to-emerald-500/10"
+        iconColor="text-teal-500 dark:text-teal-400"
         >
           <div className="grid grid-cols-2 gap-2 mb-4">
             <StatTile
@@ -414,10 +418,11 @@ export function GroupStatsPanel({
       {/* ─── 4. Participation Health ────────────────────────────────────── */}
       {participation && (
         <SectionCard
-          icon={HeartPulse}
-          title="Participation Health"
-          subtitle="Is the group staying engaged? Missed votes are the silent killer of leaderboard dreams."
-          accent="bg-gradient-to-r from-rose-500/20 to-pink-500/10 text-rose-200"
+        icon={HeartPulse}
+        title="Participation Health"
+        subtitle="Is the group staying engaged? Missed votes are the silent killer of leaderboard dreams."
+        accent="bg-gradient-to-r from-rose-500/15 to-pink-500/10"
+        iconColor="text-rose-500 dark:text-rose-400"
         >
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -468,7 +473,8 @@ export function GroupStatsPanel({
         icon={Medal}
         title="Group Records"
         subtitle="The moments that defined the season — best, worst, and everything legendary in between."
-        accent="bg-gradient-to-r from-violet-500/20 to-purple-500/10 text-violet-200"
+        accent="bg-gradient-to-r from-violet-500/15 to-purple-500/10"
+        iconColor="text-violet-500 dark:text-violet-400"
       >
         <div className="grid grid-cols-1 gap-2">
           {records.perfect && (
@@ -531,7 +537,8 @@ export function GroupStatsPanel({
         icon={Star}
         title="Where Points Come From"
         subtitle={`${bonusPct}% of all group points came from bonus categories — see where the squad earns its edge.`}
-        accent="bg-gradient-to-r from-cyan-500/20 to-blue-500/10 text-cyan-200"
+        accent="bg-gradient-to-r from-cyan-500/15 to-blue-500/10"
+        iconColor="text-cyan-500 dark:text-cyan-400"
       >
         <div className="flex flex-col sm:flex-row items-center gap-4">
           <div className="w-[180px] h-[180px] shrink-0">
@@ -592,7 +599,8 @@ export function GroupStatsPanel({
           icon={TrendingUp}
           title="Group Points Over Time"
           subtitle="Total points accumulated by the whole squad — one line, one team, one climb."
-          accent="bg-gradient-to-r from-emerald-500/20 to-teal-500/10 text-emerald-200"
+          accent="bg-gradient-to-r from-emerald-500/15 to-teal-500/10"
+          iconColor="text-emerald-500 dark:text-emerald-400"
         >
           <div className="h-[220px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -644,7 +652,8 @@ export function GroupStatsPanel({
           icon={Target}
           title="Group Form (Rolling Last 5)"
           subtitle="Average prediction accuracy across all players over the last 5 matches — is the squad sharpening up or losing the plot?"
-          accent="bg-gradient-to-r from-blue-500/20 to-indigo-500/10 text-blue-200"
+          accent="bg-gradient-to-r from-blue-500/15 to-indigo-500/10"
+          iconColor="text-blue-500 dark:text-blue-400"
         >
           <div className="h-[220px] w-full">
             <ResponsiveContainer width="100%" height="100%">
