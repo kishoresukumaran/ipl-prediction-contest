@@ -233,16 +233,16 @@ export function GroupStatsPanel({
   // ── Milestone targets ────────────────────────────────────────────────────
   const milestones = useMemo(() => {
     const { groupTotalPoints, groupCorrect, groupAccuracy, maxLongestStreak } = metrics;
-    const pointTargets  = [500, 1000, 1500, 2000, 2500, 3000];
-    const correctTargets = [100, 200, 300, 400, 500];
+    const pointTargets   = [5000, 6000, 7000, 8000, 9000, 10000];
+    const correctTargets = [700, 800, 900, 1000, 1100];
 
-    const nextPointTarget  = pointTargets.find(t => groupTotalPoints < t) ?? pointTargets[pointTargets.length - 1];
+    const nextPointTarget   = pointTargets.find(t => groupTotalPoints < t) ?? pointTargets[pointTargets.length - 1];
     const nextCorrectTarget = correctTargets.find(t => groupCorrect < t) ?? correctTargets[correctTargets.length - 1];
 
     return [
       { label: `Hit ${nextPointTarget.toLocaleString()} group points`, current: groupTotalPoints, target: nextPointTarget },
       { label: `${nextCorrectTarget} correct picks as a group`, current: groupCorrect, target: nextCorrectTarget },
-      { label: 'Group accuracy above 50%', current: Math.round(groupAccuracy), target: 50, unit: '%' },
+      { label: 'Group accuracy above 60%', current: Math.round(groupAccuracy), target: 60, unit: '%' },
       { label: 'Someone hits a 10-match streak', current: maxLongestStreak, target: 10 },
     ];
   }, [metrics]);
