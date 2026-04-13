@@ -288,6 +288,8 @@ export default function InsightsPage() {
             ghostVoters={data.ghostVoters}
             matchDifficulty={data.matchDifficulty}
             streakData={data.streakData}
+            pointsRace={data.pointsRace}
+            formData={data.formData}
             completedMatches={data.matches.filter(m => m.is_completed && m.winner).length}
             totalMatches={data.matches.length}
           />

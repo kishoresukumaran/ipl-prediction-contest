@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
-  AreaChart, Area, XAxis, YAxis,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, ReferenceLine, LineChart, Line,
 } from 'recharts';
 import { useChartTheme } from '@/hooks/useChartTheme';
 import { PlayerPointsBreakdown } from '@/lib/types';
@@ -46,6 +46,8 @@ export interface GroupStatsPanelProps {
   ghostVoters: GhostVoterEntry[];
   matchDifficulty: MatchDifficultyEntry[];
   streakData: StreakEntry[];
+  pointsRace: { matchId: number; matchDate: string; [key: string]: number | string }[];
+  formData: { matchId: number; [key: string]: number | string }[];
   completedMatches: number;
   totalMatches: number;
 }
@@ -146,7 +148,8 @@ function RecordCard({ emoji, label, value, sub, color = 'text-[var(--app-text)]'
 // ─── Main panel ──────────────────────────────────────────────────────────────
 export function GroupStatsPanel({
   leaderboard, crowdWisdom, voteSplits, participationRate,
-  ghostVoters, matchDifficulty, streakData, completedMatches, totalMatches,
+  ghostVoters, matchDifficulty, streakData, pointsRace, formData,
+  completedMatches, totalMatches,
 }: GroupStatsPanelProps) {
   const chartTheme = useChartTheme();
 
@@ -201,18 +204,18 @@ export function GroupStatsPanel({
   const participation = useMemo(() => {
     if (!participationRate.length) return null;
     const avg = participationRate.reduce((s, r) => s + r.rate, 0) / participationRate.length;
-    const perfect = participationRate.filter(r => r.rate >= 0.999).length;
+    const perfect = participationRate.filter(r => r.rate >= 99.9).length;
     const totalMissed = ghostVoters.reduce((s, g) => s + g.missedCount, 0);
     const recent5 = participationRate.slice(-5);
     const recentAvg = recent5.length > 0 ? recent5.reduce((s, r) => s + r.rate, 0) / recent5.length : avg;
 
     let label: string; let labelColor: string;
-    if (recentAvg >= 0.90) { label = 'All In'; labelColor = 'text-emerald-400'; }
-    else if (recentAvg >= 0.75) { label = 'Engaged'; labelColor = 'text-teal-400'; }
-    else if (recentAvg >= 0.55) { label = 'Drifting'; labelColor = 'text-amber-400'; }
+    if (recentAvg >= 90) { label = 'All In'; labelColor = 'text-emerald-400'; }
+    else if (recentAvg >= 75) { label = 'Engaged'; labelColor = 'text-teal-400'; }
+    else if (recentAvg >= 55) { label = 'Drifting'; labelColor = 'text-amber-400'; }
     else { label = 'Ghost Town'; labelColor = 'text-red-400'; }
 
-    const sparkline = participationRate.map(r => ({ matchId: r.matchId, rate: Math.round(r.rate * 100) }));
+    const sparkline = participationRate.map(r => ({ matchId: r.matchId, rate: Math.round(r.rate) }));
 
     return { avg, perfect, totalMissed, recentAvg, label, labelColor, sparkline };
   }, [participationRate, ghostVoters]);
@@ -246,6 +249,28 @@ export function GroupStatsPanel({
       { label: 'Someone hits a 10-match streak', current: maxLongestStreak, target: 10 },
     ];
   }, [metrics]);
+
+  // ── Group cumulative points over time ────────────────────────────────────
+  const groupPointsOverTime = useMemo(() => {
+    if (!pointsRace.length) return [];
+    const playerIds = Object.keys(pointsRace[0]).filter(k => k !== 'matchId' && k !== 'matchDate');
+    return pointsRace.map(row => ({
+      matchId: row.matchId as number,
+      matchDate: row.matchDate as string,
+      total: playerIds.reduce((s, id) => s + ((row[id] as number) || 0), 0),
+    }));
+  }, [pointsRace]);
+
+  // ── Group rolling form (avg of all players' last-5 accuracy) ─────────────
+  const groupFormOverTime = useMemo(() => {
+    if (!formData.length) return [];
+    const playerIds = Object.keys(formData[0]).filter(k => k !== 'matchId');
+    return formData.map(row => {
+      const values = playerIds.map(id => (row[id] as number) || 0);
+      const avg = values.length > 0 ? values.reduce((s, v) => s + v, 0) / values.length : 0;
+      return { matchId: row.matchId as number, avg: parseFloat(avg.toFixed(1)) };
+    });
+  }, [formData]);
 
   if (!leaderboard.length) return <div className="text-center text-sm text-[var(--app-text-secondary)] py-12">No data yet</div>;
 
@@ -401,7 +426,7 @@ export function GroupStatsPanel({
             </div>
             <div className="text-right">
               <p className="text-xs text-[var(--app-text-secondary)]">Season avg</p>
-              <p className="text-lg font-bold text-[var(--app-text)]">{(participation.avg * 100).toFixed(1)}%</p>
+              <p className="text-lg font-bold text-[var(--app-text)]">{participation.avg.toFixed(1)}%</p>
             </div>
           </div>
 
@@ -433,7 +458,7 @@ export function GroupStatsPanel({
           <div className="grid grid-cols-3 gap-2">
             <StatTile label="Perfect Matches" value={participation.perfect} sub="100% voted" highlight="text-emerald-400" />
             <StatTile label="Missed Votes" value={participation.totalMissed.toLocaleString()} highlight="text-red-400" />
-            <StatTile label="Recent Avg" value={`${(participation.recentAvg * 100).toFixed(0)}%`} sub="last 5 matches" />
+            <StatTile label="Recent Avg" value={`${participation.recentAvg.toFixed(0)}%`} sub="last 5 matches" />
           </div>
         </SectionCard>
       )}
@@ -560,6 +585,113 @@ export function GroupStatsPanel({
           </p>
         )}
       </SectionCard>
+
+      {/* ─── 7. Cumulative Group Points ─────────────────────────────────── */}
+      {groupPointsOverTime.length > 0 && (
+        <SectionCard
+          icon={TrendingUp}
+          title="Group Points Over Time"
+          subtitle="Total points accumulated by the whole squad — one line, one team, one climb."
+          accent="bg-gradient-to-r from-emerald-500/20 to-teal-500/10 text-emerald-200"
+        >
+          <div className="h-[220px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={groupPointsOverTime} margin={{ top: 8, right: 8, left: 0, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                <XAxis
+                  dataKey="matchId"
+                  stroke={chartTheme.axis}
+                  tick={{ fontSize: 10 }}
+                  label={{ value: 'Match #', position: 'bottom', fill: chartTheme.label, fontSize: 11, offset: 0 }}
+                />
+                <YAxis
+                  stroke={chartTheme.axis}
+                  tick={{ fontSize: 10 }}
+                  tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(v)}
+                  width={40}
+                />
+                <Tooltip
+                  content={({ payload }) => {
+                    if (!payload?.length) return null;
+                    const d = payload[0].payload as { matchId: number; matchDate: string; total: number };
+                    return (
+                      <div className="bg-[var(--app-surface)] border border-[var(--app-border)] rounded-lg px-2.5 py-1.5 text-xs shadow-xl">
+                        <p className="font-semibold text-[var(--app-text)]">Match #{d.matchId}</p>
+                        <p className="text-emerald-400">{d.total.toLocaleString()} total group pts</p>
+                      </div>
+                    );
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="total"
+                  stroke="#10b981"
+                  fill="#10b981"
+                  fillOpacity={0.15}
+                  strokeWidth={2.5}
+                  dot={false}
+                  activeDot={{ r: 4, fill: '#10b981' }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </SectionCard>
+      )}
+
+      {/* ─── 8. Group Rolling Form ──────────────────────────────────────── */}
+      {groupFormOverTime.length > 0 && (
+        <SectionCard
+          icon={Target}
+          title="Group Form (Rolling Last 5)"
+          subtitle="Average prediction accuracy across all players over the last 5 matches — is the squad sharpening up or losing the plot?"
+          accent="bg-gradient-to-r from-blue-500/20 to-indigo-500/10 text-blue-200"
+        >
+          <div className="h-[220px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={groupFormOverTime} margin={{ top: 8, right: 8, left: 0, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                <XAxis
+                  dataKey="matchId"
+                  stroke={chartTheme.axis}
+                  tick={{ fontSize: 10 }}
+                  label={{ value: 'Match #', position: 'bottom', fill: chartTheme.label, fontSize: 11, offset: 0 }}
+                />
+                <YAxis
+                  domain={[0, 100]}
+                  stroke={chartTheme.axis}
+                  tick={{ fontSize: 10 }}
+                  unit="%"
+                  width={40}
+                />
+                <ReferenceLine y={50} stroke={chartTheme.axis} strokeDasharray="5 5" label={{ value: '50%', fill: chartTheme.label, fontSize: 10 }} />
+                <Tooltip
+                  content={({ payload }) => {
+                    if (!payload?.length) return null;
+                    const d = payload[0].payload as { matchId: number; avg: number };
+                    return (
+                      <div className="bg-[var(--app-surface)] border border-[var(--app-border)] rounded-lg px-2.5 py-1.5 text-xs shadow-xl">
+                        <p className="font-semibold text-[var(--app-text)]">Match #{d.matchId}</p>
+                        <p className={d.avg >= 50 ? 'text-emerald-400' : 'text-red-400'}>
+                          Group form: {d.avg}%
+                        </p>
+                        <p className="text-[var(--app-text-tertiary)]">avg accuracy (last 5 matches)</p>
+                      </div>
+                    );
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="avg"
+                  stroke="#6366f1"
+                  strokeWidth={2.5}
+                  dot={false}
+                  activeDot={{ r: 4, fill: '#6366f1' }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </SectionCard>
+      )}
 
     </div>
   );
