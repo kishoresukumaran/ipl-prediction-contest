@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { BarChart3, TrendingUp, Users, Zap, Target, Trophy, Flame, Skull, Vote, Star } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, Zap, Target, Trophy, Flame, Skull, Vote, Star, Globe2 } from 'lucide-react';
 import { PlayerPointsBreakdown, Match, Prediction } from '@/lib/types';
 import { TEAMS, PARTICIPANTS } from '@/lib/constants';
 
@@ -36,6 +36,7 @@ const VoteSplitChart = dynamic(() => import('@/components/charts/VoteSplitChart'
 const ParticipationPulseChart = dynamic(() => import('@/components/charts/ParticipationPulseChart').then(m => ({ default: m.ParticipationPulseChart })), { ssr: false });
 const HomeAwayBiasChart = dynamic(() => import('@/components/charts/HomeAwayBiasChart').then(m => ({ default: m.HomeAwayBiasChart })), { ssr: false });
 const PowerRankingsChart = dynamic(() => import('@/components/charts/PowerRankingsChart').then(m => ({ default: m.PowerRankingsChart })), { ssr: false });
+const GroupStatsPanel = dynamic(() => import('@/components/charts/GroupStatsPanel').then(m => ({ default: m.GroupStatsPanel })), { ssr: false });
 
 interface InsightsAPIData {
   leaderboard: PlayerPointsBreakdown[];
@@ -103,6 +104,7 @@ const TABS = [
   { id: 'h2h', label: 'Head to Head', icon: TrendingUp },
   { id: 'matches', label: 'Match Analysis', icon: BarChart3 },
   { id: 'votes', label: 'Votes', icon: Vote },
+  { id: 'group', label: 'Group Stats', icon: Globe2 },
   { id: 'shame', label: 'Wall of Shame', icon: Skull },
 ];
 
@@ -275,6 +277,20 @@ export default function InsightsPage() {
           <ChartCard title="Hardest Matches to Predict" subtitle="The matches that made everyone look clueless. Don't worry, even experts got these wrong... probably.">
             <MatchDifficultyChart data={data.matchDifficulty} />
           </ChartCard>
+        )}
+
+        {activeTab === 'group' && (
+          <GroupStatsPanel
+            leaderboard={data.leaderboard}
+            crowdWisdom={data.crowdWisdom}
+            voteSplits={data.voteSplits}
+            participationRate={data.participationRate}
+            ghostVoters={data.ghostVoters}
+            matchDifficulty={data.matchDifficulty}
+            streakData={data.streakData}
+            completedMatches={data.matches.filter(m => m.is_completed && m.winner).length}
+            totalMatches={data.matches.length}
+          />
         )}
 
         {activeTab === 'shame' && (
