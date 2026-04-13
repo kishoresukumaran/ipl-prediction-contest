@@ -432,9 +432,10 @@ export default function Home() {
               <p className="text-xs text-[var(--app-text-secondary)] mt-0.5">Group Accuracy</p>
             </div>
           </div>
-          <p className="text-xs text-[var(--app-text-tertiary)]">
-            {leaderboard.length} players · {groupCorrect.toLocaleString()} correct picks
-          </p>
+          <div className="text-xs text-[var(--app-text-tertiary)] space-y-0.5">
+            <p>{leaderboard.length} players · {completedCount} matches completed</p>
+            <p>{groupCorrect.toLocaleString()} correct picks · {(groupTotalPreds - groupCorrect).toLocaleString()} wrong picks</p>
+          </div>
           {showGroupBreakdown && groupBreakdown.length > 0 && (
             <div className="mt-3 pt-3 border-t border-teal-400/20">
               <p className="text-xs text-[var(--app-text-tertiary)] mb-2">Points breakdown</p>
