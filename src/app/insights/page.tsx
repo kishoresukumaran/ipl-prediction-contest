@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { BarChart3, TrendingUp, Users, Zap, Target, Trophy, Flame, Skull, Vote, Star, Globe2 } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, Zap, Target, Trophy, Flame, Skull, Vote, Star, Globe2, Sparkles } from 'lucide-react';
 import { PlayerPointsBreakdown, Match, Prediction } from '@/lib/types';
 import { TEAMS, PARTICIPANTS } from '@/lib/constants';
 
@@ -37,6 +37,7 @@ const ParticipationPulseChart = dynamic(() => import('@/components/charts/Partic
 const HomeAwayBiasChart = dynamic(() => import('@/components/charts/HomeAwayBiasChart').then(m => ({ default: m.HomeAwayBiasChart })), { ssr: false });
 const PowerRankingsChart = dynamic(() => import('@/components/charts/PowerRankingsChart').then(m => ({ default: m.PowerRankingsChart })), { ssr: false });
 const GroupStatsPanel = dynamic(() => import('@/components/charts/GroupStatsPanel').then(m => ({ default: m.GroupStatsPanel })), { ssr: false });
+const CrystalBallInsightsPanel = dynamic(() => import('@/components/charts/CrystalBallInsightsPanel').then(m => ({ default: m.CrystalBallInsightsPanel })), { ssr: false });
 
 interface InsightsAPIData {
   leaderboard: PlayerPointsBreakdown[];
@@ -65,7 +66,11 @@ interface InsightsAPIData {
     matches: { id: number; home_team: string; away_team: string; match_type: string; is_power_match: boolean; is_abandoned?: boolean }[];
     matrix: Record<string, Record<number, { total: number; base: number; powerMatch: number; underdog: number; joker: number; streak: number; doubleHeader: number; abandoned: number }>>;
     triviaByPlayer: Record<string, number>;
+    preTournamentByPlayer?: Record<string, number>;
   };
+  preTournamentByPlayer: Record<string, number>;
+  preTournamentPredictions: import('@/lib/types').PreTournamentPrediction[];
+  preTournamentActuals: import('@/lib/types').PreTournamentActuals | null;
   ghostVoters: { name: string; color: string; missedCount: number; noVoteCount: number; lateCount: number; participationRate: number; totalMatches: number; missedMatches: { matchId: number; homeTeam: string; awayTeam: string; matchDate: string; reason: 'no_vote' | 'late' }[] }[];
   teamVoteTotals: { team: string; teamName: string; color: string; textColor: string; total: number; correct: number; wrong: number; pending: number; winRate: number }[];
   voteSplits: { matchId: number; homeTeam: string; awayTeam: string; homePicks: number; awayPicks: number; totalVotes: number; consensusPct: number; majorityTeam: string; majorityCorrect: boolean; winner: string | null }[];
@@ -100,6 +105,7 @@ const TABS = [
   { id: 'teams', label: 'Teams', icon: Users },
   { id: 'streaks', label: 'Streaks', icon: Flame },
   { id: 'bonus', label: 'Bonus', icon: Star },
+  { id: 'pretournament', label: 'Crystal Ball', icon: Sparkles },
   { id: 'behavior', label: 'Behavior', icon: Zap },
   { id: 'h2h', label: 'Head to Head', icon: TrendingUp },
   { id: 'matches', label: 'Match Analysis', icon: BarChart3 },
@@ -254,6 +260,10 @@ export default function InsightsPage() {
               <HomeAwayBiasChart data={data.homeAwayBias} />
             </ChartCard>
           </>
+        )}
+
+        {activeTab === 'pretournament' && (
+          <CrystalBallInsightsPanel hasData={(data.preTournamentPredictions?.length ?? 0) > 0} />
         )}
 
         {activeTab === 'behavior' && (

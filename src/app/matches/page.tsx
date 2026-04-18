@@ -11,12 +11,14 @@ import {
   Loader2,
   Award,
   Layers,
+  Sparkles,
 } from 'lucide-react';
 import { TEAMS } from '@/lib/constants';
 import { matchTimeToIrish } from '@/lib/utils';
 import { Match } from '@/lib/types';
+import { CrystalBallMatchesPanel } from '@/components/dashboard/CrystalBallMatchesPanel';
 
-type FilterTab = 'all' | 'upcoming' | 'completed' | 'double';
+type FilterTab = 'all' | 'upcoming' | 'completed' | 'double' | 'pretournament';
 
 function TeamBadge({ team }: { team: string }) {
   const teamConfig = TEAMS[team];
@@ -148,7 +150,7 @@ export default function MatchesPage() {
       })
     : [];
 
-  const tabs: { id: FilterTab; label: string; count: number }[] = [
+  const tabs: { id: FilterTab; label: string; count: number; icon?: typeof Sparkles }[] = [
     { id: 'all', label: 'All', count: matches?.length || 0 },
     { id: 'upcoming', label: 'Upcoming', count: matches?.filter((m) => !m.is_completed).length || 0 },
     { id: 'completed', label: 'Completed', count: matches?.filter((m) => m.is_completed).length || 0 },
@@ -157,6 +159,7 @@ export default function MatchesPage() {
       label: 'Double Headers',
       count: matches?.filter((m) => doubleHeaderDates.has(m.match_date)).length || 0,
     },
+    { id: 'pretournament', label: '🔮 Crystal Ball', count: 6, icon: Sparkles },
   ];
 
   if (loading) {
@@ -177,28 +180,36 @@ export default function MatchesPage() {
 
       {/* Filter Tabs */}
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-              activeTab === tab.id
-                ? 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border border-indigo-500/40 font-semibold'
-                : 'bg-[var(--app-surface)] text-[var(--app-text-secondary)] border border-[var(--app-border)] hover:bg-[var(--app-surface-alt)]'
-            }`}
-          >
-            {tab.label}
-            <span
-              className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                activeTab === tab.id ? 'bg-indigo-500/25 text-indigo-600 dark:text-indigo-300' : 'bg-[var(--app-surface-alt)] text-[var(--app-text-tertiary)]'
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+                activeTab === tab.id
+                  ? 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border border-indigo-500/40 font-semibold'
+                  : 'bg-[var(--app-surface)] text-[var(--app-text-secondary)] border border-[var(--app-border)] hover:bg-[var(--app-surface-alt)]'
               }`}
             >
-              {tab.count}
-            </span>
-          </button>
-        ))}
+              {Icon && <Icon className="h-3 w-3" />}
+              {tab.label}
+              <span
+                className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  activeTab === tab.id ? 'bg-indigo-500/25 text-indigo-600 dark:text-indigo-300' : 'bg-[var(--app-surface-alt)] text-[var(--app-text-tertiary)]'
+                }`}
+              >
+                {tab.count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
+      {activeTab === 'pretournament' ? (
+        <CrystalBallMatchesPanel />
+      ) : (
+      <>
       {/* Team Filter */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
         {Object.keys(TEAMS).map((abbr) => {
@@ -252,6 +263,8 @@ export default function MatchesPage() {
           ))
         )}
       </div>
+      </>
+      )}
     </div>
   );
 }

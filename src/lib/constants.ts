@@ -61,3 +61,38 @@ export function getMatchPoints(matchType: string, isPowerMatch: boolean): number
   }
   return POINTS_CONFIG[matchType as keyof typeof POINTS_CONFIG] as number || POINTS_CONFIG.league;
 }
+
+// =============================================================
+// Pre-Tournament ("Crystal Ball 🔮") prediction config
+// =============================================================
+export const PRE_TOURNAMENT_POINTS = {
+  champion: 10,
+  orangeCap: 5,
+  purpleCap: 5,
+  // Partial credit for "Top 4 Play-off Teams":
+  // 0 correct -> 0, 1 -> 3, 2 -> 6, 3 -> 9, 4 -> 15
+  playoffByCount: { 0: 0, 1: 3, 2: 6, 3: 9, 4: 15 } as Record<number, number>,
+  tableTopper: 3,
+  contestWinner: 3,
+} as const;
+
+export type PreTournamentQuestionKind = 'team' | 'teams4' | 'player';
+
+export interface PreTournamentQuestion {
+  id: string;
+  emoji: string;
+  nickname: string;
+  label: string;
+  field: 'champion' | 'orange_cap' | 'purple_cap' | 'playoff_teams' | 'table_topper' | 'contest_winner';
+  kind: PreTournamentQuestionKind;
+  points: number | string;
+}
+
+export const PRE_TOURNAMENT_QUESTIONS: readonly PreTournamentQuestion[] = [
+  { id: 'champion',       emoji: '🏆', nickname: 'The Crown',       label: 'IPL Champion 2026',             field: 'champion',       kind: 'team',   points: 10 },
+  { id: 'orange_cap',     emoji: '🏏', nickname: 'Run Machine',     label: 'Orange Cap Winner (most runs)', field: 'orange_cap',     kind: 'team',   points: 5  },
+  { id: 'purple_cap',     emoji: '🎯', nickname: 'Wicket Wizard',   label: 'Purple Cap Winner (most wkts)', field: 'purple_cap',     kind: 'team',   points: 5  },
+  { id: 'playoff_teams',  emoji: '🎲', nickname: 'Fantastic Four',  label: 'Top 4 Play-off Teams',          field: 'playoff_teams',  kind: 'teams4', points: '3/6/9/15' },
+  { id: 'table_topper',   emoji: '👑', nickname: 'League Leader',   label: 'Table Topper in Play-offs',     field: 'table_topper',   kind: 'team',   points: 3  },
+  { id: 'contest_winner', emoji: '🧙', nickname: 'The Prophecy',    label: 'Our Contest Winner',            field: 'contest_winner', kind: 'player', points: 3  },
+] as const;

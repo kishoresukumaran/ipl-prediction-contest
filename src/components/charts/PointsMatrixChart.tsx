@@ -28,6 +28,7 @@ interface PointsMatrixData {
   matches: MatrixMatch[];
   matrix: Record<string, Record<number, CellBreakdown>>;
   triviaByPlayer: Record<string, number>;
+  preTournamentByPlayer?: Record<string, number>;
 }
 
 const BREAKDOWN_ROWS = [
@@ -211,7 +212,7 @@ export function PointsMatrixChart({
                     })}
 
                     {/* Trivia sub-row */}
-                    <tr className={`${subRowBg} text-[10px] border-b border-[var(--app-border)]`}>
+                    <tr className={`${subRowBg} text-[10px]`}>
                       <td className={`sticky left-0 z-10 border-r border-[var(--app-border)] pl-9 pr-2 py-1 whitespace-nowrap ${subRowBg}`}>
                         <span className="text-cyan-500 dark:text-cyan-300 font-medium">Trivia</span>
                       </td>
@@ -226,6 +227,25 @@ export function PointsMatrixChart({
                       ))}
                       <td className={`sticky right-0 z-10 border-l border-[var(--app-border)] px-2 py-1 text-center font-semibold text-cyan-500 dark:text-cyan-300 ${subRowBg}`}>
                         {data.triviaByPlayer?.[player.id] || '-'}
+                      </td>
+                    </tr>
+
+                    {/* Crystal Ball (Pre-Tournament) sub-row */}
+                    <tr className={`${subRowBg} text-[10px] border-b border-[var(--app-border)]`}>
+                      <td className={`sticky left-0 z-10 border-r border-[var(--app-border)] pl-9 pr-2 py-1 whitespace-nowrap ${subRowBg}`}>
+                        <span className="text-indigo-500 dark:text-indigo-300 font-medium">🔮 Crystal Ball</span>
+                      </td>
+                      {data.matches.map(m => (
+                        <td
+                          key={m.id}
+                          className="text-center px-0 py-1 text-[var(--app-text-tertiary)]"
+                          style={{ minWidth: 32, opacity: 0.3 }}
+                        >
+                          -
+                        </td>
+                      ))}
+                      <td className={`sticky right-0 z-10 border-l border-[var(--app-border)] px-2 py-1 text-center font-semibold text-indigo-500 dark:text-indigo-300 ${subRowBg}`}>
+                        {data.preTournamentByPlayer?.[player.id] || '-'}
                       </td>
                     </tr>
                   </>

@@ -53,6 +53,7 @@ export function PowerRankingsChart({ data }: PowerRankingsChartProps) {
         streakBonus: p.streakBonus,
         doubleHeaderBonus: p.doubleHeaderBonus,
         triviaPoints: p.triviaPoints,
+        preTournamentPoints: p.preTournamentPoints,
         accuracy: p.accuracy,
         rank: i,
         color: participant?.avatar_color || '#666',
@@ -115,6 +116,12 @@ export function PowerRankingsChart({ data }: PowerRankingsChartProps) {
             <div className="flex justify-between gap-4">
               <span className="text-[var(--app-text-secondary)]">Trivia</span>
               <span className="font-semibold text-cyan-400">{p.triviaPoints}</span>
+            </div>
+          )}
+          {p.preTournamentPoints > 0 && (
+            <div className="flex justify-between gap-4">
+              <span className="text-[var(--app-text-secondary)]">🔮 Crystal Ball</span>
+              <span className="font-semibold text-indigo-400">{p.preTournamentPoints}</span>
             </div>
           )}
           <div className="flex justify-between gap-4 pt-1 mt-1 border-t border-[var(--app-border)]">

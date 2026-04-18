@@ -26,10 +26,31 @@ interface SyncTriviaPoints {
   points_earned: number;
 }
 
+interface SyncPreTournamentPrediction {
+  player: string;
+  champion?: string | null;
+  orange_cap?: string | null;
+  purple_cap?: string | null;
+  playoff_teams?: string | null; // CSV of full team names from sheet
+  table_topper?: string | null;
+  contest_winner?: string | null; // sheet name like "Kishore"
+}
+
+interface SyncPreTournamentActuals {
+  champion?: string | null;
+  orange_cap?: string | null;
+  purple_cap?: string | null;
+  playoff_teams?: string | null;
+  table_topper?: string | null;
+  contest_winner?: string | null;
+}
+
 interface SyncPayload {
   matches?: SyncMatch[];
   predictions?: SyncPrediction[];
   trivia_points?: SyncTriviaPoints[];
+  pre_tournament_predictions?: SyncPreTournamentPrediction[];
+  pre_tournament_actuals?: SyncPreTournamentActuals;
 }
 
 interface SyncSummary {
@@ -37,6 +58,7 @@ interface SyncSummary {
   predictions: { upserted: number };
   jokers: { upserted: number };
   trivia_points: { upserted: number };
+  pre_tournament: { predictions_upserted: number; actuals_updated: number };
 }
 
 /**
@@ -65,6 +87,40 @@ export async function POST(request: NextRequest) {
       predictions: { upserted: 0 },
       jokers: { upserted: 0 },
       trivia_points: { upserted: 0 },
+      pre_tournament: { predictions_upserted: 0, actuals_updated: 0 },
+    };
+
+    // Helper: resolve a team value (full name OR abbreviation) -> abbr.
+    // Returns null and pushes an error if it can't resolve a non-empty value.
+    const resolveTeam = (
+      raw: string | null | undefined,
+      ctx: string
+    ): string | null => {
+      if (raw === null || raw === undefined) return null;
+      const trimmed = raw.toString().trim();
+      if (trimmed === '') return null;
+      // Already an abbreviation?
+      const upper = trimmed.toUpperCase();
+      if (TEAM_NAME_TO_ABBR[trimmed]) return TEAM_NAME_TO_ABBR[trimmed];
+      // Try the value-as-abbr by checking the reverse map: if any entry maps to it, accept.
+      if (Object.values(TEAM_NAME_TO_ABBR).includes(upper)) return upper;
+      errors.push(`Unknown team '${raw}' in ${ctx}`);
+      return null;
+    };
+
+    const resolvePlayoffCsv = (
+      raw: string | null | undefined,
+      ctx: string
+    ): string | null => {
+      if (!raw) return null;
+      const parts = raw.toString().split(',').map((p) => p.trim()).filter(Boolean);
+      if (parts.length === 0) return null;
+      const abbrs: string[] = [];
+      for (const part of parts) {
+        const abbr = resolveTeam(part, `${ctx} playoff_teams`);
+        if (abbr) abbrs.push(abbr);
+      }
+      return abbrs.length > 0 ? abbrs.join(',') : null;
     };
 
     // ============ SYNC MATCHES ============
@@ -235,6 +291,111 @@ export async function POST(request: NextRequest) {
         } else {
           summary.trivia_points.upserted++;
         }
+      }
+    }
+
+    // ============ SYNC PRE-TOURNAMENT PREDICTIONS ============
+    if (payload.pre_tournament_predictions && Array.isArray(payload.pre_tournament_predictions)) {
+      for (const row of payload.pre_tournament_predictions) {
+        const { player } = row;
+        if (!player || player.toString().trim() === '') {
+          errors.push('Skipping pre_tournament_predictions row: missing player');
+          continue;
+        }
+
+        // Validate player exists (don't block sync, just warn)
+        const participantId = resolvePlayerId(player);
+        if (!participantId) {
+          errors.push(`Unknown player in pre_tournament_predictions: '${player}'`);
+          continue;
+        }
+
+        const ctx = `pre_tournament(${player})`;
+        const champion = resolveTeam(row.champion, ctx);
+        const orange_cap = resolveTeam(row.orange_cap, ctx);
+        const purple_cap = resolveTeam(row.purple_cap, ctx);
+        const table_topper = resolveTeam(row.table_topper, ctx);
+        const playoff_teams = resolvePlayoffCsv(row.playoff_teams, ctx);
+
+        let contest_winner: string | null = null;
+        if (row.contest_winner && row.contest_winner.toString().trim() !== '') {
+          contest_winner = resolvePlayerId(row.contest_winner);
+          if (!contest_winner) {
+            errors.push(`Unknown contest_winner '${row.contest_winner}' for ${player}`);
+          }
+        }
+
+        const { error: ptError } = await admin
+          .from('pre_tournament_predictions')
+          .upsert(
+            {
+              player,
+              champion,
+              orange_cap,
+              purple_cap,
+              playoff_teams,
+              table_topper,
+              contest_winner,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'player' }
+          );
+
+        if (ptError) {
+          errors.push(`Failed to upsert pre_tournament_prediction for ${player}: ${ptError.message}`);
+        } else {
+          summary.pre_tournament.predictions_upserted++;
+        }
+      }
+    }
+
+    // ============ SYNC PRE-TOURNAMENT ACTUALS ============
+    if (payload.pre_tournament_actuals && typeof payload.pre_tournament_actuals === 'object') {
+      const a = payload.pre_tournament_actuals;
+      const ctx = 'pre_tournament_actuals';
+
+      // Build update object — only include non-null fields so phased reveals
+      // don't accidentally clear previously-set columns.
+      const updateData: Record<string, unknown> = { id: 1, updated_at: new Date().toISOString() };
+
+      if (a.champion !== undefined) {
+        const v = resolveTeam(a.champion, ctx);
+        if (v !== null || a.champion === null || a.champion === '') updateData.champion = v;
+      }
+      if (a.orange_cap !== undefined) {
+        const v = resolveTeam(a.orange_cap, ctx);
+        if (v !== null || a.orange_cap === null || a.orange_cap === '') updateData.orange_cap = v;
+      }
+      if (a.purple_cap !== undefined) {
+        const v = resolveTeam(a.purple_cap, ctx);
+        if (v !== null || a.purple_cap === null || a.purple_cap === '') updateData.purple_cap = v;
+      }
+      if (a.table_topper !== undefined) {
+        const v = resolveTeam(a.table_topper, ctx);
+        if (v !== null || a.table_topper === null || a.table_topper === '') updateData.table_topper = v;
+      }
+      if (a.playoff_teams !== undefined) {
+        const v = resolvePlayoffCsv(a.playoff_teams, ctx);
+        if (v !== null || a.playoff_teams === null || a.playoff_teams === '') updateData.playoff_teams = v;
+      }
+      if (a.contest_winner !== undefined) {
+        if (a.contest_winner === null || a.contest_winner === '') {
+          updateData.contest_winner = null;
+        } else {
+          const cw = resolvePlayerId(a.contest_winner);
+          if (cw) updateData.contest_winner = cw;
+          else errors.push(`Unknown contest_winner '${a.contest_winner}' in actuals`);
+        }
+      }
+
+      const { error: actError } = await admin
+        .from('pre_tournament_actuals')
+        .upsert(updateData, { onConflict: 'id' });
+
+      if (actError) {
+        errors.push(`Failed to upsert pre_tournament_actuals: ${actError.message}`);
+      } else {
+        summary.pre_tournament.actuals_updated++;
       }
     }
 

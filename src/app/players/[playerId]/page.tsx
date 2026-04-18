@@ -18,7 +18,8 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { TEAMS } from '@/lib/constants';
-import { PlayerPointsBreakdown } from '@/lib/types';
+import { PlayerPointsBreakdown, PreTournamentPrediction, PreTournamentActuals } from '@/lib/types';
+import { CrystalBallSection } from '@/components/dashboard/CrystalBallSection';
 
 interface PredictionHistoryItem {
   matchId: number;
@@ -53,6 +54,8 @@ interface PlayerData extends PlayerPointsBreakdown {
   profitableTeams: { team: string; points: number }[];
   predictionHistory: PredictionHistoryItem[];
   bonusHistory: BonusHistoryItem[];
+  preTournamentPrediction: PreTournamentPrediction | null;
+  preTournamentActuals: PreTournamentActuals | null;
 }
 
 function TeamBadge({ team }: { team: string }) {
@@ -135,6 +138,7 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
     { label: 'Double Header', value: player.doubleHeaderBonus, color: 'bg-emerald-400', textColor: 'text-emerald-400' },
     { label: 'Streak', value: player.streakBonus, color: 'bg-orange-400', textColor: 'text-orange-400' },
     { label: 'Trivia', value: player.triviaPoints, color: 'bg-pink-400', textColor: 'text-pink-400' },
+    { label: 'Crystal Ball', value: player.preTournamentPoints, color: 'bg-indigo-400', textColor: 'text-indigo-400' },
   ];
 
   const topTeams = player.teamAffinity.slice(0, 5);
@@ -246,6 +250,14 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
           <span className="text-xs text-[var(--app-text-tertiary)]">Not yet played</span>
         )}
       </div>
+
+      {/* Crystal Ball (Pre-Tournament Predictions) */}
+      <CrystalBallSection
+        participantName={player.participantName}
+        prediction={player.preTournamentPrediction}
+        actuals={player.preTournamentActuals}
+        breakdown={player.preTournamentBreakdown}
+      />
 
       {/* Team Affinity */}
       {topTeams.length > 0 && (

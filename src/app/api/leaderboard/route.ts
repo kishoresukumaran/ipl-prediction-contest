@@ -8,11 +8,13 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const admin = getSupabaseAdmin();
-    const [matchesRes, predictionsRes, jokersRes, triviaPtsRes] = await Promise.all([
+    const [matchesRes, predictionsRes, jokersRes, triviaPtsRes, preTPredsRes, preTActualsRes] = await Promise.all([
       admin.from('matches').select('*').order('match_date').order('start_time'),
       admin.from('predictions').select('*'),
       admin.from('jokers').select('*'),
       admin.from('trivia_points').select('*'),
+      admin.from('pre_tournament_predictions').select('*'),
+      admin.from('pre_tournament_actuals').select('*').eq('id', 1).maybeSingle(),
     ]);
 
     if (matchesRes.error) {
@@ -28,17 +30,27 @@ export async function GET() {
       console.error('Trivia Points query error:', triviaPtsRes.error);
       return NextResponse.json({ error: triviaPtsRes.error.message }, { status: 500 });
     }
+    if (preTPredsRes.error) {
+      console.error('Pre-tournament predictions query error:', preTPredsRes.error);
+    }
+    if (preTActualsRes.error) {
+      console.error('Pre-tournament actuals query error:', preTActualsRes.error);
+    }
 
     const matches = matchesRes.data || [];
     const predictions = predictionsRes.data || [];
     const jokers = jokersRes.data || [];
     const triviaPoints = triviaPtsRes.data || [];
+    const preTournamentPredictions = preTPredsRes.data || [];
+    const preTournamentActuals = preTActualsRes.data || null;
 
     const leaderboard = calculateAllPlayerPoints(PARTICIPANTS, {
       matches,
       predictions,
       jokers,
       triviaPoints,
+      preTournamentPredictions,
+      preTournamentActuals,
     });
 
     // Add avatar color and last 5 match results for each player

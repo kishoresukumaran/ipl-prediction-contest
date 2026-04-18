@@ -9,12 +9,14 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const admin = getSupabaseAdmin();
-    const [matchesRes, predictionsRes, jokersRes, triviaPtsRes, triviaRes] = await Promise.all([
+    const [matchesRes, predictionsRes, jokersRes, triviaPtsRes, triviaRes, preTPredsRes, preTActualsRes] = await Promise.all([
       admin.from('matches').select('*').order('match_date').order('start_time'),
       admin.from('predictions').select('*'),
       admin.from('jokers').select('*'),
       admin.from('trivia_points').select('*'),
       admin.from('trivia').select('id, trivia_date'),
+      admin.from('pre_tournament_predictions').select('*'),
+      admin.from('pre_tournament_actuals').select('*').eq('id', 1).maybeSingle(),
     ]);
 
     const matches: Match[] = matchesRes.data || [];
@@ -24,8 +26,17 @@ export async function GET() {
     const triviaDateMap = new Map<number, string>(
       (triviaRes.data || []).map((t: { id: number; trivia_date: string }) => [t.id, t.trivia_date])
     );
+    const preTournamentPredictions = preTPredsRes.data || [];
+    const preTournamentActuals = preTActualsRes.data || null;
 
-    const leaderboard = calculateAllPlayerPoints(PARTICIPANTS, { matches, predictions, jokers, triviaPoints });
+    const leaderboard = calculateAllPlayerPoints(PARTICIPANTS, {
+      matches,
+      predictions,
+      jokers,
+      triviaPoints,
+      preTournamentPredictions,
+      preTournamentActuals,
+    });
     const completedMatches = matches.filter(m => m.is_completed && m.winner);
 
     const pointsRace = buildPointsRace(completedMatches, predictions, jokers, triviaPoints);
@@ -67,13 +78,25 @@ export async function GET() {
     const participationRate = buildParticipationRate(completedMatches, predictions);
     const homeAwayBias = buildHomeAwayBias(completedMatches, predictions);
 
+    // Crystal Ball: per-player breakdown for PointsMatrix sub-row
+    const preTournamentByPlayer: Record<string, number> = {};
+    leaderboard.forEach((p) => {
+      if (p.preTournamentPoints > 0) preTournamentByPlayer[p.participantId] = p.preTournamentPoints;
+    });
+
+    // Inject into pointsMatrix so PointsMatrixChart receives it via its `data` prop
+    const pointsMatrixWithCrystal = { ...pointsMatrix, preTournamentByPlayer };
+
     return NextResponse.json({
       leaderboard, matches, predictions, pointsRace, teamPopularity,
       accuracyByPlayer, weeklyPoints, crowdWisdom,
       contrarianData, matchDifficulty, formData, winRateByTeam,
       doubleHeaderData, doubleHeaderHeroes, heatmapData, streakData, wallOfShame,
-      pointsMatrix, triviaStats,
+      pointsMatrix: pointsMatrixWithCrystal, triviaStats,
       ghostVoters, teamVoteTotals, voteSplits, participationRate, homeAwayBias,
+      preTournamentByPlayer,
+      preTournamentPredictions,
+      preTournamentActuals,
     });
   } catch (error) {
     console.error('Insights API error:', error);

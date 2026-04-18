@@ -58,6 +58,40 @@ export interface TriviaPoints {
   points_earned: number;
 }
 
+// =============================================================
+// Pre-Tournament ("Crystal Ball") types
+// =============================================================
+export interface PreTournamentPrediction {
+  id?: number;
+  player: string;
+  champion: string | null;
+  orange_cap: string | null;
+  purple_cap: string | null;
+  playoff_teams: string | null; // CSV of 4 team abbrs e.g. "CSK,MI,RCB,SRH"
+  table_topper: string | null;
+  contest_winner: string | null; // participant_id
+}
+
+export interface PreTournamentActuals {
+  champion: string | null;
+  orange_cap: string | null;
+  purple_cap: string | null;
+  playoff_teams: string | null;
+  table_topper: string | null;
+  contest_winner: string | null;
+}
+
+export interface PreTournamentBreakdown {
+  total: number;
+  champion: number;
+  orangeCap: number;
+  purpleCap: number;
+  playoffTeams: number;
+  playoffCorrectCount: number; // 0..4
+  tableTopper: number;
+  contestWinner: number;
+}
+
 
 export interface StreakInfo {
   start: number; // match id
@@ -77,6 +111,8 @@ export interface PlayerPointsBreakdown {
   streakBonus: number;
   abandonedPoints: number;
   triviaPoints: number;
+  preTournamentPoints: number;
+  preTournamentBreakdown: PreTournamentBreakdown;
   correctPredictions: number;
   totalPredictions: number;
   accuracy: number;

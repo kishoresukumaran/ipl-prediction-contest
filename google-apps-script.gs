@@ -31,11 +31,16 @@ function syncAll() {
     // Read trivia points from "Trivia_Points" tab
     const triviaPointsData = readTriviaPoints(spreadsheet);
 
+    // Read pre-tournament predictions + actuals from "Pre_Tournament_Points" tab
+    const preTournamentData = readPreTournamentPoints(spreadsheet);
+
     // Build payload
     const payload = {
       matches: matchesData,
       predictions: predictionsData,
-      trivia_points: triviaPointsData
+      trivia_points: triviaPointsData,
+      pre_tournament_predictions: preTournamentData.predictions,
+      pre_tournament_actuals: preTournamentData.actuals
     };
 
     // POST to API
@@ -62,6 +67,9 @@ function syncAll() {
       message += `Predictions: ${summary.predictions.upserted} upserted\n`;
       message += `Jokers: ${summary.jokers.upserted} upserted\n`;
       message += `Trivia Points: ${summary.trivia_points.upserted} upserted`;
+      if (summary.pre_tournament) {
+        message += `\nPre-Tournament: ${summary.pre_tournament.predictions_upserted} predictions, ${summary.pre_tournament.actuals_updated} actuals`;
+      }
 
       if (result.errors && result.errors.length > 0) {
         message += `\n\nWarnings:\n`;
@@ -256,6 +264,124 @@ function readTriviaPoints(spreadsheet) {
     Logger.log('Error reading trivia points: ' + error.toString());
     return [];
   }
+}
+
+/**
+ * Read pre-tournament predictions + actuals from the "Pre_Tournament_Points" tab.
+ *
+ * Sheet column layout (1-indexed):
+ *   A  Players              <- player display name (e.g. "Kishore")
+ *   B  Winner Prediction    <- player's pick for IPL Champion
+ *   C  Orange cap           <- player's pick for Orange Cap winner
+ *   D  Purple cap           <- player's pick for Purple Cap winner
+ *   E  Play off - Top 4     <- player's 4 playoff teams (CSV)
+ *   F  Top team             <- player's pick for table topper
+ *   G  Prediction Champion  <- player's pick for who wins the prediction contest
+ *   H  Actual Winner        <- ADMIN: actual IPL champion
+ *   I  Orange cap Winner    <- ADMIN: actual orange cap
+ *   J  Purple cap Winner    <- ADMIN: actual purple cap
+ *   K  Play off Teams       <- ADMIN: actual top-4 (CSV)
+ *   L  Actual Top team      <- ADMIN: actual table topper
+ *   M  Actual Champion      <- ADMIN: actual contest winner
+ *
+ * The H-M columns are the same on every row (admin fills row 2). We read them
+ * from row 2.
+ */
+function readPreTournamentPoints(spreadsheet) {
+  const empty = { predictions: [], actuals: null };
+  try {
+    const sheet = spreadsheet.getSheetByName('Pre_Tournament_Points');
+    if (!sheet) {
+      Logger.log('Pre_Tournament_Points sheet not found - skipping');
+      return empty;
+    }
+
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return empty;
+
+    // Read all 13 columns (A-M) for all data rows
+    const data = sheet.getRange(2, 1, lastRow - 1, 13).getValues();
+
+    const predictions = [];
+    let actuals = null;
+
+    data.forEach(function (row, idx) {
+      const player = row[0];
+      const championPred = row[1];
+      const orangePred = row[2];
+      const purplePred = row[3];
+      const playoffPred = row[4];
+      const topTeamPred = row[5];
+      const contestPred = row[6];
+
+      const championAct = row[7];
+      const orangeAct = row[8];
+      const purpleAct = row[9];
+      const playoffAct = row[10];
+      const topTeamAct = row[11];
+      const contestAct = row[12];
+
+      // Capture actuals from the first row that has any actual value set.
+      // (Admin should put them on row 2; this is robust to phased reveals.)
+      if (actuals === null) {
+        const anyActual =
+          (championAct && championAct.toString().trim() !== '') ||
+          (orangeAct && orangeAct.toString().trim() !== '') ||
+          (purpleAct && purpleAct.toString().trim() !== '') ||
+          (playoffAct && playoffAct.toString().trim() !== '') ||
+          (topTeamAct && topTeamAct.toString().trim() !== '') ||
+          (contestAct && contestAct.toString().trim() !== '');
+        if (anyActual || idx === 0) {
+          actuals = {
+            champion: cellToTextOrNull(championAct),
+            orange_cap: cellToTextOrNull(orangeAct),
+            purple_cap: cellToTextOrNull(purpleAct),
+            playoff_teams: cellToTextOrNull(playoffAct),
+            table_topper: cellToTextOrNull(topTeamAct),
+            contest_winner: cellToTextOrNull(contestAct)
+          };
+        }
+      }
+
+      // Skip rows with no player name
+      if (!player || player.toString().trim() === '') return;
+
+      // Skip player rows where every prediction column is blank
+      const hasAnyPrediction =
+        (championPred && championPred.toString().trim() !== '') ||
+        (orangePred && orangePred.toString().trim() !== '') ||
+        (purplePred && purplePred.toString().trim() !== '') ||
+        (playoffPred && playoffPred.toString().trim() !== '') ||
+        (topTeamPred && topTeamPred.toString().trim() !== '') ||
+        (contestPred && contestPred.toString().trim() !== '');
+      if (!hasAnyPrediction) return;
+
+      predictions.push({
+        player: player.toString().trim(),
+        champion: cellToTextOrNull(championPred),
+        orange_cap: cellToTextOrNull(orangePred),
+        purple_cap: cellToTextOrNull(purplePred),
+        playoff_teams: cellToTextOrNull(playoffPred),
+        table_topper: cellToTextOrNull(topTeamPred),
+        contest_winner: cellToTextOrNull(contestPred)
+      });
+    });
+
+    Logger.log('Loaded ' + predictions.length + ' pre-tournament predictions; actuals=' + (actuals ? 'set' : 'none'));
+    return { predictions: predictions, actuals: actuals };
+  } catch (error) {
+    Logger.log('Error reading pre-tournament points: ' + error.toString());
+    return empty;
+  }
+}
+
+/**
+ * Helper: convert a sheet cell value to a trimmed string, or null if empty.
+ */
+function cellToTextOrNull(value) {
+  if (value === null || value === undefined) return null;
+  const s = value.toString().trim();
+  return s === '' ? null : s;
 }
 
 /**

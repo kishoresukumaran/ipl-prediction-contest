@@ -1,11 +1,108 @@
-import { Match, Prediction, Joker, TriviaPoints, PlayerPointsBreakdown, StreakInfo } from './types';
-import { POINTS_CONFIG, getMatchPoints } from './constants';
+import {
+  Match,
+  Prediction,
+  Joker,
+  TriviaPoints,
+  PlayerPointsBreakdown,
+  StreakInfo,
+  PreTournamentPrediction,
+  PreTournamentActuals,
+  PreTournamentBreakdown,
+} from './types';
+import { POINTS_CONFIG, getMatchPoints, PRE_TOURNAMENT_POINTS } from './constants';
 
 export interface ScoringData {
   matches: Match[];
   predictions: Prediction[];
   jokers: Joker[];
   triviaPoints: TriviaPoints[];
+  preTournamentPredictions?: PreTournamentPrediction[];
+  preTournamentActuals?: PreTournamentActuals | null;
+}
+
+const EMPTY_PRE_TOURNAMENT_BREAKDOWN: PreTournamentBreakdown = {
+  total: 0,
+  champion: 0,
+  orangeCap: 0,
+  purpleCap: 0,
+  playoffTeams: 0,
+  playoffCorrectCount: 0,
+  tableTopper: 0,
+  contestWinner: 0,
+};
+
+function normalizeTeam(value: string | null | undefined): string {
+  return (value ?? '').toString().trim().toUpperCase();
+}
+
+function parsePlayoffTeams(csv: string | null | undefined): string[] {
+  if (!csv) return [];
+  return csv
+    .split(',')
+    .map((t) => normalizeTeam(t))
+    .filter((t) => t.length > 0);
+}
+
+export function calculatePreTournamentPoints(
+  participantId: string,
+  prediction: PreTournamentPrediction | null | undefined,
+  actuals: PreTournamentActuals | null | undefined
+): PreTournamentBreakdown {
+  if (!prediction || !actuals) return { ...EMPTY_PRE_TOURNAMENT_BREAKDOWN };
+
+  const breakdown: PreTournamentBreakdown = { ...EMPTY_PRE_TOURNAMENT_BREAKDOWN };
+
+  // Single-team questions: only score if actual is set (phased reveal)
+  if (actuals.champion && normalizeTeam(prediction.champion) === normalizeTeam(actuals.champion)) {
+    breakdown.champion = PRE_TOURNAMENT_POINTS.champion;
+  }
+  if (actuals.orange_cap && normalizeTeam(prediction.orange_cap) === normalizeTeam(actuals.orange_cap)) {
+    breakdown.orangeCap = PRE_TOURNAMENT_POINTS.orangeCap;
+  }
+  if (actuals.purple_cap && normalizeTeam(prediction.purple_cap) === normalizeTeam(actuals.purple_cap)) {
+    breakdown.purpleCap = PRE_TOURNAMENT_POINTS.purpleCap;
+  }
+  if (actuals.table_topper && normalizeTeam(prediction.table_topper) === normalizeTeam(actuals.table_topper)) {
+    breakdown.tableTopper = PRE_TOURNAMENT_POINTS.tableTopper;
+  }
+
+  // Playoff Top 4: count intersection of predicted vs actual sets
+  if (actuals.playoff_teams) {
+    const actualSet = new Set(parsePlayoffTeams(actuals.playoff_teams));
+    const predicted = parsePlayoffTeams(prediction.playoff_teams);
+    let count = 0;
+    const seen = new Set<string>();
+    for (const t of predicted) {
+      if (seen.has(t)) continue;
+      seen.add(t);
+      if (actualSet.has(t)) count++;
+    }
+    if (count > 4) count = 4;
+    breakdown.playoffCorrectCount = count;
+    breakdown.playoffTeams = PRE_TOURNAMENT_POINTS.playoffByCount[count] ?? 0;
+  }
+
+  // Contest winner: any player who correctly predicted the winner gets points
+  // (case-insensitive participant id compare). participantId param kept for API
+  // symmetry / future use.
+  void participantId;
+  if (actuals.contest_winner && prediction.contest_winner) {
+    const a = actuals.contest_winner.toString().trim().toLowerCase();
+    const p = prediction.contest_winner.toString().trim().toLowerCase();
+    if (a && p && a === p) {
+      breakdown.contestWinner = PRE_TOURNAMENT_POINTS.contestWinner;
+    }
+  }
+
+  breakdown.total =
+    breakdown.champion +
+    breakdown.orangeCap +
+    breakdown.purpleCap +
+    breakdown.playoffTeams +
+    breakdown.tableTopper +
+    breakdown.contestWinner;
+
+  return breakdown;
 }
 
 export function calculatePlayerPoints(
@@ -13,7 +110,7 @@ export function calculatePlayerPoints(
   participantName: string,
   data: ScoringData
 ): PlayerPointsBreakdown {
-  const { matches, predictions, jokers, triviaPoints } = data;
+  const { matches, predictions, jokers, triviaPoints, preTournamentPredictions, preTournamentActuals } = data;
 
   const completedMatches = matches
     .filter(m => m.is_completed && m.winner)
@@ -129,8 +226,19 @@ export function calculatePlayerPoints(
 
   const triviaPointsTotal = playerTriviaPoints.reduce((sum, t) => sum + t.points_earned, 0);
 
+  // Pre-tournament ("Crystal Ball") points
+  const playerPreTournament = preTournamentPredictions?.find(
+    (p) => p.player.toLowerCase() === participantName.toLowerCase()
+  );
+  const preTournamentBreakdown = calculatePreTournamentPoints(
+    participantId,
+    playerPreTournament,
+    preTournamentActuals
+  );
+  const preTournamentPointsTotal = preTournamentBreakdown.total;
+
   const totalPoints = basePoints + powerMatchPoints + underdogBonus + jokerBonus +
-    doubleHeaderBonus + streakBonus + abandonedPoints + triviaPointsTotal;
+    doubleHeaderBonus + streakBonus + abandonedPoints + triviaPointsTotal + preTournamentPointsTotal;
 
   return {
     participantId,
@@ -144,6 +252,8 @@ export function calculatePlayerPoints(
     streakBonus,
     abandonedPoints,
     triviaPoints: triviaPointsTotal,
+    preTournamentPoints: preTournamentPointsTotal,
+    preTournamentBreakdown,
     correctPredictions,
     totalPredictions,
     accuracy: totalPredictions > 0 ? (correctPredictions / totalPredictions) * 100 : 0,
