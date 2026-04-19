@@ -37,7 +37,7 @@ const PLANNED_WIDGETS = [
   {
     emoji: '🏅',
     title: 'Achievement Wall',
-    desc: 'Crystal Ball badges earned: Perfect Seer, Bracket Buster, Lone Genius, Kingmaker.',
+    desc: 'Pre-Tournament badges earned: Perfect Seer, Bracket Buster, Lone Genius, Kingmaker.',
   },
 ];
 
@@ -50,20 +50,20 @@ export function CrystalBallInsightsPanel({ hasData = false }: Props) {
     <div className="space-y-6">
       {/* Hero teaser card */}
       <div className="relative overflow-hidden rounded-xl border border-indigo-500/30 bg-gradient-to-br from-indigo-500/15 via-fuchsia-500/10 to-amber-500/5 p-6">
-        <div className="absolute -right-8 -top-8 text-[200px] opacity-10 select-none animate-pulse">
+        <div className="absolute -right-8 -top-8 text-[200px] opacity-[0.04] dark:opacity-10 select-none animate-pulse">
           🔮
         </div>
-        <div className="absolute -left-6 -bottom-10 text-[160px] opacity-[0.06] select-none">
+        <div className="absolute -left-6 -bottom-10 text-[160px] opacity-[0.03] dark:opacity-[0.06] select-none">
           ✨
         </div>
 
         <div className="relative">
           <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="h-5 w-5 text-indigo-300" />
-            <h2 className="text-lg font-extrabold bg-gradient-to-r from-indigo-300 via-fuchsia-300 to-amber-300 bg-clip-text text-transparent">
-              The Crystal Ball
+            <Sparkles className="h-5 w-5 text-indigo-500 dark:text-indigo-300" />
+            <h2 className="text-lg font-extrabold bg-gradient-to-r from-indigo-600 via-fuchsia-600 to-amber-600 dark:from-indigo-300 dark:via-fuchsia-300 dark:to-amber-300 bg-clip-text text-transparent">
+              Pre-Tournament Predictions
             </h2>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-500/25 text-indigo-200 text-[10px] font-bold uppercase tracking-wider">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-600 dark:bg-indigo-500/25 border border-indigo-700 dark:border-transparent text-white dark:text-indigo-200 text-[10px] font-bold uppercase tracking-wider">
               <Lock className="h-3 w-3" /> Coming Soon
             </span>
           </div>
@@ -87,15 +87,15 @@ export function CrystalBallInsightsPanel({ hasData = false }: Props) {
                     {q.label}
                   </div>
                 </div>
-                <span className="text-[10px] font-bold text-amber-400 shrink-0">
-                  {typeof q.points === 'number' ? `+${q.points}` : q.points}
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-500/15 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 shrink-0">
+                  {typeof q.points === 'number' ? `+${q.points}` : q.points} pts
                 </span>
               </div>
             ))}
           </div>
 
           <div className="mt-5 flex items-center gap-2 text-xs text-[var(--app-text-tertiary)]">
-            <Hourglass className="h-3.5 w-3.5 text-indigo-300" />
+            <Hourglass className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-300" />
             <span>
               {hasData
                 ? 'Predictions synced. Widgets coming online soon.'
@@ -108,7 +108,7 @@ export function CrystalBallInsightsPanel({ hasData = false }: Props) {
       {/* Planned widgets preview */}
       <div className="bg-[var(--app-surface)] backdrop-blur-sm rounded-xl border border-[var(--app-border)] p-4">
         <h3 className="text-base font-semibold text-[var(--app-text)] mb-0.5 flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-indigo-400" />
+          <Sparkles className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
           Planned Widgets
         </h3>
         <p className="text-xs text-[var(--app-text-secondary)] mb-4">
@@ -126,7 +126,7 @@ export function CrystalBallInsightsPanel({ hasData = false }: Props) {
                 <div className="min-w-0">
                   <div className="text-xs font-bold text-[var(--app-text)] flex items-center gap-1.5">
                     {w.title}
-                    <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[var(--app-surface-alt)] text-[var(--app-text-tertiary)] font-semibold">
+                    <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-indigo-500/15 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-500/25 font-semibold">
                       Soon
                     </span>
                   </div>

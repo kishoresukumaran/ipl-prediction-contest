@@ -233,7 +233,7 @@ export function PointsMatrixChart({
                     {/* Crystal Ball (Pre-Tournament) sub-row */}
                     <tr className={`${subRowBg} text-[10px] border-b border-[var(--app-border)]`}>
                       <td className={`sticky left-0 z-10 border-r border-[var(--app-border)] pl-9 pr-2 py-1 whitespace-nowrap ${subRowBg}`}>
-                        <span className="text-indigo-500 dark:text-indigo-300 font-medium">🔮 Crystal Ball</span>
+                        <span className="text-indigo-500 dark:text-indigo-300 font-medium">🔮 Pre-Tournament</span>
                       </td>
                       {data.matches.map(m => (
                         <td

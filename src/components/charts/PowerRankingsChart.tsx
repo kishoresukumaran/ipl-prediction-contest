@@ -120,7 +120,7 @@ export function PowerRankingsChart({ data }: PowerRankingsChartProps) {
           )}
           {p.preTournamentPoints > 0 && (
             <div className="flex justify-between gap-4">
-              <span className="text-[var(--app-text-secondary)]">🔮 Crystal Ball</span>
+              <span className="text-[var(--app-text-secondary)]">🔮 Pre-Tournament</span>
               <span className="font-semibold text-indigo-400">{p.preTournamentPoints}</span>
             </div>
           )}

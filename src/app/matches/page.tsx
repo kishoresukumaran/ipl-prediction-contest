@@ -159,7 +159,7 @@ export default function MatchesPage() {
       label: 'Double Headers',
       count: matches?.filter((m) => doubleHeaderDates.has(m.match_date)).length || 0,
     },
-    { id: 'pretournament', label: '🔮 Crystal Ball', count: 6, icon: Sparkles },
+    { id: 'pretournament', label: '🔮 Pre-Tournament', count: 6, icon: Sparkles },
   ];
 
   if (loading) {

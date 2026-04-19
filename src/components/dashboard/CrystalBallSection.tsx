@@ -75,7 +75,7 @@ function PlayerChip({
       <span className="text-[11px] font-semibold text-[var(--app-text)]">
         {p?.name || participantId}
       </span>
-      {state === 'correct' && <span className="text-emerald-400 text-[10px]">✓</span>}
+      {state === 'correct' && <span className="text-emerald-600 dark:text-emerald-400 text-[10px]">✓</span>}
     </span>
   );
 }
@@ -103,13 +103,13 @@ interface Props {
 function LockedTeaser({ context = 'predictions' }: { context?: 'predictions' | 'actuals' }) {
   return (
     <div className="rounded-xl border border-indigo-500/30 bg-gradient-to-br from-indigo-500/10 via-fuchsia-500/5 to-transparent p-4 relative overflow-hidden">
-      <div className="absolute -right-6 -top-6 text-[120px] opacity-10 select-none animate-pulse">
+      <div className="absolute -right-6 -top-6 text-[120px] opacity-[0.05] dark:opacity-10 select-none animate-pulse">
         🔮
       </div>
       <div className="flex items-center gap-2 mb-2 relative">
-        <Lock className="h-4 w-4 text-indigo-400" />
+        <Lock className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
         <h3 className="text-sm font-bold text-[var(--app-text)]">Revealing soon</h3>
-        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-semibold uppercase tracking-wider">
+        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-600 dark:bg-indigo-500/20 border border-indigo-700 dark:border-transparent text-white dark:text-indigo-300 font-semibold uppercase tracking-wider">
           Locked
         </span>
       </div>
@@ -131,7 +131,7 @@ function LockedTeaser({ context = 'predictions' }: { context?: 'predictions' | '
               </div>
               <div className="text-[10px] text-[var(--app-text-tertiary)] truncate">{q.label}</div>
             </div>
-            <span className="text-[10px] font-bold text-amber-400 shrink-0">+{q.points} pts</span>
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-500/15 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 shrink-0">+{q.points} pts</span>
           </div>
         ))}
       </div>
@@ -154,10 +154,10 @@ export function CrystalBallSection({ participantName, prediction, actuals, break
   return (
     <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4">
       <h2 className="text-sm font-semibold text-[var(--app-text-secondary)] mb-1 flex items-center gap-2">
-        <Sparkles className="h-4 w-4 text-indigo-400" />
-        <span>🔮 Crystal Ball Predictions</span>
+        <Sparkles className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
+        <span>🔮 Pre-Tournament Predictions</span>
         {breakdown.total > 0 && (
-          <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-bold">
+          <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 text-[10px] font-bold">
             <Trophy className="h-3 w-3" />
             {breakdown.total} pts
           </span>
@@ -277,7 +277,7 @@ export function CrystalBallSection({ participantName, prediction, actuals, break
 
                 <div className="text-right shrink-0 min-w-[40px]">
                   {earned > 0 ? (
-                    <span className="text-xs font-bold text-amber-400">+{earned}</span>
+                    <span className="text-xs font-bold text-amber-600 dark:text-amber-400">+{earned}</span>
                   ) : (
                     <span className="text-[10px] text-[var(--app-text-tertiary)]">
                       {actualVal ? '0' : '—'}

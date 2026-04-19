@@ -105,7 +105,7 @@ const TABS = [
   { id: 'teams', label: 'Teams', icon: Users },
   { id: 'streaks', label: 'Streaks', icon: Flame },
   { id: 'bonus', label: 'Bonus', icon: Star },
-  { id: 'pretournament', label: 'Crystal Ball', icon: Sparkles },
+  { id: 'pretournament', label: 'Pre-Tournament', icon: Sparkles },
   { id: 'behavior', label: 'Behavior', icon: Zap },
   { id: 'h2h', label: 'Head to Head', icon: TrendingUp },
   { id: 'matches', label: 'Match Analysis', icon: BarChart3 },

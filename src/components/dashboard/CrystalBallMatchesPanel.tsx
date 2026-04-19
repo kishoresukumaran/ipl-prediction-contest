@@ -127,7 +127,7 @@ export function CrystalBallMatchesPanel() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-indigo-400" />
+        <Loader2 className="h-6 w-6 animate-spin text-indigo-500 dark:text-indigo-400" />
       </div>
     );
   }
@@ -163,7 +163,7 @@ export function CrystalBallMatchesPanel() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-bold text-[var(--app-text)]">{q.nickname}</span>
-                    <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-bold">
+                    <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold">
                       {typeof q.points === 'number' ? `${q.points} pts` : `${q.points} pts`}
                     </span>
                   </div>
@@ -217,12 +217,12 @@ function PanelHeader({ playersCount }: { playersCount?: number }) {
   return (
     <div className="rounded-xl border border-indigo-500/30 bg-gradient-to-r from-indigo-500/10 via-fuchsia-500/5 to-transparent p-4">
       <div className="flex items-center gap-2">
-        <Sparkles className="h-5 w-5 text-indigo-300" />
-        <h2 className="text-base font-extrabold bg-gradient-to-r from-indigo-300 via-fuchsia-300 to-amber-300 bg-clip-text text-transparent">
-          🔮 Crystal Ball Predictions
+        <Sparkles className="h-5 w-5 text-indigo-500 dark:text-indigo-300" />
+        <h2 className="text-base font-extrabold bg-gradient-to-r from-indigo-600 via-fuchsia-600 to-amber-600 dark:from-indigo-300 dark:via-fuchsia-300 dark:to-amber-300 bg-clip-text text-transparent">
+          🔮 Pre-Tournament Predictions
         </h2>
         {playersCount !== undefined && (
-          <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-bold uppercase tracking-wider">
+          <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 font-bold uppercase tracking-wider">
             {playersCount} oracles
           </span>
         )}
@@ -354,7 +354,7 @@ function QuestionDetail({
                 {pickEl}
                 <span className="text-xs font-bold w-8 text-right shrink-0">
                   {earned > 0 ? (
-                    <span className="text-amber-400 inline-flex items-center gap-0.5">
+                    <span className="text-amber-600 dark:text-amber-400 inline-flex items-center gap-0.5">
                       <Trophy className="h-3 w-3" />+{earned}
                     </span>
                   ) : actualVal ? (
