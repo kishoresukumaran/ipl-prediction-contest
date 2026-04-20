@@ -32,14 +32,11 @@ interface PredictionHistoryItem {
   predictionTime: string | null;
 }
 
-interface BonusHistoryItem {
-  questionId: number;
-  questionText: string;
-  options: string[];
-  matchId: number;
-  homeTeam: string;
-  awayTeam: string;
-  selectedOption: string | null;
+interface TriviaHistoryItem {
+  triviaId: number;
+  question: string | null;
+  triviaDate: string | null;
+  prediction: string | null;
   correctAnswer: string | null;
   isCorrect: boolean;
   points: number;
@@ -53,7 +50,7 @@ interface PlayerData extends PlayerPointsBreakdown {
   hatedTeams: { team: string; count: number }[];
   profitableTeams: { team: string; points: number }[];
   predictionHistory: PredictionHistoryItem[];
-  bonusHistory: BonusHistoryItem[];
+  triviaHistory: TriviaHistoryItem[];
   preTournamentPrediction: PreTournamentPrediction | null;
   preTournamentActuals: PreTournamentActuals | null;
 }
@@ -397,97 +394,84 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
         </div>
       </div>
 
-      {/* Bonus Question History */}
+      {/* Trivia Question History */}
       <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl overflow-hidden">
         <div className="px-4 py-3 border-b border-[var(--app-border)]">
           <h2 className="text-sm font-semibold text-[var(--app-text-secondary)] flex items-center gap-2">
             <HelpCircle className="h-4 w-4 text-amber-400" />
-            Bonus Question History ({player.bonusHistory?.length ?? 0})
+            Trivia Question History ({player.triviaHistory?.length ?? 0})
           </h2>
         </div>
         <div className="max-h-[500px] overflow-y-auto divide-y divide-[var(--app-border)]">
-          {!player.bonusHistory?.length ? (
-            <div className="px-4 py-6 text-center text-[var(--app-text-tertiary)] text-sm">No bonus questions yet</div>
+          {!player.triviaHistory?.length ? (
+            <div className="px-4 py-6 text-center text-[var(--app-text-tertiary)] text-sm">No trivia rounds yet</div>
           ) : (
-            [...player.bonusHistory].reverse().map((bh) => {
-              const answered = bh.selectedOption !== null;
-              const resolved = bh.correctAnswer !== null;
+            [...player.triviaHistory].reverse().map((th) => {
               return (
-                <Link key={bh.questionId} href={`/matches/${bh.matchId}`}>
-                  <div className="px-4 py-3 hover:bg-[var(--app-surface-hover)] transition-all">
-                    {/* Match + result icon row */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="shrink-0">
-                        {!answered ? (
-                          <Minus className="h-4 w-4 text-[var(--app-text-tertiary)]" />
-                        ) : !resolved ? (
-                          <Minus className="h-4 w-4 text-[var(--app-text-tertiary)]" />
-                        ) : bh.isCorrect ? (
-                          <CheckCircle className="h-4 w-4 text-emerald-400" />
+                <div key={th.triviaId} className="px-4 py-3 hover:bg-[var(--app-surface-hover)] transition-all">
+                  <div
+                    className={`rounded-lg border px-3 py-2 ${
+                      th.isCorrect
+                        ? 'bg-emerald-500/5 border-emerald-500/20'
+                        : 'bg-red-500/5 border-red-500/15'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-[var(--app-text-tertiary)] shrink-0">
+                        Q{th.triviaId}
+                      </span>
+                      {th.triviaDate && (
+                        <span className="text-[10px] text-[var(--app-text-tertiary)]">
+                          {new Date(`${th.triviaDate}T00:00:00`).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </span>
+                      )}
+                      <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+                        <span className={`text-xs font-medium ${th.isCorrect ? 'text-emerald-400' : 'text-red-400'}`}>
+                          {th.prediction || '—'}
+                        </span>
+                        {!th.isCorrect && th.correctAnswer && (
+                          <>
+                            <span className="text-[10px] text-[var(--app-text-tertiary)]">→</span>
+                            <span className="text-[10px] text-[var(--app-text-secondary)]">{th.correctAnswer}</span>
+                          </>
+                        )}
+                      </div>
+                      <div className="shrink-0 flex items-center gap-1.5">
+                        {th.isCorrect ? (
+                          <span className="text-emerald-400 text-xs">✓</span>
                         ) : (
-                          <XCircle className="h-4 w-4 text-red-400" />
+                          <span className="text-red-400 text-xs">✗</span>
+                        )}
+                        {th.isCorrect && th.points > 0 && (
+                          <span className="text-[10px] font-bold text-amber-400">+{th.points}</span>
                         )}
                       </div>
-                      <span className="text-[10px] text-[var(--app-text-tertiary)]">#{bh.matchId}</span>
-                      {bh.homeTeam && <TeamBadge team={bh.homeTeam} />}
-                      {bh.homeTeam && bh.awayTeam && (
-                        <span className="text-[var(--app-text-tertiary)] text-[10px]">vs</span>
-                      )}
-                      {bh.awayTeam && <TeamBadge team={bh.awayTeam} />}
-                      {bh.isCorrect && bh.points > 0 && (
-                        <span className="ml-auto text-xs font-bold text-amber-400">+{bh.points} pts</span>
-                      )}
                     </div>
-
-                    {/* Question text */}
-                    <p className="text-xs font-medium text-[var(--app-text)] leading-snug mb-2">
-                      {bh.questionText}
-                    </p>
-
-                    {/* Options grid */}
-                    {bh.options.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {bh.options.map((opt) => {
-                          const isPlayerPick = opt === bh.selectedOption;
-                          const isCorrectOpt = resolved && opt === bh.correctAnswer;
-                          const isWrongPick = isPlayerPick && resolved && !bh.isCorrect;
-
-                          let cls = 'text-[10px] font-medium px-2 py-0.5 rounded-full border transition-all ';
-                          if (isCorrectOpt && isPlayerPick) {
-                            // player picked correctly
-                            cls += 'bg-emerald-500/20 border-emerald-400 text-emerald-300';
-                          } else if (isCorrectOpt) {
-                            // correct answer but player didn't pick it
-                            cls += 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400';
-                          } else if (isWrongPick) {
-                            // player picked this but it's wrong
-                            cls += 'bg-red-500/15 border-red-400 text-red-300';
-                          } else if (isPlayerPick && !resolved) {
-                            // picked but result pending
-                            cls += 'bg-indigo-500/15 border-indigo-400/60 text-indigo-300';
-                          } else {
-                            // neutral unchosen option
-                            cls += 'bg-transparent border-[var(--app-border)] text-[var(--app-text-tertiary)]';
-                          }
-
-                          return (
-                            <span key={opt} className={cls}>
-                              {isPlayerPick && '→ '}
-                              {opt}
-                              {isCorrectOpt && !isPlayerPick && ' ✓'}
-                            </span>
-                          );
-                        })}
-                        {!answered && (
-                          <span className="text-[10px] italic text-[var(--app-text-tertiary)] px-1">No answer</span>
-                        )}
-                        {answered && !resolved && (
-                          <span className="text-[10px] italic text-[var(--app-text-tertiary)] px-1">Result pending</span>
-                        )}
-                      </div>
+                    {th.question && (
+                      <p className="text-xs text-[var(--app-text)] mt-2 leading-snug">
+                        {th.question}
+                      </p>
+                    )}
+                    {!th.question && (
+                      <p className="text-xs text-[var(--app-text-tertiary)] mt-2 italic">
+                        Question text unavailable
+                      </p>
+                    )}
+                    {!th.prediction && (
+                      <p className="text-[10px] italic text-[var(--app-text-tertiary)] mt-1">
+                        No answer submitted
+                      </p>
+                    )}
+                    {th.isCorrect && th.points === 0 && (
+                      <p className="text-[10px] text-[var(--app-text-tertiary)] mt-1">
+                        Correct answer, 0 points awarded
+                      </p>
                     )}
                   </div>
-                </Link>
+                </div>
               );
             })
           )}
