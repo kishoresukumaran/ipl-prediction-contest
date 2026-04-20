@@ -55,8 +55,8 @@ interface SyncPayload {
 
 interface SyncSummary {
   matches: { updated: number; skipped: number };
-  predictions: { upserted: number };
-  jokers: { upserted: number };
+  predictions: { upserted: number; deleted: number };
+  jokers: { upserted: number; deleted: number };
   trivia_points: { upserted: number };
   pre_tournament: { predictions_upserted: number; actuals_updated: number };
 }
@@ -84,8 +84,8 @@ export async function POST(request: NextRequest) {
     const errors: string[] = [];
     const summary: SyncSummary = {
       matches: { updated: 0, skipped: 0 },
-      predictions: { upserted: 0 },
-      jokers: { upserted: 0 },
+      predictions: { upserted: 0, deleted: 0 },
+      jokers: { upserted: 0, deleted: 0 },
       trivia_points: { upserted: 0 },
       pre_tournament: { predictions_upserted: 0, actuals_updated: 0 },
     };
@@ -207,15 +207,47 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
+        // Blank prediction means "no pick" — delete any previously stored
+        // prediction + joker so the sheet remains the source of truth when
+        // an admin clears a cell.
+        const predictionTrimmed = (prediction ?? '').toString().trim();
+        if (predictionTrimmed === '') {
+          const { error: delPredError } = await admin
+            .from('predictions')
+            .delete()
+            .eq('match_id', match_id)
+            .eq('participant_id', participantId);
+
+          if (delPredError) {
+            errors.push(`Failed to delete prediction for ${player} in match ${match_id}: ${delPredError.message}`);
+          } else {
+            summary.predictions.deleted++;
+          }
+
+          const { error: delJokerError } = await admin
+            .from('jokers')
+            .delete()
+            .eq('match_id', match_id)
+            .eq('participant_id', participantId);
+
+          if (delJokerError) {
+            errors.push(`Failed to delete joker for ${player} in match ${match_id}: ${delJokerError.message}`);
+          } else {
+            summary.jokers.deleted++;
+          }
+
+          continue;
+        }
+
         // Check if prediction is abandoned
         let predictedTeamAbbr: string;
-        if (prediction.toLowerCase() === 'abandoned') {
+        if (predictionTrimmed.toLowerCase() === 'abandoned') {
           predictedTeamAbbr = 'ABANDONED';
         } else {
           // Resolve predicted team
-          predictedTeamAbbr = TEAM_NAME_TO_ABBR[prediction];
+          predictedTeamAbbr = TEAM_NAME_TO_ABBR[predictionTrimmed];
           if (!predictedTeamAbbr) {
-            errors.push(`Unknown team: '${prediction}' predicted by ${player} in match ${match_id}`);
+            errors.push(`Unknown team: '${predictionTrimmed}' predicted by ${player} in match ${match_id}`);
             continue;
           }
         }
@@ -239,7 +271,7 @@ export async function POST(request: NextRequest) {
 
         summary.predictions.upserted++;
 
-        // Upsert joker if flagged
+        // Upsert joker if flagged; otherwise make sure no stale joker remains
         if (joker === true) {
           const { error: jokerError } = await admin
             .from('jokers')
@@ -256,6 +288,16 @@ export async function POST(request: NextRequest) {
             errors.push(`Failed to upsert joker for ${player} in match ${match_id}: ${jokerError.message}`);
           } else {
             summary.jokers.upserted++;
+          }
+        } else {
+          const { error: delJokerError } = await admin
+            .from('jokers')
+            .delete()
+            .eq('match_id', match_id)
+            .eq('participant_id', participantId);
+
+          if (delJokerError) {
+            errors.push(`Failed to clear stale joker for ${player} in match ${match_id}: ${delJokerError.message}`);
           }
         }
       }

@@ -64,9 +64,15 @@ function syncAll() {
 
       let message = `Sync complete!\n\n`;
       message += `Matches: ${summary.matches.updated} updated\n`;
-      message += `Predictions: ${summary.predictions.upserted} upserted\n`;
-      message += `Jokers: ${summary.jokers.upserted} upserted\n`;
-      message += `Trivia Points: ${summary.trivia_points.upserted} upserted`;
+      message += `Predictions: ${summary.predictions.upserted} upserted`;
+      if (summary.predictions.deleted) {
+        message += `, ${summary.predictions.deleted} deleted`;
+      }
+      message += `\nJokers: ${summary.jokers.upserted} upserted`;
+      if (summary.jokers.deleted) {
+        message += `, ${summary.jokers.deleted} deleted`;
+      }
+      message += `\nTrivia Points: ${summary.trivia_points.upserted} upserted`;
       if (summary.pre_tournament) {
         message += `\nPre-Tournament: ${summary.pre_tournament.predictions_upserted} predictions, ${summary.pre_tournament.actuals_updated} actuals`;
       }
@@ -138,6 +144,12 @@ function readMatches(spreadsheet) {
 /**
  * Read predictions from the "Predictions" tab
  * Columns: A=Player, B=Match ID, C=Prediction, D=Joker (can be TRUE, YES, true, 1, or empty)
+ *
+ * We emit a row for every (player, match_id) pair that exists in the sheet,
+ * even if the Prediction cell is blank. A blank prediction is sent as an
+ * empty string so the API can delete any stale prediction for that pair
+ * (otherwise clearing a cell in the sheet would silently leave the old
+ * prediction in the database).
  */
 function readPredictions(spreadsheet) {
   try {
@@ -160,16 +172,24 @@ function readPredictions(spreadsheet) {
       const prediction = row[2];
       const joker = row[3];
 
-      // Only include rows with a prediction
-      if (prediction && prediction.toString().trim() !== '') {
-        const jokerStr = joker.toString().toUpperCase().trim();
-        predictions.push({
-          player: player,
-          match_id: matchId,
-          prediction: prediction,
-          joker: joker === true || joker === 1 || jokerStr === 'TRUE' || jokerStr === 'YES'
-        });
-      }
+      // Skip rows that don't identify a (player, match) pair at all
+      if (!player || player.toString().trim() === '') return;
+      if (matchId === '' || matchId === null || matchId === undefined) return;
+
+      const predictionStr = prediction === null || prediction === undefined
+        ? ''
+        : prediction.toString().trim();
+
+      const jokerStr = (joker === null || joker === undefined ? '' : joker.toString())
+        .toUpperCase()
+        .trim();
+
+      predictions.push({
+        player: player,
+        match_id: matchId,
+        prediction: predictionStr,
+        joker: joker === true || joker === 1 || jokerStr === 'TRUE' || jokerStr === 'YES'
+      });
     });
 
     return predictions;
