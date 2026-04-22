@@ -100,9 +100,15 @@ export function StreakAchievements({ data }: { data: StreakAchievementPlayer[] }
                       )}
                     </div>
 
-                    <div className="shrink-0 rounded-md border border-amber-400/30 bg-amber-400/10 px-2.5 py-1 text-center">
-                      <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-400/80">Personal Best</p>
-                      <p className="text-sm font-black text-amber-400 tabular-nums">{player.longestStreak}</p>
+                    <div className="shrink-0 flex items-center gap-2">
+                      <div className="rounded-md border border-amber-400/35 bg-amber-400/15 px-2.5 py-1 text-center min-w-[72px]">
+                        <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-300/90">Streaks</p>
+                        <p className="text-sm font-black text-amber-300 tabular-nums">{player.streakCount}</p>
+                      </div>
+                      <div className="rounded-md border border-[var(--app-border)] bg-[var(--app-surface)] px-2.5 py-1 text-center min-w-[90px]">
+                        <p className="text-[9px] font-semibold uppercase tracking-wide text-[var(--app-text-tertiary)]">Personal Best</p>
+                        <p className="text-sm font-black text-[var(--app-text)] tabular-nums">{player.longestStreak}</p>
+                      </div>
                     </div>
 
                     <svg
