@@ -61,6 +61,7 @@ export async function GET() {
       currentStreak: p.currentStreak,
       color: PARTICIPANTS.find(pp => pp.id === p.participantId)?.avatar_color || '#666',
     }));
+    const streakAchievements = buildStreakAchievements(leaderboard, completedMatches, predictions);
 
     // Wall of Shame data
     const wallOfShame = buildWallOfShame(completedMatches, predictions, jokers);
@@ -91,7 +92,7 @@ export async function GET() {
       leaderboard, matches, predictions, pointsRace, teamPopularity,
       accuracyByPlayer, weeklyPoints, crowdWisdom,
       contrarianData, matchDifficulty, formData, winRateByTeam,
-      doubleHeaderData, doubleHeaderHeroes, heatmapData, streakData, wallOfShame,
+      doubleHeaderData, doubleHeaderHeroes, heatmapData, streakData, streakAchievements, wallOfShame,
       pointsMatrix: pointsMatrixWithCrystal, triviaStats,
       ghostVoters, teamVoteTotals, voteSplits, participationRate, homeAwayBias,
       preTournamentByPlayer,
@@ -102,6 +103,78 @@ export async function GET() {
     console.error('Insights API error:', error);
     return NextResponse.json({ error: 'Failed to compute insights' }, { status: 500 });
   }
+}
+
+function buildStreakAchievements(
+  leaderboard: Awaited<ReturnType<typeof calculateAllPlayerPoints>>,
+  matches: Match[],
+  predictions: Prediction[]
+) {
+  const sortedMatches = [...matches].sort((a, b) => {
+    const dateDiff = a.match_date.localeCompare(b.match_date);
+    if (dateDiff !== 0) return dateDiff;
+    return a.start_time.localeCompare(b.start_time);
+  });
+
+  const matchIndexById = new Map<number, number>();
+  sortedMatches.forEach((match, idx) => {
+    matchIndexById.set(match.id, idx);
+  });
+
+  return leaderboard
+    .map((player) => {
+      const streakInstances = player.streaks.map((streak, streakIndex) => {
+        const startIdx = matchIndexById.get(streak.start);
+        const endIdx = matchIndexById.get(streak.end);
+        if (startIdx === undefined || endIdx === undefined) {
+          return {
+            id: `${player.participantId}-${streakIndex}`,
+            startMatchId: streak.start,
+            endMatchId: streak.end,
+            length: streak.length,
+            matches: [],
+          };
+        }
+
+        const segment = sortedMatches.slice(startIdx, endIdx + 1);
+        const matchDetails = segment.map((match) => {
+          const playerPrediction = predictions.find(
+            (pred) => pred.match_id === match.id && pred.participant_id === player.participantId
+          );
+          const winner = match.winner || '';
+          const isAbandoned = winner === 'ABANDONED';
+          const predicted = playerPrediction?.predicted_team || '';
+          return {
+            matchId: match.id,
+            homeTeam: match.home_team,
+            awayTeam: match.away_team,
+            predicted,
+            winner,
+            isAbandoned,
+            correct: isAbandoned ? true : predicted !== '' && predicted === winner,
+          };
+        });
+
+        return {
+          id: `${player.participantId}-${streakIndex}`,
+          startMatchId: streak.start,
+          endMatchId: streak.end,
+          length: streak.length,
+          matches: matchDetails,
+        };
+      });
+
+      return {
+        playerId: player.participantId,
+        name: player.participantName,
+        color: PARTICIPANTS.find((p) => p.id === player.participantId)?.avatar_color || '#666',
+        streakCount: player.streaks.length,
+        longestStreak: player.longestStreak,
+        currentStreak: player.currentStreak,
+        streaks: streakInstances,
+      };
+    })
+    .sort((a, b) => b.streakCount - a.streakCount || b.longestStreak - a.longestStreak || a.name.localeCompare(b.name));
 }
 
 function buildPointsRace(matches: Match[], predictions: Prediction[], jokers: any[], triviaPoints: any[]) {

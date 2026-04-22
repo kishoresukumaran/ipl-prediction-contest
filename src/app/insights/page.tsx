@@ -11,6 +11,7 @@ const PointsRaceChart = dynamic(() => import('@/components/charts/PointsRaceChar
 const TeamPopularityChart = dynamic(() => import('@/components/charts/TeamPopularityChart').then(m => ({ default: m.TeamPopularityChart })), { ssr: false });
 const AccuracyChart = dynamic(() => import('@/components/charts/AccuracyChart').then(m => ({ default: m.AccuracyChart })), { ssr: false });
 const StreakChart = dynamic(() => import('@/components/charts/StreakChart').then(m => ({ default: m.StreakChart })), { ssr: false });
+const StreakAchievements = dynamic(() => import('@/components/charts/StreakAchievements').then(m => ({ default: m.StreakAchievements })), { ssr: false });
 const PredictionHeatmap = dynamic(() => import('@/components/charts/PredictionHeatmap').then(m => ({ default: m.PredictionHeatmap })), { ssr: false });
 const HeadToHeadChart = dynamic(() => import('@/components/charts/HeadToHeadChart').then(m => ({ default: m.HeadToHeadChart })), { ssr: false });
 const DoubleHeaderChart = dynamic(() => import('@/components/charts/DoubleHeaderChart').then(m => ({ default: m.DoubleHeaderChart })), { ssr: false });
@@ -56,6 +57,29 @@ interface InsightsAPIData {
   doubleHeaderHeroes: { name: string; color: string; totalDays: number; sweptDays: number; totalBonusPoints: number; successRate: number; instances: { date: string; matches: { matchId: number; homeTeam: string; awayTeam: string; predicted: string; winner: string; correct: boolean }[]; swept: boolean }[] }[];
   heatmapData: { participants: { id: string; name: string }[]; matches: { id: number; home_team: string; away_team: string; is_abandoned?: boolean }[]; predictions: Record<string, Record<number, { predicted: string; correct: boolean | null | 'abandoned' }>> };
   streakData: { name: string; longestStreak: number; currentStreak: number; color: string }[];
+  streakAchievements: {
+    playerId: string;
+    name: string;
+    color: string;
+    streakCount: number;
+    longestStreak: number;
+    currentStreak: number;
+    streaks: {
+      id: string;
+      startMatchId: number;
+      endMatchId: number;
+      length: number;
+      matches: {
+        matchId: number;
+        homeTeam: string;
+        awayTeam: string;
+        predicted: string;
+        winner: string;
+        isAbandoned: boolean;
+        correct: boolean;
+      }[];
+    }[];
+  }[];
   wallOfShame: {
     wastedJokers: { name: string; matchId: number; homeTeam: string; awayTeam: string; picked: string; winner: string; color: string }[];
     jinxers: { name: string; pickedFavorite: number; favoriteWon: number; favoriteLost: number; jinxRate: number; color: string; jinxMatches: { matchId: number; homeTeam: string; awayTeam: string; favorite: string; winner: string | null; jinxed: boolean; voteShare: number; totalVotes: number }[] }[];
@@ -205,6 +229,9 @@ export default function InsightsPage() {
           <>
             <ChartCard title="On Fire / Ice Cold 🔥❄️" subtitle="Current streak status across all players">
               <OnFireIceCold data={data.streakData} />
+            </ChartCard>
+            <ChartCard title="Streak Hall of Fame" subtitle="Personal bests and every streak earned">
+              <StreakAchievements data={data.streakAchievements} />
             </ChartCard>
             <ChartCard title="Winning Streaks" subtitle="Longest and current streaks">
               <StreakChart data={data.streakData} />
