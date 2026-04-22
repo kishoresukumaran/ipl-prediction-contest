@@ -256,8 +256,37 @@ export default function LeaderboardPage() {
 
       {/* Table */}
       <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl overflow-hidden">
-        {/* Table Header */}
-        <div className="grid grid-cols-[40px_1fr_60px_50px_50px_50px] sm:grid-cols-[40px_1fr_70px_60px_60px_60px_60px] items-center px-3 py-2 bg-[var(--app-surface)] border-b border-[var(--app-border)] text-[10px] sm:text-xs font-medium text-[var(--app-text-secondary)]">
+        {/* Mobile sort bar */}
+        <div className="sm:hidden flex items-center gap-2 px-3 py-2 bg-[var(--app-surface)] border-b border-[var(--app-border)] text-[10px] font-medium text-[var(--app-text-secondary)] overflow-x-auto scrollbar-hide">
+          <span className="text-[var(--app-text-tertiary)] shrink-0">Sort:</span>
+          {(
+            [
+              { field: 'rank' as const, label: '#' },
+              { field: 'name' as const, label: 'Name' },
+              { field: 'totalPoints' as const, label: 'Points' },
+              { field: 'accuracy' as const, label: 'Acc%' },
+              { field: 'currentStreak' as const, label: 'Strk' },
+            ]
+          ).map((opt) => (
+            <button
+              key={opt.field}
+              onClick={() => handleSort(opt.field)}
+              className={`shrink-0 rounded-full px-2.5 py-0.5 border transition-colors ${
+                sortField === opt.field
+                  ? 'bg-amber-500/15 border-amber-500/40 text-amber-300'
+                  : 'border-[var(--app-border)] text-[var(--app-text-secondary)] hover:text-[var(--app-text)]'
+              }`}
+            >
+              {opt.label}
+              {sortField === opt.field && (
+                <span className="ml-1 text-[9px]">{sortDir === 'asc' ? '▲' : '▼'}</span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Desktop Table Header */}
+        <div className="hidden sm:grid grid-cols-[40px_1fr_70px_60px_60px_60px_60px] items-center px-3 py-2 bg-[var(--app-surface)] border-b border-[var(--app-border)] text-xs font-medium text-[var(--app-text-secondary)]">
           <button onClick={() => handleSort('rank')} className="text-left hover:text-[var(--app-text)] transition-colors">
             #
           </button>
@@ -267,7 +296,7 @@ export default function LeaderboardPage() {
           <button onClick={() => handleSort('totalPoints')} className="text-right hover:text-[var(--app-text)] transition-colors">
             Points
           </button>
-          <button onClick={() => handleSort('correctPredictions')} className="text-right hover:text-[var(--app-text)] transition-colors hidden sm:block">
+          <button onClick={() => handleSort('correctPredictions')} className="text-right hover:text-[var(--app-text)] transition-colors">
             W/L
           </button>
           <button onClick={() => handleSort('accuracy')} className="text-right hover:text-[var(--app-text)] transition-colors">
@@ -276,56 +305,107 @@ export default function LeaderboardPage() {
           <button onClick={() => handleSort('currentStreak')} className="text-right hover:text-[var(--app-text)] transition-colors">
             Strk
           </button>
-          <div className="text-right hidden sm:block">Last 5</div>
+          <div className="text-right">Last 5</div>
         </div>
 
         {/* Rows */}
-        {sorted.map((player) => (
-          <div key={player.participantId}>
-            <button
-              onClick={() =>
-                setExpandedId(expandedId === player.participantId ? null : player.participantId)
-              }
-              className="w-full grid grid-cols-[40px_1fr_60px_50px_50px_50px] sm:grid-cols-[40px_1fr_70px_60px_60px_60px_60px] items-center px-3 py-2.5 hover:bg-[var(--app-surface)] transition-all border-b border-[var(--app-border)] text-left"
-            >
-              <div>
-                <RankBadge rank={player.rank || 0} />
-              </div>
-              <div className="flex items-center gap-2 min-w-0">
-                <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                  style={{ backgroundColor: player.avatarColor }}
-                >
-                  {player.participantName.charAt(0)}
+        {sorted.map((player) => {
+          const isExpanded = expandedId === player.participantId;
+          return (
+            <div key={player.participantId}>
+              <button
+                onClick={() => setExpandedId(isExpanded ? null : player.participantId)}
+                className="w-full text-left border-b border-[var(--app-border)] hover:bg-[var(--app-surface)] transition-all"
+              >
+                {/* Mobile card layout */}
+                <div className="sm:hidden px-3 py-2.5 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="shrink-0">
+                      <RankBadge rank={player.rank || 0} />
+                    </div>
+                    <div
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                      style={{ backgroundColor: player.avatarColor }}
+                    >
+                      {player.participantName.charAt(0)}
+                    </div>
+                    <span className="flex-1 min-w-0 text-sm font-medium text-[var(--app-text)] truncate">
+                      {player.participantName}
+                    </span>
+                    {isExpanded ? (
+                      <ChevronUp className="h-4 w-4 text-[var(--app-text-tertiary)] shrink-0" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-[var(--app-text-tertiary)] shrink-0" />
+                    )}
+                  </div>
+                  <div className="flex items-center flex-wrap gap-1.5 pl-10">
+                    <span className="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5">
+                      <span className="text-[9px] uppercase tracking-wide text-amber-300/80">Pts</span>
+                      <span className="text-xs font-bold text-amber-300 tabular-nums">{player.totalPoints}</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5">
+                      <span className="text-[9px] uppercase tracking-wide text-emerald-300/80">Acc</span>
+                      <span className="text-xs font-bold text-emerald-300 tabular-nums">{player.accuracy.toFixed(0)}%</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-md border border-purple-500/25 bg-purple-500/10 px-2 py-0.5">
+                      <span className="text-[9px] uppercase tracking-wide text-purple-300/80">Strk</span>
+                      <span className="text-xs font-bold text-purple-300 tabular-nums">{player.currentStreak}</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-md border border-[var(--app-border)] bg-[var(--app-surface)] px-2 py-0.5">
+                      <span className="text-[9px] uppercase tracking-wide text-[var(--app-text-tertiary)]">W/L</span>
+                      <span className="text-xs font-bold text-[var(--app-text)] tabular-nums">
+                        {player.correctPredictions}/{player.totalPredictions}
+                      </span>
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-md border border-[var(--app-border)] bg-[var(--app-surface)] px-2 py-0.5">
+                      <span className="text-[9px] uppercase tracking-wide text-[var(--app-text-tertiary)]">Last 5</span>
+                      <Last5Dots results={player.last5Results} />
+                    </span>
+                  </div>
                 </div>
-                <span className="text-sm font-medium text-[var(--app-text)] truncate">
-                  {player.participantName}
-                </span>
-                {expandedId === player.participantId ? (
-                  <ChevronUp className="h-3 w-3 text-[var(--app-text-tertiary)] shrink-0" />
-                ) : (
-                  <ChevronDown className="h-3 w-3 text-[var(--app-text-tertiary)] shrink-0" />
-                )}
-              </div>
-              <div className="text-right text-sm font-bold text-amber-400">
-                {player.totalPoints}
-              </div>
-              <div className="text-right text-xs text-[var(--app-text-secondary)] hidden sm:block">
-                {player.correctPredictions}/{player.totalPredictions}
-              </div>
-              <div className="text-right text-xs text-emerald-400">
-                {player.accuracy.toFixed(0)}%
-              </div>
-              <div className="text-right text-xs text-purple-400">{player.currentStreak}</div>
-              <div className="text-right hidden sm:flex justify-end">
-                <Last5Dots results={player.last5Results} />
-              </div>
-            </button>
 
-            {/* Expanded breakdown */}
-            {expandedId === player.participantId && <PointsBreakdownRow player={player} />}
-          </div>
-        ))}
+                {/* Desktop table row */}
+                <div className="hidden sm:grid grid-cols-[40px_1fr_70px_60px_60px_60px_60px] items-center px-3 py-2.5">
+                  <div>
+                    <RankBadge rank={player.rank || 0} />
+                  </div>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                      style={{ backgroundColor: player.avatarColor }}
+                    >
+                      {player.participantName.charAt(0)}
+                    </div>
+                    <span className="text-sm font-medium text-[var(--app-text)] truncate">
+                      {player.participantName}
+                    </span>
+                    {isExpanded ? (
+                      <ChevronUp className="h-3 w-3 text-[var(--app-text-tertiary)] shrink-0" />
+                    ) : (
+                      <ChevronDown className="h-3 w-3 text-[var(--app-text-tertiary)] shrink-0" />
+                    )}
+                  </div>
+                  <div className="text-right text-sm font-bold text-amber-400">
+                    {player.totalPoints}
+                  </div>
+                  <div className="text-right text-xs text-[var(--app-text-secondary)]">
+                    {player.correctPredictions}/{player.totalPredictions}
+                  </div>
+                  <div className="text-right text-xs text-emerald-400">
+                    {player.accuracy.toFixed(0)}%
+                  </div>
+                  <div className="text-right text-xs text-purple-400">{player.currentStreak}</div>
+                  <div className="flex justify-end">
+                    <Last5Dots results={player.last5Results} />
+                  </div>
+                </div>
+              </button>
+
+              {/* Expanded breakdown */}
+              {isExpanded && <PointsBreakdownRow player={player} />}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
