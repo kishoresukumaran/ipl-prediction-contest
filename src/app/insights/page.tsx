@@ -230,7 +230,7 @@ export default function InsightsPage() {
             <ChartCard title="On Fire / Ice Cold 🔥❄️" subtitle="Current streak status across all players">
               <OnFireIceCold data={data.streakData} />
             </ChartCard>
-            <ChartCard title="Streak Hall of Fame" subtitle="Personal bests and every streak earned">
+            <ChartCard title="Streak Hall of Fame" subtitle="Streaks attained, best streak length, and full match-by-match breakdown — click a player to expand.">
               <StreakAchievements data={data.streakAchievements} />
             </ChartCard>
             <ChartCard title="Winning Streaks" subtitle="Longest and current streaks">

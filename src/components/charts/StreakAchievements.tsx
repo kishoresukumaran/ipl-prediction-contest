@@ -31,14 +31,6 @@ interface StreakAchievementPlayer {
   streaks: StreakInstance[];
 }
 
-function FlameIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
-      <path d="M12 23c-3.866 0-7-3.134-7-7 0-3.526 2.339-6.074 4.5-8.5.69-.775 1.5-1.6 1.5-1.6s.81.825 1.5 1.6C14.661 9.926 17 12.474 17 16c0 3.866-3.134 7-5 7zm0-2c1.657 0 3-1.343 3-3 0-1.8-1.2-3.2-2.2-4.4-.3-.35-.6-.7-.8-.95-.2.25-.5.6-.8.95C10.2 14.8 9 16.2 9 18c0 1.657 1.343 3 3 3z" />
-    </svg>
-  );
-}
-
 export function StreakAchievements({ data }: { data: StreakAchievementPlayer[] }) {
   const [expandedPlayerId, setExpandedPlayerId] = useState<string | null>(null);
 
@@ -91,22 +83,13 @@ export function StreakAchievements({ data }: { data: StreakAchievementPlayer[] }
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: Math.min(totalStreaks, 5) }).map((_, idx) => (
-                        <FlameIcon key={`${player.playerId}-flame-${idx}`} className="h-3.5 w-3.5 text-amber-400" />
-                      ))}
-                      {totalStreaks > 5 && (
-                        <span className="text-[10px] font-bold text-amber-400">x{totalStreaks}</span>
-                      )}
-                    </div>
-
                     <div className="shrink-0 flex items-center gap-2">
-                      <div className="rounded-md border border-amber-400/35 bg-amber-400/15 px-2.5 py-1 text-center min-w-[72px]">
-                        <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-300/90">Streaks</p>
+                      <div className="rounded-md border border-amber-400/35 bg-amber-400/15 px-2.5 py-1 text-center min-w-[96px]">
+                        <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-300/90">Streaks Attained</p>
                         <p className="text-sm font-black text-amber-300 tabular-nums">{player.streakCount}</p>
                       </div>
-                      <div className="rounded-md border border-[var(--app-border)] bg-[var(--app-surface)] px-2.5 py-1 text-center min-w-[90px]">
-                        <p className="text-[9px] font-semibold uppercase tracking-wide text-[var(--app-text-tertiary)]">Personal Best</p>
+                      <div className="rounded-md border border-[var(--app-border)] bg-[var(--app-surface)] px-2.5 py-1 text-center min-w-[80px]">
+                        <p className="text-[9px] font-semibold uppercase tracking-wide text-[var(--app-text-tertiary)]">Best Length</p>
                         <p className="text-sm font-black text-[var(--app-text)] tabular-nums">{player.longestStreak}</p>
                       </div>
                     </div>
