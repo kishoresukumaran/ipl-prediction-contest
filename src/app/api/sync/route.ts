@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { TEAM_NAME_TO_ABBR, resolvePlayerId, resolveMatchType } from '@/lib/sync-mappings';
 
+// Allow this serverless function up to 60s. The previous per-row sequential
+// upsert approach blew past Vercel's default 10s window with ~600+ predictions.
+export const maxDuration = 60;
+
 interface SyncMatch {
   id: number;
   winner?: string | null;
@@ -62,6 +66,28 @@ interface SyncSummary {
 }
 
 /**
+ * Run promises with bounded concurrency. Used for per-row updates that can't
+ * be expressed as a single bulk statement (e.g. matches.update with row-
+ * specific column sets).
+ */
+async function runWithConcurrency<T, R>(
+  items: T[],
+  worker: (item: T) => Promise<R>,
+  concurrency = 10
+): Promise<R[]> {
+  const results: R[] = [];
+  let cursor = 0;
+  const runners = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (cursor < items.length) {
+      const idx = cursor++;
+      results[idx] = await worker(items[idx]);
+    }
+  });
+  await Promise.all(runners);
+  return results;
+}
+
+/**
  * POST /api/sync
  * Syncs data from Google Sheet to Supabase
  * Requires x-api-key header matching SYNC_API_KEY env var
@@ -99,10 +125,8 @@ export async function POST(request: NextRequest) {
       if (raw === null || raw === undefined) return null;
       const trimmed = raw.toString().trim();
       if (trimmed === '') return null;
-      // Already an abbreviation?
       const upper = trimmed.toUpperCase();
       if (TEAM_NAME_TO_ABBR[trimmed]) return TEAM_NAME_TO_ABBR[trimmed];
-      // Try the value-as-abbr by checking the reverse map: if any entry maps to it, accept.
       if (Object.values(TEAM_NAME_TO_ABBR).includes(upper)) return upper;
       errors.push(`Unknown team '${raw}' in ${ctx}`);
       return null;
@@ -124,22 +148,29 @@ export async function POST(request: NextRequest) {
     };
 
     // ============ SYNC MATCHES ============
+    // Matches still use .update() (not upsert) because rows must already
+    // exist; bulk-update with differing column sets isn't a single SQL call,
+    // so we run row updates with bounded concurrency to keep latency low
+    // without overwhelming PostgREST.
     if (payload.matches && Array.isArray(payload.matches)) {
+      type MatchUpdate = {
+        id: number;
+        data: Record<string, unknown>;
+      };
+      const matchUpdates: MatchUpdate[] = [];
+
       for (const match of payload.matches) {
         const { id, winner, match_type, is_power_match, underdog_team } = match;
 
-        // Only upsert if there's a winner to update
         if (!winner || winner.trim() === '') {
           summary.matches.skipped++;
           continue;
         }
 
-        // Check if match is abandoned
         let winnerAbbr: string;
         if (winner.toLowerCase() === 'abandoned') {
           winnerAbbr = 'ABANDONED';
         } else {
-          // Resolve team abbreviation
           winnerAbbr = TEAM_NAME_TO_ABBR[winner];
           if (!winnerAbbr) {
             errors.push(`Unknown team: '${winner}' for match ${id}`);
@@ -148,7 +179,6 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Resolve underdog team if provided
         let underdogAbbr: string | null = null;
         if (underdog_team && underdog_team.trim() !== '') {
           underdogAbbr = TEAM_NAME_TO_ABBR[underdog_team];
@@ -159,92 +189,93 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Resolve match type if provided
         const resolvedMatchType = match_type ? resolveMatchType(match_type) : undefined;
 
-        // Upsert match (never delete, only update)
         const updateData: Record<string, unknown> = {
           winner: winnerAbbr,
           is_completed: true,
           result_updated_at: new Date().toISOString(),
         };
+        if (underdogAbbr) updateData.underdog_team = underdogAbbr;
+        if (resolvedMatchType) updateData.match_type = resolvedMatchType;
+        if (is_power_match !== undefined) updateData.is_power_match = is_power_match;
 
-        if (underdogAbbr) {
-          updateData.underdog_team = underdogAbbr;
-        }
-
-        if (resolvedMatchType) {
-          updateData.match_type = resolvedMatchType;
-        }
-
-        if (is_power_match !== undefined) {
-          updateData.is_power_match = is_power_match;
-        }
-
-        const { error: updateError } = await admin
-          .from('matches')
-          .update(updateData)
-          .eq('id', id);
-
-        if (updateError) {
-          errors.push(`Failed to update match ${id}: ${updateError.message}`);
-          summary.matches.skipped++;
-        } else {
-          summary.matches.updated++;
-        }
+        matchUpdates.push({ id, data: updateData });
       }
+
+      await runWithConcurrency(
+        matchUpdates,
+        async ({ id, data }) => {
+          const { error: updateError } = await admin
+            .from('matches')
+            .update(data)
+            .eq('id', id);
+          if (updateError) {
+            errors.push(`Failed to update match ${id}: ${updateError.message}`);
+            summary.matches.skipped++;
+          } else {
+            summary.matches.updated++;
+          }
+        },
+        10
+      );
     }
 
     // ============ SYNC PREDICTIONS & JOKERS ============
+    // Strategy: collect all rows into 4 buckets (predictions to upsert/delete,
+    // jokers to upsert/delete), then issue a single bulk upsert for each
+    // upsert bucket and parallel deletes for the delete buckets. This turns
+    // ~1000 sequential round-trips into ~4 statements + a handful of deletes.
     if (payload.predictions && Array.isArray(payload.predictions)) {
+      type PKey = { match_id: number; participant_id: string };
+
+      const predictionsToUpsert: Array<{
+        match_id: number;
+        participant_id: string;
+        predicted_team: string;
+      }> = [];
+      const predictionsToDelete: PKey[] = [];
+      const jokersToUpsert: Array<{
+        participant_id: string;
+        match_id: number;
+        declared_at: string;
+      }> = [];
+      const jokersToDelete: PKey[] = [];
+
+      const seenPred = new Set<string>();
+      const seenJokerUpsert = new Set<string>();
+      const seenJokerDelete = new Set<string>();
+      const pkey = (p: PKey) => `${p.match_id}:${p.participant_id}`;
+
       for (const pred of payload.predictions) {
         const { player, match_id, prediction, joker } = pred;
 
-        // Resolve player ID
         const participantId = resolvePlayerId(player);
         if (!participantId) {
           errors.push(`Unknown player: '${player}' in match ${match_id}`);
           continue;
         }
 
-        // Blank prediction means "no pick" — delete any previously stored
-        // prediction + joker so the sheet remains the source of truth when
-        // an admin clears a cell.
         const predictionTrimmed = (prediction ?? '').toString().trim();
+
+        // Blank prediction -> remove both the prediction and any stored joker
         if (predictionTrimmed === '') {
-          const { error: delPredError } = await admin
-            .from('predictions')
-            .delete()
-            .eq('match_id', match_id)
-            .eq('participant_id', participantId);
-
-          if (delPredError) {
-            errors.push(`Failed to delete prediction for ${player} in match ${match_id}: ${delPredError.message}`);
-          } else {
-            summary.predictions.deleted++;
+          const k = pkey({ match_id, participant_id: participantId });
+          if (!seenPred.has(k)) {
+            seenPred.add(k);
+            predictionsToDelete.push({ match_id, participant_id: participantId });
           }
-
-          const { error: delJokerError } = await admin
-            .from('jokers')
-            .delete()
-            .eq('match_id', match_id)
-            .eq('participant_id', participantId);
-
-          if (delJokerError) {
-            errors.push(`Failed to delete joker for ${player} in match ${match_id}: ${delJokerError.message}`);
-          } else {
-            summary.jokers.deleted++;
+          if (!seenJokerDelete.has(k)) {
+            seenJokerDelete.add(k);
+            jokersToDelete.push({ match_id, participant_id: participantId });
           }
-
           continue;
         }
 
-        // Check if prediction is abandoned
         let predictedTeamAbbr: string;
         if (predictionTrimmed.toLowerCase() === 'abandoned') {
           predictedTeamAbbr = 'ABANDONED';
         } else {
-          // Resolve predicted team
           predictedTeamAbbr = TEAM_NAME_TO_ABBR[predictionTrimmed];
           if (!predictedTeamAbbr) {
             errors.push(`Unknown team: '${predictionTrimmed}' predicted by ${player} in match ${match_id}`);
@@ -252,92 +283,153 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Upsert prediction
-        const { error: predError } = await admin
-          .from('predictions')
-          .upsert(
-            {
-              match_id,
-              participant_id: participantId,
-              predicted_team: predictedTeamAbbr,
-            },
-            { onConflict: 'match_id,participant_id' }
-          );
-
-        if (predError) {
-          errors.push(`Failed to upsert prediction for ${player} in match ${match_id}: ${predError.message}`);
-          continue;
+        const k = pkey({ match_id, participant_id: participantId });
+        if (!seenPred.has(k)) {
+          seenPred.add(k);
+          predictionsToUpsert.push({
+            match_id,
+            participant_id: participantId,
+            predicted_team: predictedTeamAbbr,
+          });
         }
 
-        summary.predictions.upserted++;
-
-        // Upsert joker if flagged; otherwise make sure no stale joker remains
         if (joker === true) {
-          const { error: jokerError } = await admin
-            .from('jokers')
-            .upsert(
-              {
-                participant_id: participantId,
-                match_id,
-                declared_at: new Date().toISOString(),
-              },
-              { onConflict: 'participant_id,match_id' }
-            );
-
-          if (jokerError) {
-            errors.push(`Failed to upsert joker for ${player} in match ${match_id}: ${jokerError.message}`);
-          } else {
-            summary.jokers.upserted++;
+          if (!seenJokerUpsert.has(k)) {
+            seenJokerUpsert.add(k);
+            jokersToUpsert.push({
+              participant_id: participantId,
+              match_id,
+              declared_at: new Date().toISOString(),
+            });
           }
         } else {
-          const { error: delJokerError } = await admin
-            .from('jokers')
-            .delete()
-            .eq('match_id', match_id)
-            .eq('participant_id', participantId);
-
-          if (delJokerError) {
-            errors.push(`Failed to clear stale joker for ${player} in match ${match_id}: ${delJokerError.message}`);
+          if (!seenJokerDelete.has(k)) {
+            seenJokerDelete.add(k);
+            jokersToDelete.push({ match_id, participant_id: participantId });
           }
         }
       }
+
+      // Bulk upsert predictions in one call
+      if (predictionsToUpsert.length > 0) {
+        const { error: predError } = await admin
+          .from('predictions')
+          .upsert(predictionsToUpsert, { onConflict: 'match_id,participant_id' });
+        if (predError) {
+          errors.push(`Failed to bulk upsert predictions: ${predError.message}`);
+        } else {
+          summary.predictions.upserted = predictionsToUpsert.length;
+        }
+      }
+
+      // Bulk upsert jokers in one call
+      if (jokersToUpsert.length > 0) {
+        const { error: jokerError } = await admin
+          .from('jokers')
+          .upsert(jokersToUpsert, { onConflict: 'participant_id,match_id' });
+        if (jokerError) {
+          errors.push(`Failed to bulk upsert jokers: ${jokerError.message}`);
+        } else {
+          summary.jokers.upserted = jokersToUpsert.length;
+        }
+      }
+
+      // Parallel deletes for blank predictions and stale jokers
+      const delPredCounts = await runWithConcurrency<PKey, number>(
+        predictionsToDelete,
+        async (p) => {
+          const { error } = await admin
+            .from('predictions')
+            .delete()
+            .eq('match_id', p.match_id)
+            .eq('participant_id', p.participant_id);
+          if (error) {
+            errors.push(`Failed to delete prediction (match ${p.match_id}, ${p.participant_id}): ${error.message}`);
+            return 0;
+          }
+          return 1;
+        },
+        15
+      );
+      summary.predictions.deleted = delPredCounts.reduce<number>((a, b) => a + b, 0);
+
+      const delJokerCounts = await runWithConcurrency<PKey, number>(
+        jokersToDelete,
+        async (p) => {
+          const { error } = await admin
+            .from('jokers')
+            .delete()
+            .eq('match_id', p.match_id)
+            .eq('participant_id', p.participant_id);
+          if (error) {
+            errors.push(`Failed to delete joker (match ${p.match_id}, ${p.participant_id}): ${error.message}`);
+            return 0;
+          }
+          return 1;
+        },
+        15
+      );
+      summary.jokers.deleted = delJokerCounts.reduce<number>((a, b) => a + b, 0);
     }
 
     // ============ SYNC TRIVIA POINTS ============
+    // Single bulk upsert; we still validate rows up-front and skip empty ones.
+    // Deduplicate on (player, trivia_id) — duplicate keys in one ON CONFLICT
+    // statement cause Postgres to error "cannot affect row a second time".
     if (payload.trivia_points && Array.isArray(payload.trivia_points)) {
+      const triviaMap = new Map<string, {
+        player: string;
+        trivia_id: number;
+        prediction: string;
+        correct_answer: string;
+        correct_check: number;
+        points_earned: number;
+      }>();
+
       for (const tp of payload.trivia_points) {
         const { player, trivia_id, prediction, correct_answer, correct_check, points_earned } = tp;
-
         if (!player || player.toString().trim() === '') {
           errors.push(`Skipping trivia points: missing player name`);
           continue;
         }
+        triviaMap.set(`${player}:${trivia_id}`, {
+          player,
+          trivia_id,
+          prediction,
+          correct_answer,
+          correct_check,
+          points_earned,
+        });
+      }
 
-        // Upsert trivia points
+      const triviaRows = Array.from(triviaMap.values());
+
+      if (triviaRows.length > 0) {
         const { error: tpError } = await admin
           .from('trivia_points')
-          .upsert(
-            {
-              player,
-              trivia_id,
-              prediction,
-              correct_answer,
-              correct_check,
-              points_earned,
-            },
-            { onConflict: 'player,trivia_id' }
-          );
-
+          .upsert(triviaRows, { onConflict: 'player,trivia_id' });
         if (tpError) {
-          errors.push(`Failed to upsert trivia points for ${player} in trivia ${trivia_id}: ${tpError.message}`);
+          errors.push(`Failed to bulk upsert trivia points: ${tpError.message}`);
         } else {
-          summary.trivia_points.upserted++;
+          summary.trivia_points.upserted = triviaRows.length;
         }
       }
     }
 
     // ============ SYNC PRE-TOURNAMENT PREDICTIONS ============
+    // Deduplicate on `player` so the bulk upsert never sees the same key twice.
     if (payload.pre_tournament_predictions && Array.isArray(payload.pre_tournament_predictions)) {
+      const ptMap = new Map<string, {
+        player: string;
+        champion: string | null;
+        orange_cap: string | null;
+        purple_cap: string | null;
+        playoff_teams: string | null;
+        table_topper: string | null;
+        contest_winner: string | null;
+        updated_at: string;
+      }>();
+
       for (const row of payload.pre_tournament_predictions) {
         const { player } = row;
         if (!player || player.toString().trim() === '') {
@@ -345,7 +437,6 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // Validate player exists (don't block sync, just warn)
         const participantId = resolvePlayerId(player);
         if (!participantId) {
           errors.push(`Unknown player in pre_tournament_predictions: '${player}'`);
@@ -367,26 +458,27 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        ptMap.set(player, {
+          player,
+          champion,
+          orange_cap,
+          purple_cap,
+          playoff_teams,
+          table_topper,
+          contest_winner,
+          updated_at: new Date().toISOString(),
+        });
+      }
+
+      const ptRows = Array.from(ptMap.values());
+      if (ptRows.length > 0) {
         const { error: ptError } = await admin
           .from('pre_tournament_predictions')
-          .upsert(
-            {
-              player,
-              champion,
-              orange_cap,
-              purple_cap,
-              playoff_teams,
-              table_topper,
-              contest_winner,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: 'player' }
-          );
-
+          .upsert(ptRows, { onConflict: 'player' });
         if (ptError) {
-          errors.push(`Failed to upsert pre_tournament_prediction for ${player}: ${ptError.message}`);
+          errors.push(`Failed to bulk upsert pre_tournament_predictions: ${ptError.message}`);
         } else {
-          summary.pre_tournament.predictions_upserted++;
+          summary.pre_tournament.predictions_upserted = ptRows.length;
         }
       }
     }
