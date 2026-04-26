@@ -337,9 +337,26 @@ export async function POST(request: NextRequest) {
         explicitBlankPredictionKeys.forEach((k) => expectedPredictionKeySet.add(k));
       }
 
+      // Safety guard: never delete predictions or jokers belonging to a
+      // completed match. Sheet-side IMPORTRANGE refreshes can briefly show
+      // cells as blank for already-decided games, which previously caused the
+      // sync to wipe historical predictions/jokers and made the leaderboard
+      // flip "none" between page reloads.
+      const { data: completedMatchRows, error: completedMatchesError } = await admin
+        .from('matches')
+        .select('id')
+        .eq('is_completed', true);
+      if (completedMatchesError) {
+        errors.push(`Failed to load completed matches for delete safety: ${completedMatchesError.message}`);
+      }
+      const completedMatchIdSet = new Set<number>(
+        (completedMatchRows || []).map((m: { id: number }) => m.id)
+      );
+
       const predictionsToDelete = Array.from(expectedPredictionKeySet)
         .filter((k) => !upsertPredictionKeySet.has(k))
-        .map(parseKey);
+        .map(parseKey)
+        .filter((p) => !completedMatchIdSet.has(p.match_id));
 
       // Bulk upsert predictions in one call
       if (predictionsToUpsert.length > 0) {
@@ -402,6 +419,7 @@ export async function POST(request: NextRequest) {
             .map((j) => ({ match_id: j.match_id, participant_id: j.participant_id }))
             .filter((j) => {
               const key = toKey(j);
+              if (completedMatchIdSet.has(j.match_id)) return false;
               return jokerScopeKeySet.has(key) && !desiredJokerKeySet.has(key);
             });
 
