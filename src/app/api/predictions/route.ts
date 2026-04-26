@@ -1,22 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { fetchAllRows, supabase } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const matchId = searchParams.get('match_id');
 
-  let query = supabase.from('predictions').select('*');
-
+  // When filtering by a single match the result set is small (≤ #players),
+  // so a normal `select('*')` is fine. Without a filter, the unbounded query
+  // would silently get capped at PostgREST's default 1000-row limit, so we
+  // paginate via `fetchAllRows`.
   if (matchId) {
-    query = query.eq('match_id', parseInt(matchId, 10));
+    const { data, error } = await supabase
+      .from('predictions')
+      .select('*')
+      .eq('match_id', parseInt(matchId, 10));
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json(data);
   }
 
-  const { data, error } = await query;
-
+  const { data, error } = await fetchAllRows(() =>
+    supabase.from('predictions').select('*')
+  );
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-
   return NextResponse.json(data);
 }
 

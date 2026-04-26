@@ -1,18 +1,22 @@
 import { NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { fetchAllRows, getSupabaseAdmin } from '@/lib/supabase';
 import { calculateAllPlayerPoints } from '@/lib/scoring';
 import { PARTICIPANTS, TEAMS, getMatchPoints } from '@/lib/constants';
+import { Prediction, TriviaPoints } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
     const admin = getSupabaseAdmin();
+    // Predictions and trivia_points cross PostgREST's default 1000-row cap once
+    // ~30 matches × 29 players are filled in, so we paginate them via
+    // `fetchAllRows` to avoid silently truncating the latest matches.
     const [matchesRes, predictionsRes, jokersRes, triviaPtsRes, triviaRes, preTPredsRes, preTActualsRes] = await Promise.all([
       admin.from('matches').select('*').order('match_date').order('start_time'),
-      admin.from('predictions').select('*'),
+      fetchAllRows<Prediction>(() => admin.from('predictions').select('*')),
       admin.from('jokers').select('*'),
-      admin.from('trivia_points').select('*'),
+      fetchAllRows<TriviaPoints>(() => admin.from('trivia_points').select('*')),
       admin.from('trivia').select('id, question, trivia_date, correct_answer'),
       admin.from('pre_tournament_predictions').select('*'),
       admin.from('pre_tournament_actuals').select('*').eq('id', 1).maybeSingle(),
