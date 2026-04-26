@@ -37,7 +37,8 @@ function syncAll() {
     // Build payload
     const payload = {
       matches: matchesData,
-      predictions: predictionsData,
+      predictions: predictionsData.rows,
+      expected_prediction_pairs: predictionsData.expected_pairs,
       trivia_points: triviaPointsData,
       pre_tournament_predictions: preTournamentData.predictions,
       pre_tournament_actuals: preTournamentData.actuals
@@ -145,27 +146,28 @@ function readMatches(spreadsheet) {
  * Read predictions from the "Predictions" tab
  * Columns: A=Player, B=Match ID, C=Prediction, D=Joker (can be TRUE, YES, true, 1, or empty)
  *
- * We emit a row for every (player, match_id) pair that exists in the sheet,
- * even if the Prediction cell is blank. A blank prediction is sent as an
- * empty string so the API can delete any stale prediction for that pair
- * (otherwise clearing a cell in the sheet would silently leave the old
- * prediction in the database).
+ * We emit:
+ * - rows: only non-blank predictions to upsert
+ * - expected_pairs: every (player, match_id) pair found in the sheet
+ *
+ * The API uses expected_pairs minus rows to delete stale predictions in bulk.
  */
 function readPredictions(spreadsheet) {
   try {
     const sheet = spreadsheet.getSheetByName('Predictions');
     if (!sheet) {
       Logger.log('Predictions sheet not found');
-      return [];
+      return { rows: [], expected_pairs: [] };
     }
 
     const lastRow = sheet.getLastRow();
-    if (lastRow < 2) return []; // No data rows
+    if (lastRow < 2) return { rows: [], expected_pairs: [] }; // No data rows
 
     // Get all data at once
     const data = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
 
     const predictions = [];
+    const expectedPairs = [];
     data.forEach((row) => {
       const player = row[0];
       const matchId = row[1];
@@ -176,9 +178,15 @@ function readPredictions(spreadsheet) {
       if (!player || player.toString().trim() === '') return;
       if (matchId === '' || matchId === null || matchId === undefined) return;
 
+      expectedPairs.push({
+        player: player.toString().trim(),
+        match_id: matchId
+      });
+
       const predictionStr = prediction === null || prediction === undefined
         ? ''
         : prediction.toString().trim();
+      if (predictionStr === '') return;
 
       const jokerStr = (joker === null || joker === undefined ? '' : joker.toString())
         .toUpperCase()
@@ -192,10 +200,13 @@ function readPredictions(spreadsheet) {
       });
     });
 
-    return predictions;
+    return {
+      rows: predictions,
+      expected_pairs: expectedPairs
+    };
   } catch (error) {
     Logger.log('Error reading predictions: ' + error.toString());
-    return [];
+    return { rows: [], expected_pairs: [] };
   }
 }
 
@@ -405,8 +416,32 @@ function cellToTextOrNull(value) {
 }
 
 /**
- * Show a toast notification
+ * Show a notification.
+ *
+ * - Menu invocations have a UI: show a modal alert so the operator sees the
+ *   full multi-line summary.
+ * - Time-driven triggers have NO UI: SpreadsheetApp.getUi() throws there, so
+ *   we fall back to a transient spreadsheet toast (visible if anyone has the
+ *   sheet open) and always log to the execution log.
  */
 function showToast(title, message) {
-  SpreadsheetApp.getUi().alert(title + '\n\n' + message);
+  Logger.log('[' + title + '] ' + message);
+
+  var ui = null;
+  try {
+    ui = SpreadsheetApp.getUi();
+  } catch (e) {
+    ui = null; // No UI bound (e.g. running from a time-based trigger)
+  }
+
+  if (ui) {
+    ui.alert(title + '\n\n' + message);
+    return;
+  }
+
+  try {
+    SpreadsheetApp.getActiveSpreadsheet().toast(message, title, 5);
+  } catch (e2) {
+    // No active spreadsheet either - logging above is enough.
+  }
 }

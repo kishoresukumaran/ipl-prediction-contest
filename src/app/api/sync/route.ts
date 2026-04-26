@@ -52,6 +52,7 @@ interface SyncPreTournamentActuals {
 interface SyncPayload {
   matches?: SyncMatch[];
   predictions?: SyncPrediction[];
+  expected_prediction_pairs?: Array<{ player: string; match_id: number }>;
   trivia_points?: SyncTriviaPoints[];
   pre_tournament_predictions?: SyncPreTournamentPrediction[];
   pre_tournament_actuals?: SyncPreTournamentActuals;
@@ -85,6 +86,14 @@ async function runWithConcurrency<T, R>(
   });
   await Promise.all(runners);
   return results;
+}
+
+function chunkArray<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
 }
 
 /**
@@ -228,24 +237,28 @@ export async function POST(request: NextRequest) {
     // ~1000 sequential round-trips into ~4 statements + a handful of deletes.
     if (payload.predictions && Array.isArray(payload.predictions)) {
       type PKey = { match_id: number; participant_id: string };
+      const toKey = (p: PKey) => `${p.match_id}:${p.participant_id}`;
+      const parseKey = (k: string): PKey => {
+        const [matchIdStr, participant_id] = k.split(':');
+        return { match_id: Number(matchIdStr), participant_id };
+      };
+      const buildOrDeleteClause = (pairs: PKey): string =>
+        `and(match_id.eq.${pairs.match_id},participant_id.eq.${pairs.participant_id})`;
 
       const predictionsToUpsert: Array<{
         match_id: number;
         participant_id: string;
         predicted_team: string;
       }> = [];
-      const predictionsToDelete: PKey[] = [];
       const jokersToUpsert: Array<{
         participant_id: string;
         match_id: number;
         declared_at: string;
       }> = [];
-      const jokersToDelete: PKey[] = [];
+      const explicitBlankPredictionKeys = new Set<string>();
 
       const seenPred = new Set<string>();
       const seenJokerUpsert = new Set<string>();
-      const seenJokerDelete = new Set<string>();
-      const pkey = (p: PKey) => `${p.match_id}:${p.participant_id}`;
 
       for (const pred of payload.predictions) {
         const { player, match_id, prediction, joker } = pred;
@@ -258,17 +271,10 @@ export async function POST(request: NextRequest) {
 
         const predictionTrimmed = (prediction ?? '').toString().trim();
 
-        // Blank prediction -> remove both the prediction and any stored joker
+        // Blank prediction is retained as a backward-compatible signal for
+        // deletion when `expected_prediction_pairs` is not provided.
         if (predictionTrimmed === '') {
-          const k = pkey({ match_id, participant_id: participantId });
-          if (!seenPred.has(k)) {
-            seenPred.add(k);
-            predictionsToDelete.push({ match_id, participant_id: participantId });
-          }
-          if (!seenJokerDelete.has(k)) {
-            seenJokerDelete.add(k);
-            jokersToDelete.push({ match_id, participant_id: participantId });
-          }
+          explicitBlankPredictionKeys.add(toKey({ match_id, participant_id: participantId }));
           continue;
         }
 
@@ -283,7 +289,7 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        const k = pkey({ match_id, participant_id: participantId });
+        const k = toKey({ match_id, participant_id: participantId });
         if (!seenPred.has(k)) {
           seenPred.add(k);
           predictionsToUpsert.push({
@@ -302,13 +308,38 @@ export async function POST(request: NextRequest) {
               declared_at: new Date().toISOString(),
             });
           }
-        } else {
-          if (!seenJokerDelete.has(k)) {
-            seenJokerDelete.add(k);
-            jokersToDelete.push({ match_id, participant_id: participantId });
-          }
         }
       }
+
+      const upsertPredictionKeySet = new Set(
+        predictionsToUpsert.map((p) => toKey({ match_id: p.match_id, participant_id: p.participant_id }))
+      );
+      const desiredJokerKeySet = new Set(
+        jokersToUpsert.map((j) => toKey({ match_id: j.match_id, participant_id: j.participant_id }))
+      );
+
+      // Determine which prediction keys are in-scope for this sync:
+      // - preferred: explicit `expected_prediction_pairs` from GAS
+      // - fallback: explicit blank rows from legacy payload
+      const expectedPredictionKeySet = new Set<string>();
+      if (payload.expected_prediction_pairs && Array.isArray(payload.expected_prediction_pairs)) {
+        for (const pair of payload.expected_prediction_pairs) {
+          const participantId = resolvePlayerId(pair.player);
+          if (!participantId) {
+            errors.push(`Unknown player in expected_prediction_pairs: '${pair.player}'`);
+            continue;
+          }
+          expectedPredictionKeySet.add(toKey({ match_id: pair.match_id, participant_id: participantId }));
+        }
+      }
+      const hasExplicitExpectedPairs = expectedPredictionKeySet.size > 0;
+      if (!hasExplicitExpectedPairs) {
+        explicitBlankPredictionKeys.forEach((k) => expectedPredictionKeySet.add(k));
+      }
+
+      const predictionsToDelete = Array.from(expectedPredictionKeySet)
+        .filter((k) => !upsertPredictionKeySet.has(k))
+        .map(parseKey);
 
       // Bulk upsert predictions in one call
       if (predictionsToUpsert.length > 0) {
@@ -334,42 +365,60 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Parallel deletes for blank predictions and stale jokers
-      const delPredCounts = await runWithConcurrency<PKey, number>(
-        predictionsToDelete,
-        async (p) => {
-          const { error } = await admin
+      // Bulk-delete stale predictions in chunks.
+      // PostgREST URL length can grow with .or(...) predicates, so we chunk.
+      for (const chunk of chunkArray(predictionsToDelete, 100)) {
+        const clause = chunk.map(buildOrDeleteClause).join(',');
+        const { error } = await admin
             .from('predictions')
             .delete()
-            .eq('match_id', p.match_id)
-            .eq('participant_id', p.participant_id);
-          if (error) {
-            errors.push(`Failed to delete prediction (match ${p.match_id}, ${p.participant_id}): ${error.message}`);
-            return 0;
-          }
-          return 1;
-        },
-        15
-      );
-      summary.predictions.deleted = delPredCounts.reduce<number>((a, b) => a + b, 0);
+            .or(clause);
+        if (error) {
+          errors.push(`Failed bulk deleting predictions: ${error.message}`);
+        } else {
+          summary.predictions.deleted += chunk.length;
+        }
+      }
 
-      const delJokerCounts = await runWithConcurrency<PKey, number>(
-        jokersToDelete,
-        async (p) => {
-          const { error } = await admin
-            .from('jokers')
-            .delete()
-            .eq('match_id', p.match_id)
-            .eq('participant_id', p.participant_id);
-          if (error) {
-            errors.push(`Failed to delete joker (match ${p.match_id}, ${p.participant_id}): ${error.message}`);
-            return 0;
-          }
-          return 1;
-        },
-        15
+      // Delete only stale jokers currently present in DB for in-scope pairs.
+      // This avoids firing thousands of no-op deletes every sync.
+      const jokerScopeKeySet = hasExplicitExpectedPairs
+        ? expectedPredictionKeySet
+        : new Set([...upsertPredictionKeySet, ...explicitBlankPredictionKeys]);
+      const scopeMatchIds = Array.from(
+        new Set(Array.from(jokerScopeKeySet).map((k) => parseKey(k).match_id))
       );
-      summary.jokers.deleted = delJokerCounts.reduce<number>((a, b) => a + b, 0);
+
+      if (scopeMatchIds.length > 0) {
+        const { data: existingScopedJokers, error: existingJokersError } = await admin
+          .from('jokers')
+          .select('match_id,participant_id')
+          .in('match_id', scopeMatchIds);
+
+        if (existingJokersError) {
+          errors.push(`Failed to load existing jokers for diff-delete: ${existingJokersError.message}`);
+        } else {
+          const staleJokerPairs = (existingScopedJokers || [])
+            .map((j) => ({ match_id: j.match_id, participant_id: j.participant_id }))
+            .filter((j) => {
+              const key = toKey(j);
+              return jokerScopeKeySet.has(key) && !desiredJokerKeySet.has(key);
+            });
+
+          for (const chunk of chunkArray(staleJokerPairs, 100)) {
+            const clause = chunk.map(buildOrDeleteClause).join(',');
+            const { error } = await admin
+              .from('jokers')
+              .delete()
+              .or(clause);
+            if (error) {
+              errors.push(`Failed bulk deleting stale jokers: ${error.message}`);
+            } else {
+              summary.jokers.deleted += chunk.length;
+            }
+          }
+        }
+      }
     }
 
     // ============ SYNC TRIVIA POINTS ============

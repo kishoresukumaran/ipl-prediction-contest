@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { calculateAllPlayerPoints } from '@/lib/scoring';
 import { PARTICIPANTS } from '@/lib/constants';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 30;
 
 export async function GET() {
   try {
