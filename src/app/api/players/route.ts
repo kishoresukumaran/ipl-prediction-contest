@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server';
 import { fetchAllRows, getSupabaseAdmin } from '@/lib/supabase';
 import { calculateAllPlayerPoints } from '@/lib/scoring';
-import { PARTICIPANTS, TEAMS, getMatchPoints } from '@/lib/constants';
-import { Prediction, TriviaPoints } from '@/lib/types';
+import { PARTICIPANTS, getMatchPoints } from '@/lib/constants';
+import { Joker, Match, Prediction, TriviaPoints } from '@/lib/types';
+import {
+  computeDayOfWeekPerf,
+  computePlayerJourney,
+  computeRankStats,
+  computeWeeklyPlayerDeltas,
+  deriveRankHistory,
+} from '@/lib/rank-stats';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,6 +73,19 @@ export async function GET() {
       preTournamentPredictions,
       preTournamentActuals,
     });
+    const completedMatches = matches.filter((m) => m.is_completed && m.winner);
+    const pointsRace = buildPointsRace(completedMatches, predictions, jokers, triviaPoints);
+    const rankHistory = deriveRankHistory(pointsRace, leaderboard);
+    const rankStats = computeRankStats(rankHistory);
+    const dayOfWeekPerf = computeDayOfWeekPerf(completedMatches, predictions);
+    const weeklyDeltas = computeWeeklyPlayerDeltas(
+      matches,
+      predictions,
+      jokers,
+      triviaPoints,
+      preTournamentPredictions,
+      preTournamentActuals
+    );
 
     const players = leaderboard.map((player) => {
       const participant = PARTICIPANTS.find((p) => p.id === player.participantId);
@@ -82,7 +102,7 @@ export async function GET() {
         .map(([team, count]) => ({ team, count }));
 
       // Per-match prediction history
-      const completedMatches = matches
+      const orderedCompletedMatches = matches
         .filter((m) => m.is_completed && m.winner)
         .sort((a, b) => {
           const dateCompare = a.match_date.localeCompare(b.match_date);
@@ -90,7 +110,7 @@ export async function GET() {
           return a.start_time.localeCompare(b.start_time);
         });
 
-      const predictionHistory = completedMatches.map((match) => {
+      const predictionHistory = orderedCompletedMatches.map((match) => {
         const pred = playerPreds.find((p) => p.match_id === match.id);
         let isCorrect: boolean | 'abandoned' = false;
         if (pred) {
@@ -113,7 +133,7 @@ export async function GET() {
 
       // The Hater: which team they bet against the most
       const betAgainst: Record<string, number> = {};
-      completedMatches.forEach(match => {
+      orderedCompletedMatches.forEach(match => {
         const pred = playerPreds.find(p => p.match_id === match.id);
         if (!pred) return;
         // They bet against the team they didn't pick
@@ -126,7 +146,7 @@ export async function GET() {
 
       // Most Profitable Team: which team earned them the most points when picked
       const teamProfit: Record<string, number> = {};
-      completedMatches.forEach(match => {
+      orderedCompletedMatches.forEach(match => {
         const pred = playerPreds.find(p => p.match_id === match.id);
         if (!pred || pred.predicted_team !== match.winner) return;
         const pts = getMatchPoints(match.match_type, match.is_power_match);
@@ -169,6 +189,13 @@ export async function GET() {
         triviaHistory,
         preTournamentPrediction,
         preTournamentActuals,
+        journey: computePlayerJourney(
+          player.participantId,
+          rankHistory,
+          rankStats,
+          dayOfWeekPerf,
+          weeklyDeltas
+        ),
       };
     });
 
@@ -177,4 +204,28 @@ export async function GET() {
     console.error('Players API error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
+}
+
+function buildPointsRace(matches: Match[], predictions: Prediction[], jokers: Joker[], triviaPoints: TriviaPoints[]) {
+  const result: Array<{ matchId: number; matchDate: string; [key: string]: number | string }> = [];
+  for (let i = 1; i <= matches.length; i++) {
+    const subMatches = matches.slice(0, i);
+    const matchIds = new Set(subMatches.map((m) => m.id));
+    const subPredictions = predictions.filter((p) => matchIds.has(p.match_id));
+    const scores = calculateAllPlayerPoints(PARTICIPANTS, {
+      matches: subMatches,
+      predictions: subPredictions,
+      jokers,
+      triviaPoints,
+    });
+    const entry: { matchId: number; matchDate: string; [key: string]: number | string } = {
+      matchId: matches[i - 1].id,
+      matchDate: matches[i - 1].match_date,
+    };
+    scores.forEach((score) => {
+      entry[score.participantId] = score.totalPoints;
+    });
+    result.push(entry);
+  }
+  return result;
 }

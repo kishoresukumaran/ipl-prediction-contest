@@ -12,7 +12,6 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
-  Award,
   BarChart3,
   Minus,
   HelpCircle,
@@ -20,6 +19,8 @@ import {
 import { TEAMS } from '@/lib/constants';
 import { PlayerPointsBreakdown, PreTournamentPrediction, PreTournamentActuals } from '@/lib/types';
 import { CrystalBallSection } from '@/components/dashboard/CrystalBallSection';
+import { PersonalBestCard } from '@/components/charts/PersonalBestCard';
+import { DayOfWeekChart } from '@/components/charts/DayOfWeekChart';
 
 interface PredictionHistoryItem {
   matchId: number;
@@ -53,6 +54,15 @@ interface PlayerData extends PlayerPointsBreakdown {
   triviaHistory: TriviaHistoryItem[];
   preTournamentPrediction: PreTournamentPrediction | null;
   preTournamentActuals: PreTournamentActuals | null;
+  journey: {
+    rankHistory: Array<{ matchId: number; rank: number }>;
+    bestWeek: { week: string; points: number } | null;
+    worstWeek: { week: string; points: number } | null;
+    longestClimbStreak: number;
+    biggestSingleMatchClimb: { delta: number; matchId: number } | null;
+    biggestSingleMatchCrash: { delta: number; matchId: number } | null;
+    dayOfWeekBreakdown: Array<{ day: string; correct: number; total: number; accuracy: number }>;
+  };
 }
 
 function TeamBadge({ team }: { team: string }) {
@@ -195,6 +205,14 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
         <StatCard label="Best Streak" value={player.longestStreak} color="text-orange-400" icon={Flame} />
         <StatCard label="Current Streak" value={player.currentStreak} color="text-purple-400" icon={TrendingUp} />
       </div>
+
+      {/* Journey */}
+      {player.journey && (
+        <div className="space-y-3">
+          <PersonalBestCard journey={player.journey} participantId={player.participantId} />
+          <DayOfWeekChart playerId={player.participantId} data={player.journey.dayOfWeekBreakdown} />
+        </div>
+      )}
 
       {/* Points Breakdown */}
       <div className="bg-[var(--app-surface)] backdrop-blur-sm border border-[var(--app-border)] rounded-xl p-4">

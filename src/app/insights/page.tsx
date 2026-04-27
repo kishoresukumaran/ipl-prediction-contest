@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { BarChart3, TrendingUp, Users, Zap, Target, Trophy, Flame, Skull, Vote, Star, Globe2, Sparkles } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, Zap, Target, Trophy, Flame, Skull, Vote, Star, Globe2, Sparkles, LineChart } from 'lucide-react';
 import { PlayerPointsBreakdown, Match, Prediction } from '@/lib/types';
-import { TEAMS, PARTICIPANTS } from '@/lib/constants';
 
 // Lazy load all chart components
 const PointsRaceChart = dynamic(() => import('@/components/charts/PointsRaceChart').then(m => ({ default: m.PointsRaceChart })), { ssr: false });
@@ -24,7 +23,6 @@ const WinRateByTeamChart = dynamic(() => import('@/components/charts/WinRateByTe
 const PointsGapChart = dynamic(() => import('@/components/charts/PointsGapChart').then(m => ({ default: m.PointsGapChart })), { ssr: false });
 const WallOfShame = dynamic(() => import('@/components/charts/WallOfShame').then(m => ({ default: m.WallOfShame })), { ssr: false });
 const PointsMatrixChart = dynamic(() => import('@/components/charts/PointsMatrixChart').then(m => ({ default: m.PointsMatrixChart })), { ssr: false });
-const CrowdTrapChart = dynamic(() => import('@/components/charts/CrowdTrapChart').then(m => ({ default: m.CrowdTrapChart })), { ssr: false });
 const OnFireIceCold = dynamic(() => import('@/components/charts/OnFireIceCold').then(m => ({ default: m.OnFireIceCold })), { ssr: false });
 const DoubleHeaderHeroesChart = dynamic(() => import('@/components/charts/DoubleHeaderHeroesChart').then(m => ({ default: m.DoubleHeaderHeroesChart })), { ssr: false });
 const DoubleHeaderDayViewChart = dynamic(() => import('@/components/charts/DoubleHeaderDayViewChart').then(m => ({ default: m.DoubleHeaderDayViewChart })), { ssr: false });
@@ -39,12 +37,67 @@ const HomeAwayBiasChart = dynamic(() => import('@/components/charts/HomeAwayBias
 const PowerRankingsChart = dynamic(() => import('@/components/charts/PowerRankingsChart').then(m => ({ default: m.PowerRankingsChart })), { ssr: false });
 const GroupStatsPanel = dynamic(() => import('@/components/charts/GroupStatsPanel').then(m => ({ default: m.GroupStatsPanel })), { ssr: false });
 const CrystalBallInsightsPanel = dynamic(() => import('@/components/charts/CrystalBallInsightsPanel').then(m => ({ default: m.CrystalBallInsightsPanel })), { ssr: false });
+const RankBumpChart = dynamic(() => import('@/components/charts/RankBumpChart').then(m => ({ default: m.RankBumpChart })), { ssr: false });
+const LeadChangesPanel = dynamic(() => import('@/components/charts/LeadChangesPanel').then(m => ({ default: m.LeadChangesPanel })), { ssr: false });
+const ThroneAndCellarChart = dynamic(() => import('@/components/charts/ThroneAndCellarChart').then(m => ({ default: m.ThroneAndCellarChart })), { ssr: false });
+const BiggestClimbsChart = dynamic(() => import('@/components/charts/BiggestClimbsChart').then(m => ({ default: m.BiggestClimbsChart })), { ssr: false });
+const CatchUpPanel = dynamic(() => import('@/components/charts/CatchUpPanel').then(m => ({ default: m.CatchUpPanel })), { ssr: false });
+const PersonalBestGrid = dynamic(() => import('@/components/charts/PersonalBestGrid').then(m => ({ default: m.PersonalBestGrid })), { ssr: false });
+const DayOfWeekChart = dynamic(() => import('@/components/charts/DayOfWeekChart').then(m => ({ default: m.DayOfWeekChart })), { ssr: false });
 
 interface InsightsAPIData {
   leaderboard: PlayerPointsBreakdown[];
   matches: Match[];
   predictions: Prediction[];
   pointsRace: { matchId: number; matchDate: string; [key: string]: number | string }[];
+  rankHistory: { matchId: number; matchDate: string; [key: string]: number | string }[];
+  rankStats: {
+    participantId: string;
+    participantName: string;
+    throneTime: number;
+    top3Time: number;
+    cellarTime: number;
+    bestRank: number;
+    worstRank: number;
+    biggestClimb: { delta: number; fromRank: number; toRank: number; matchId: number } | null;
+    biggestCrash: { delta: number; fromRank: number; toRank: number; matchId: number } | null;
+  }[];
+  leadChanges: {
+    leadChanges: number;
+    uniqueLeaders: number;
+    segments: { holderId: string; holderName: string; fromMatchId: number; toMatchId: number; length: number }[];
+  };
+  catchUp: {
+    participantId: string;
+    participantName: string;
+    currentPoints: number;
+    pointsBehindLeader: number;
+    matchesRemaining: number;
+    maxRemainingMatchPoints: number;
+    doubleHeaderUpside: number;
+    jokerAvailable: boolean;
+    jokerUpside: number;
+    preTournamentLockedPoints: number;
+    preTournamentMaxRemaining: number;
+    maxFinalPoints: number;
+    status: 'champion-locked' | 'live' | 'eliminated';
+    breakdownNote: string;
+  }[];
+  dayOfWeekPerf: {
+    participantId: string;
+    participantName: string;
+    values: { day: string; correct: number; total: number; accuracy: number }[];
+  }[];
+  personalBest: {
+    participantId: string;
+    participantName: string;
+    rankHistory: Array<{ matchId: number; rank: number }>;
+    bestWeek: { week: string; points: number } | null;
+    worstWeek: { week: string; points: number } | null;
+    longestClimbStreak: number;
+    biggestSingleMatchClimb: { delta: number; matchId: number } | null;
+    biggestSingleMatchCrash: { delta: number; matchId: number } | null;
+  }[];
   teamPopularity: { team: string; correct: number; wrong: number; total: number }[];
   accuracyByPlayer: { id: string; name: string; accuracy: number; correct: number; total: number }[];
   weeklyPoints: { week: string; [key: string]: number | string }[];
@@ -125,6 +178,7 @@ interface InsightsAPIData {
 
 const TABS = [
   { id: 'leaderboard', label: 'Points & Rank', icon: Trophy },
+  { id: 'rankrace', label: 'Rank Race', icon: LineChart },
   { id: 'accuracy', label: 'Accuracy', icon: Target },
   { id: 'teams', label: 'Teams', icon: Users },
   { id: 'streaks', label: 'Streaks', icon: Flame },
@@ -196,6 +250,29 @@ export default function InsightsPage() {
             </ChartCard>
             <ChartCard title="Weekly Points" subtitle="Points earned each week (weeks run Sunday to Saturday)">
               <WeeklyPointsChart data={data.weeklyPoints} />
+            </ChartCard>
+          </>
+        )}
+
+        {activeTab === 'rankrace' && (
+          <>
+            <ChartCard title="Lead Changes" subtitle="How often has the top spot changed hands?">
+              <LeadChangesPanel data={data.leadChanges} />
+            </ChartCard>
+            <ChartCard title="Bump Chart" subtitle="Rank movement after every completed match">
+              <RankBumpChart data={data.rankHistory} />
+            </ChartCard>
+            <ChartCard title="Throne & Cellar Time" subtitle="Time spent at #1, Top 3, and last place">
+              <ThroneAndCellarChart data={data.rankStats} />
+            </ChartCard>
+            <ChartCard title="Biggest Climbs & Crashes" subtitle="Largest one-match rank swings">
+              <BiggestClimbsChart data={data.rankStats} />
+            </ChartCard>
+            <ChartCard title="Catch-Up & Elimination" subtitle="Live title-race status using remaining match and pre-tournament upside">
+              <CatchUpPanel data={data.catchUp} />
+            </ChartCard>
+            <ChartCard title="Personal Best Tracker" subtitle="Best week, worst week, and rank momentum by player">
+              <PersonalBestGrid data={data.personalBest} />
             </ChartCard>
           </>
         )}
@@ -300,6 +377,9 @@ export default function InsightsPage() {
             </ChartCard>
             <ChartCard title="Crowd Wisdom" subtitle="Does the majority always pick the winner? Spoiler: not always. Sometimes 29 people can be spectacularly wrong together.">
               <CrowdWisdomChart data={data.crowdWisdom} />
+            </ChartCard>
+            <ChartCard title="Day-of-Week Performance" subtitle="Who performs best on which day of the week?">
+              <DayOfWeekChart data={data.dayOfWeekPerf} />
             </ChartCard>
           </>
         )}

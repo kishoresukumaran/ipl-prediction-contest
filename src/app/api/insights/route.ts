@@ -3,6 +3,15 @@ import { fetchAllRows, getSupabaseAdmin } from '@/lib/supabase';
 import { calculateAllPlayerPoints } from '@/lib/scoring';
 import { PARTICIPANTS, TEAMS, POINTS_CONFIG, getMatchPoints } from '@/lib/constants';
 import { Match, Prediction, TriviaPoints } from '@/lib/types';
+import {
+  computeCatchUp,
+  computeDayOfWeekPerf,
+  computeLeadChanges,
+  computePlayerJourney,
+  computeRankStats,
+  computeWeeklyPlayerDeltas,
+  deriveRankHistory,
+} from '@/lib/rank-stats';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,6 +52,24 @@ export async function GET() {
     const completedMatches = matches.filter(m => m.is_completed && m.winner);
 
     const pointsRace = buildPointsRace(completedMatches, predictions, jokers, triviaPoints);
+    const rankHistory = deriveRankHistory(pointsRace, leaderboard);
+    const rankStats = computeRankStats(rankHistory);
+    const leadChanges = computeLeadChanges(rankHistory);
+    const catchUp = computeCatchUp(leaderboard, matches, jokers, preTournamentPredictions, preTournamentActuals);
+    const dayOfWeekPerf = computeDayOfWeekPerf(completedMatches, predictions);
+    const weeklyDeltas = computeWeeklyPlayerDeltas(
+      matches,
+      predictions,
+      jokers,
+      triviaPoints,
+      preTournamentPredictions,
+      preTournamentActuals
+    );
+    const personalBest = leaderboard.map((player) => ({
+      participantId: player.participantId,
+      participantName: player.participantName,
+      ...computePlayerJourney(player.participantId, rankHistory, rankStats, dayOfWeekPerf, weeklyDeltas),
+    }));
     const teamPopularity = buildTeamPopularity(completedMatches, predictions);
     const accuracyByPlayer = leaderboard.map(p => ({
       id: p.participantId, name: p.participantName,
@@ -93,6 +120,7 @@ export async function GET() {
 
     return NextResponse.json({
       leaderboard, matches, predictions, pointsRace, teamPopularity,
+      rankHistory, rankStats, leadChanges, catchUp, dayOfWeekPerf, personalBest,
       accuracyByPlayer, weeklyPoints, crowdWisdom,
       contrarianData, matchDifficulty, formData, winRateByTeam,
       doubleHeaderData, doubleHeaderHeroes, heatmapData, streakData, streakAchievements, wallOfShame,
