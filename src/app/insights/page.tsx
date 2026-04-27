@@ -256,19 +256,19 @@ export default function InsightsPage() {
 
         {activeTab === 'rankrace' && (
           <>
-            <ChartCard title="Lead Changes" subtitle="How often has the top spot changed hands?">
+            <ChartCard title="Lead Changes" subtitle="How often has Rank #1 on the leaderboard changed hands?">
               <LeadChangesPanel data={data.leadChanges} />
             </ChartCard>
             <ChartCard title="Bump Chart" subtitle="Rank movement after every completed match">
               <RankBumpChart data={data.rankHistory} />
             </ChartCard>
-            <ChartCard title="Throne & Cellar Time" subtitle="Time spent at #1, Top 3, and last place">
+            <ChartCard title="Throne & Cellar" subtitle="How many completed matches each player has spent at Rank #1, in the Top 3, and in last place">
               <ThroneAndCellarChart data={data.rankStats} />
             </ChartCard>
             <ChartCard title="Biggest Climbs & Crashes" subtitle="Largest one-match rank swings">
               <BiggestClimbsChart data={data.rankStats} />
             </ChartCard>
-            <ChartCard title="Catch-Up & Elimination" subtitle="Live title-race status using remaining match and pre-tournament upside">
+            <ChartCard title="Catch-Up & Elimination" subtitle="Where each player stands now, and the best-case finish if every remaining prediction goes their way (current points → max possible final points)">
               <CatchUpPanel data={data.catchUp} />
             </ChartCard>
             <ChartCard title="Personal Best Tracker" subtitle="Best week, worst week, and rank momentum by player">
