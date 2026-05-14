@@ -80,6 +80,39 @@ function PlayerChip({
   );
 }
 
+function CricketerChip({
+  name,
+  state = 'neutral',
+}: {
+  name: string | null;
+  state?: 'neutral' | 'correct' | 'wrong';
+}) {
+  if (!name) {
+    return (
+      <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-[var(--app-surface-alt)] text-[var(--app-text-tertiary)]">
+        —
+      </span>
+    );
+  }
+  const ring =
+    state === 'correct'
+      ? 'ring-2 ring-emerald-400 shadow-emerald-400/30 shadow-md'
+      : state === 'wrong'
+      ? 'ring-2 ring-red-400/60 opacity-70'
+      : '';
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-500/10 border border-amber-500/30 text-[var(--app-text)] ${ring}`}
+    >
+      <span className="text-amber-500 dark:text-amber-400 text-sm leading-none">🏏</span>
+      {name}
+      {state === 'correct' && (
+        <span className="text-emerald-600 dark:text-emerald-400 text-[10px]">✓</span>
+      )}
+    </span>
+  );
+}
+
 function teamsCsvSet(csv: string | null | undefined): Set<string> {
   if (!csv) return new Set();
   return new Set(
@@ -225,6 +258,15 @@ export function CrystalBallSection({ participantName, prediction, actuals, break
               return <PlayerChip participantId={playerPick} state={state} />;
             };
 
+            const renderCricketer = () => {
+              const state = !actualVal
+                ? 'neutral'
+                : (playerPick || '').trim().toLowerCase() === actualVal.trim().toLowerCase()
+                ? 'correct'
+                : 'wrong';
+              return <CricketerChip name={playerPick} state={state} />;
+            };
+
             return (
               <div
                 key={q.id}
@@ -247,7 +289,13 @@ export function CrystalBallSection({ participantName, prediction, actuals, break
 
                 {/* Player pick */}
                 <div className="flex items-center justify-end sm:justify-start gap-1 col-span-2 sm:col-span-1">
-                  {q.kind === 'teams4' ? renderTeams4() : q.kind === 'player' ? renderPlayer() : renderTeam()}
+                  {q.kind === 'teams4'
+                    ? renderTeams4()
+                    : q.kind === 'player'
+                    ? renderPlayer()
+                    : q.kind === 'cricketer'
+                    ? renderCricketer()
+                    : renderTeam()}
                 </div>
 
                 {/* Actual */}
@@ -265,6 +313,8 @@ export function CrystalBallSection({ participantName, prediction, actuals, break
                       </div>
                     ) : q.kind === 'player' ? (
                       <PlayerChip participantId={actualVal} />
+                    ) : q.kind === 'cricketer' ? (
+                      <CricketerChip name={actualVal} />
                     ) : (
                       <TeamChip team={actualVal} />
                     )

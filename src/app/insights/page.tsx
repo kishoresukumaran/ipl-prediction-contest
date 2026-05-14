@@ -367,7 +367,10 @@ export default function InsightsPage() {
         )}
 
         {activeTab === 'pretournament' && (
-          <CrystalBallInsightsPanel hasData={(data.preTournamentPredictions?.length ?? 0) > 0} />
+          <CrystalBallInsightsPanel
+            predictions={data.preTournamentPredictions}
+            actuals={data.preTournamentActuals}
+          />
         )}
 
         {activeTab === 'behavior' && (
