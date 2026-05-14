@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Sparkles, Hourglass, Lock, Crown, Heart, Users, ChevronRight, ClipboardList } from 'lucide-react';
+import { Sparkles, Hourglass, Lock, Crown, Heart, Users, ChevronDown, ClipboardList } from 'lucide-react';
 import {
   PARTICIPANTS,
   PRE_TOURNAMENT_QUESTIONS,
@@ -260,18 +260,28 @@ function HeroSection({
                   )}
                 </div>
 
-                {hasActual ? (
-                  <div className="flex items-center justify-between gap-2 text-[11px] -mt-1">
-                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                      Actual
-                    </span>
+                <div className="flex items-center justify-between gap-2 text-[11px] -mt-1">
+                  <span
+                    className={`font-semibold ${
+                      hasActual
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-[var(--app-text-tertiary)]'
+                    }`}
+                  >
+                    Actual
+                  </span>
+                  {hasActual ? (
                     <ValueDisplay
                       value={normalizeValue(actualVal)}
                       kind={q.kind}
                       size="sm"
                     />
-                  </div>
-                ) : null}
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--app-surface-alt)] border border-[var(--app-border)] text-[10px] font-bold text-[var(--app-text-tertiary)]">
+                      N/A
+                    </span>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -393,14 +403,29 @@ function QuestionDeepDive({
         </div>
       </div>
 
-      {/* Body: bracketology for teams4, otherwise grouped picks */}
+      {/* Body */}
       {q.kind === 'teams4' ? (
-        <BracketologyGrid
-          predictions={predictions}
-          tallies={questionTallies}
-          actualSet={actualSet}
-          question={q}
-        />
+        <>
+          {/* Mobile: stacked team list (each team → who picked it). Matches the
+              row pattern used for other questions, scales well at small widths. */}
+          <div className="sm:hidden">
+            <GroupedPicks
+              tallies={questionTallies}
+              question={q}
+              actualVal={actualVal}
+              totalPredictors={totalPredictors}
+            />
+          </div>
+          {/* Desktop: full heatmap grid (team × player) for quick comparison. */}
+          <div className="hidden sm:block">
+            <BracketologyGrid
+              predictions={predictions}
+              tallies={questionTallies}
+              actualSet={actualSet}
+              question={q}
+            />
+          </div>
+        </>
       ) : (
         <GroupedPicks
           tallies={questionTallies}
@@ -432,10 +457,20 @@ function GroupedPicks({
     );
   }
 
+  // For teams4 the actualVal is a CSV of the 4 correct teams — a tally is
+  // "correct" if its team appears in that set. For single-value kinds we just
+  // do a case-insensitive match.
+  const actualTeams4Set =
+    question.kind === 'teams4' && actualVal
+      ? new Set(splitCsv(actualVal).map((t) => t.toLowerCase()))
+      : null;
+
   return (
     <div className="mt-4 space-y-2">
       {tallies.map((tally) => {
-        const isCorrect = actualVal && valuesMatch(tally.value, actualVal);
+        const isCorrect = actualTeams4Set
+          ? actualTeams4Set.has(tally.value.toLowerCase())
+          : Boolean(actualVal) && valuesMatch(tally.value, actualVal);
         const pct = totalPredictors > 0 ? (tally.count / totalPredictors) * 100 : 0;
         const isLoneWolf = tally.count === 1;
 
@@ -723,6 +758,85 @@ function LockerRoom({
 // Section: Self-Believers + Kingmakers
 // =============================================================
 
+function KingmakerRow({
+  target,
+  backers,
+}: {
+  target: { id: string; name: string; color: string };
+  backers: EnrichedPrediction[];
+}) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div className="rounded-lg bg-[var(--app-surface-alt)]/40 border border-[var(--app-border)] hover:border-amber-500/30 transition-colors overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="w-full flex items-center gap-2 px-2.5 py-2 text-left"
+        aria-expanded={expanded}
+      >
+        <PlayerAvatar name={target.name} color={target.color} size={28} />
+        <div className="flex-1 min-w-0">
+          <div className="text-xs font-bold text-[var(--app-text)] truncate">
+            {target.name}
+          </div>
+          <div className="text-[10px] text-[var(--app-text-tertiary)]">
+            backed by {backers.length}
+          </div>
+        </div>
+        <div className="flex -space-x-1.5 shrink-0">
+          {backers.slice(0, 6).map((b) => (
+            <div
+              key={b.participantId}
+              className="ring-2 ring-[var(--app-surface)] rounded-full"
+            >
+              <PlayerAvatar
+                name={b.participantName}
+                color={b.avatarColor}
+                size={20}
+              />
+            </div>
+          ))}
+          {backers.length > 6 && (
+            <div className="ring-2 ring-[var(--app-surface)] rounded-full w-5 h-5 bg-[var(--app-surface-alt)] border border-[var(--app-border)] flex items-center justify-center text-[8px] font-bold text-[var(--app-text-secondary)]">
+              +{backers.length - 6}
+            </div>
+          )}
+        </div>
+        <ChevronDown
+          className={`h-3.5 w-3.5 text-[var(--app-text-tertiary)] shrink-0 transition-transform ${
+            expanded ? 'rotate-180' : ''
+          }`}
+        />
+      </button>
+
+      {expanded && (
+        <div className="px-2.5 pb-2.5 pt-1 border-t border-[var(--app-border)] bg-[var(--app-surface)]/60">
+          <div className="text-[9px] uppercase tracking-widest text-[var(--app-text-tertiary)] font-semibold mb-1.5">
+            Picked by
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {backers.map((b) => (
+              <div
+                key={b.participantId}
+                className="inline-flex items-center gap-1.5 bg-[var(--app-surface-alt)] border border-[var(--app-border)] rounded-full pl-0.5 pr-2.5 py-0.5"
+              >
+                <PlayerAvatar
+                  name={b.participantName}
+                  color={b.avatarColor}
+                  size={18}
+                />
+                <span className="text-[11px] font-semibold text-[var(--app-text)]">
+                  {b.participantName}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SelfBelieversAndKingmakers({
   predictions,
 }: {
@@ -819,47 +933,17 @@ function SelfBelieversAndKingmakers({
         ) : (
           <div className="space-y-1.5">
             {kingmakers.map((row) => (
-              <div
+              <KingmakerRow
                 key={row.target.id}
-                className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-[var(--app-surface-alt)]/40 border border-[var(--app-border)] hover:border-amber-500/30 transition-colors"
-              >
-                <PlayerAvatar
-                  name={row.target.name}
-                  color={row.target.color}
-                  size={28}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-bold text-[var(--app-text)] truncate">
-                    {row.target.name}
-                  </div>
-                  <div className="text-[10px] text-[var(--app-text-tertiary)]">
-                    backed by {row.backers.length}
-                  </div>
-                </div>
-                <ChevronRight className="h-3.5 w-3.5 text-[var(--app-text-tertiary)] shrink-0" />
-                <div className="flex -space-x-1.5 shrink-0">
-                  {row.backers.slice(0, 6).map((b) => (
-                    <div
-                      key={b.participantId}
-                      className="ring-2 ring-[var(--app-surface)] rounded-full"
-                    >
-                      <PlayerAvatar
-                        name={b.participantName}
-                        color={b.avatarColor}
-                        size={20}
-                      />
-                    </div>
-                  ))}
-                  {row.backers.length > 6 && (
-                    <div className="ring-2 ring-[var(--app-surface)] rounded-full w-5 h-5 bg-[var(--app-surface-alt)] border border-[var(--app-border)] flex items-center justify-center text-[8px] font-bold text-[var(--app-text-secondary)]">
-                      +{row.backers.length - 6}
-                    </div>
-                  )}
-                </div>
-              </div>
+                target={row.target}
+                backers={row.backers}
+              />
             ))}
           </div>
         )}
+        <div className="mt-3 text-[10px] text-[var(--app-text-tertiary)] italic">
+          Click a name to see everyone who backed them.
+        </div>
       </div>
     </div>
   );
