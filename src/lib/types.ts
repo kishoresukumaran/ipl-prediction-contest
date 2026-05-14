@@ -64,21 +64,21 @@ export interface TriviaPoints {
 export interface PreTournamentPrediction {
   id?: number;
   player: string;
-  champion: string | null;
-  orange_cap: string | null;
-  purple_cap: string | null;
-  playoff_teams: string | null; // CSV of 4 team abbrs e.g. "CSK,MI,RCB,SRH"
-  table_topper: string | null;
+  champion: string | null;       // team abbr e.g. "CSK"
+  orange_cap: string | null;     // cricketer name e.g. "Virat Kohli"
+  purple_cap: string | null;     // cricketer name e.g. "Jasprit Bumrah"
+  playoff_teams: string | null;  // CSV of 4 team abbrs e.g. "CSK,MI,RCB,SRH"
+  table_topper: string | null;   // team abbr
   contest_winner: string | null; // participant_id
 }
 
 export interface PreTournamentActuals {
-  champion: string | null;
-  orange_cap: string | null;
-  purple_cap: string | null;
-  playoff_teams: string | null;
-  table_topper: string | null;
-  contest_winner: string | null;
+  champion: string | null;       // team abbr
+  orange_cap: string | null;     // cricketer name
+  purple_cap: string | null;     // cricketer name
+  playoff_teams: string | null;  // CSV of 4 team abbrs
+  table_topper: string | null;   // team abbr
+  contest_winner: string | null; // participant_id
 }
 
 export interface PreTournamentBreakdown {

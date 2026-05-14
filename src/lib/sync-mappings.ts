@@ -13,6 +13,47 @@ export const TEAM_NAME_TO_ABBR: Record<string, string> = Object.entries(TEAMS).r
 );
 
 /**
+ * Common informal abbreviations players type in the sheet that aren't the
+ * canonical 3–4 letter abbreviation. Case-insensitive — keys must be UPPERCASE.
+ * Add entries here when a sync run reports `Unknown team '<X>'` for a value
+ * that's really one of our teams.
+ */
+export const TEAM_ABBR_ALIASES: Record<string, string> = {
+  PK: 'PBKS',
+  PB: 'PBKS',
+  PUNJAB: 'PBKS',
+  BLR: 'RCB',
+  BANGALORE: 'RCB',
+  BENGALURU: 'RCB',
+  HYD: 'SRH',
+  CHE: 'CSK',
+  KOL: 'KKR',
+  MUM: 'MI',
+  DEL: 'DC',
+  LKO: 'LSG',
+  LUCKNOW: 'LSG',
+  RAJ: 'RR',
+  GUJ: 'GT',
+};
+
+/**
+ * Resolves a team value (full name, canonical abbreviation, or informal alias)
+ * to its canonical abbreviation. Returns null if the value can't be resolved.
+ *
+ * Used by the sync layer to coerce sheet values to DB-friendly abbreviations.
+ */
+export function resolveTeamAbbr(raw: string | null | undefined): string | null {
+  if (raw === null || raw === undefined) return null;
+  const trimmed = raw.toString().trim();
+  if (trimmed === '') return null;
+  const upper = trimmed.toUpperCase();
+  if (TEAM_NAME_TO_ABBR[trimmed]) return TEAM_NAME_TO_ABBR[trimmed];
+  if (Object.values(TEAM_NAME_TO_ABBR).includes(upper)) return upper;
+  if (TEAM_ABBR_ALIASES[upper]) return TEAM_ABBR_ALIASES[upper];
+  return null;
+}
+
+/**
  * Maps sheet player display names to database participant IDs
  * Includes special overrides for name mismatches
  */

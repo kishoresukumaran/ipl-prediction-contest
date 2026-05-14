@@ -76,7 +76,7 @@ export const PRE_TOURNAMENT_POINTS = {
   contestWinner: 3,
 } as const;
 
-export type PreTournamentQuestionKind = 'team' | 'teams4' | 'player';
+export type PreTournamentQuestionKind = 'team' | 'teams4' | 'player' | 'cricketer';
 
 export interface PreTournamentQuestion {
   id: string;
@@ -89,10 +89,10 @@ export interface PreTournamentQuestion {
 }
 
 export const PRE_TOURNAMENT_QUESTIONS: readonly PreTournamentQuestion[] = [
-  { id: 'champion',       emoji: '🏆', nickname: 'The Crown',       label: 'IPL Champion 2026',             field: 'champion',       kind: 'team',   points: 10 },
-  { id: 'orange_cap',     emoji: '🏏', nickname: 'Run Machine',     label: 'Orange Cap Winner (most runs)', field: 'orange_cap',     kind: 'team',   points: 5  },
-  { id: 'purple_cap',     emoji: '🎯', nickname: 'Wicket Wizard',   label: 'Purple Cap Winner (most wkts)', field: 'purple_cap',     kind: 'team',   points: 5  },
-  { id: 'playoff_teams',  emoji: '🎲', nickname: 'Fantastic Four',  label: 'Top 4 Play-off Teams',          field: 'playoff_teams',  kind: 'teams4', points: '3/6/9/15' },
-  { id: 'table_topper',   emoji: '👑', nickname: 'League Leader',   label: 'Table Topper in Play-offs',     field: 'table_topper',   kind: 'team',   points: 3  },
-  { id: 'contest_winner', emoji: '🧙', nickname: 'The Prophecy',    label: 'Our Contest Winner',            field: 'contest_winner', kind: 'player', points: 3  },
+  { id: 'champion',       emoji: '🏆', nickname: 'The Crown',       label: 'IPL Champion 2026',             field: 'champion',       kind: 'team',      points: 10 },
+  { id: 'orange_cap',     emoji: '🏏', nickname: 'Run Machine',     label: 'Orange Cap Winner (most runs)', field: 'orange_cap',     kind: 'cricketer', points: 5  },
+  { id: 'purple_cap',     emoji: '🎯', nickname: 'Wicket Wizard',   label: 'Purple Cap Winner (most wkts)', field: 'purple_cap',     kind: 'cricketer', points: 5  },
+  { id: 'playoff_teams',  emoji: '🎲', nickname: 'Fantastic Four',  label: 'Top 4 Play-off Teams',          field: 'playoff_teams',  kind: 'teams4',    points: '3/6/9/15' },
+  { id: 'table_topper',   emoji: '👑', nickname: 'League Leader',   label: 'Table Topper in Play-offs',     field: 'table_topper',   kind: 'team',      points: 3  },
+  { id: 'contest_winner', emoji: '🧙', nickname: 'The Prophecy',    label: 'Our Contest Winner',            field: 'contest_winner', kind: 'player',    points: 3  },
 ] as const;

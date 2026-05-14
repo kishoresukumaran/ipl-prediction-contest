@@ -20,8 +20,8 @@ CREATE TABLE IF NOT EXISTS pre_tournament_predictions (
   id              BIGSERIAL PRIMARY KEY,
   player          TEXT        NOT NULL UNIQUE,        -- sheet display name e.g. "Kishore"
   champion        TEXT,                                -- team abbr e.g. "CSK"
-  orange_cap      TEXT,                                -- team abbr
-  purple_cap      TEXT,                                -- team abbr
+  orange_cap      TEXT,                                -- cricketer name e.g. "Virat Kohli"
+  purple_cap      TEXT,                                -- cricketer name e.g. "Jasprit Bumrah"
   playoff_teams   TEXT,                                -- CSV of 4 team abbrs e.g. "CSK,MI,RCB,SRH"
   table_topper    TEXT,                                -- team abbr
   contest_winner  TEXT,                                -- participant_id e.g. "kishore"
@@ -37,11 +37,11 @@ CREATE INDEX IF NOT EXISTS idx_pre_tournament_predictions_player
 -- =============================================================
 CREATE TABLE IF NOT EXISTS pre_tournament_actuals (
   id              INTEGER PRIMARY KEY DEFAULT 1,
-  champion        TEXT,
-  orange_cap      TEXT,
-  purple_cap      TEXT,
+  champion        TEXT,                                -- team abbr
+  orange_cap      TEXT,                                -- cricketer name
+  purple_cap      TEXT,                                -- cricketer name
   playoff_teams   TEXT,                                -- CSV of 4 team abbrs
-  table_topper    TEXT,
+  table_topper    TEXT,                                -- team abbr
   contest_winner  TEXT,                                -- participant_id
   updated_at      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT pre_tournament_actuals_singleton CHECK (id = 1)

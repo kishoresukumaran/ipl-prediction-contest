@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { TEAM_NAME_TO_ABBR, resolvePlayerId, resolveMatchType } from '@/lib/sync-mappings';
+import { resolveTeamAbbr, resolvePlayerId, resolveMatchType } from '@/lib/sync-mappings';
 
 // Allow this serverless function up to 60s. The previous per-row sequential
 // upsert approach blew past Vercel's default 10s window with ~600+ predictions.
@@ -125,8 +125,9 @@ export async function POST(request: NextRequest) {
       pre_tournament: { predictions_upserted: 0, actuals_updated: 0 },
     };
 
-    // Helper: resolve a team value (full name OR abbreviation) -> abbr.
-    // Returns null and pushes an error if it can't resolve a non-empty value.
+    // Helper: resolve a team value (full name, canonical abbreviation, or
+    // informal alias e.g. "PK" -> "PBKS") to its canonical DB abbreviation.
+    // Returns null and pushes an error if a non-empty value can't be resolved.
     const resolveTeam = (
       raw: string | null | undefined,
       ctx: string
@@ -134,11 +135,21 @@ export async function POST(request: NextRequest) {
       if (raw === null || raw === undefined) return null;
       const trimmed = raw.toString().trim();
       if (trimmed === '') return null;
-      const upper = trimmed.toUpperCase();
-      if (TEAM_NAME_TO_ABBR[trimmed]) return TEAM_NAME_TO_ABBR[trimmed];
-      if (Object.values(TEAM_NAME_TO_ABBR).includes(upper)) return upper;
+      const resolved = resolveTeamAbbr(trimmed);
+      if (resolved) return resolved;
       errors.push(`Unknown team '${raw}' in ${ctx}`);
       return null;
+    };
+
+    // Helper: pass a free-text value through unchanged (just trim + null
+    // normalize). Used for sheet columns that hold non-team values like
+    // cricketer names (orange_cap / purple_cap).
+    const passthroughText = (
+      raw: string | null | undefined
+    ): string | null => {
+      if (raw === null || raw === undefined) return null;
+      const trimmed = raw.toString().trim();
+      return trimmed === '' ? null : trimmed;
     };
 
     const resolvePlayoffCsv = (
@@ -180,22 +191,24 @@ export async function POST(request: NextRequest) {
         if (winner.toLowerCase() === 'abandoned') {
           winnerAbbr = 'ABANDONED';
         } else {
-          winnerAbbr = TEAM_NAME_TO_ABBR[winner];
-          if (!winnerAbbr) {
+          const resolved = resolveTeamAbbr(winner);
+          if (!resolved) {
             errors.push(`Unknown team: '${winner}' for match ${id}`);
             summary.matches.skipped++;
             continue;
           }
+          winnerAbbr = resolved;
         }
 
         let underdogAbbr: string | null = null;
         if (underdog_team && underdog_team.trim() !== '') {
-          underdogAbbr = TEAM_NAME_TO_ABBR[underdog_team];
-          if (!underdogAbbr) {
+          const resolved = resolveTeamAbbr(underdog_team);
+          if (!resolved) {
             errors.push(`Unknown underdog team: '${underdog_team}' for match ${id}`);
             summary.matches.skipped++;
             continue;
           }
+          underdogAbbr = resolved;
         }
 
         const resolvedMatchType = match_type ? resolveMatchType(match_type) : undefined;
@@ -282,11 +295,12 @@ export async function POST(request: NextRequest) {
         if (predictionTrimmed.toLowerCase() === 'abandoned') {
           predictedTeamAbbr = 'ABANDONED';
         } else {
-          predictedTeamAbbr = TEAM_NAME_TO_ABBR[predictionTrimmed];
-          if (!predictedTeamAbbr) {
+          const resolved = resolveTeamAbbr(predictionTrimmed);
+          if (!resolved) {
             errors.push(`Unknown team: '${predictionTrimmed}' predicted by ${player} in match ${match_id}`);
             continue;
           }
+          predictedTeamAbbr = resolved;
         }
 
         const k = toKey({ match_id, participant_id: participantId });
@@ -512,8 +526,10 @@ export async function POST(request: NextRequest) {
 
         const ctx = `pre_tournament(${player})`;
         const champion = resolveTeam(row.champion, ctx);
-        const orange_cap = resolveTeam(row.orange_cap, ctx);
-        const purple_cap = resolveTeam(row.purple_cap, ctx);
+        // orange_cap & purple_cap hold cricketer names (e.g. "Virat Kohli"),
+        // not team abbreviations — store as free text.
+        const orange_cap = passthroughText(row.orange_cap);
+        const purple_cap = passthroughText(row.purple_cap);
         const table_topper = resolveTeam(row.table_topper, ctx);
         const playoff_teams = resolvePlayoffCsv(row.playoff_teams, ctx);
 
@@ -564,12 +580,12 @@ export async function POST(request: NextRequest) {
         if (v !== null || a.champion === null || a.champion === '') updateData.champion = v;
       }
       if (a.orange_cap !== undefined) {
-        const v = resolveTeam(a.orange_cap, ctx);
-        if (v !== null || a.orange_cap === null || a.orange_cap === '') updateData.orange_cap = v;
+        // Cricketer name, not a team — store as free text.
+        updateData.orange_cap = passthroughText(a.orange_cap);
       }
       if (a.purple_cap !== undefined) {
-        const v = resolveTeam(a.purple_cap, ctx);
-        if (v !== null || a.purple_cap === null || a.purple_cap === '') updateData.purple_cap = v;
+        // Cricketer name, not a team — store as free text.
+        updateData.purple_cap = passthroughText(a.purple_cap);
       }
       if (a.table_topper !== undefined) {
         const v = resolveTeam(a.table_topper, ctx);
