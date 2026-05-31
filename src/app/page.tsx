@@ -111,6 +111,11 @@ function SkeletonCard() {
   );
 }
 
+// In-memory guard: persists across client-side route changes (so navigating
+// back to Home won't replay the burst) but resets on a full document reload
+// (refresh / new tab), which re-fires the celebration.
+let hasFiredCelebration = false;
+
 export default function Home() {
   const [matches, setMatches] = useState<Match[] | null>(null);
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardResponse | null>(null);
@@ -185,14 +190,13 @@ export default function Home() {
 
   useEffect(() => {
     if (!isTournamentComplete) return;
-    const KEY = 'ipl-celebration-2026';
     if (typeof window === 'undefined') return;
-    if (sessionStorage.getItem(KEY)) return;
+    if (hasFiredCelebration) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      sessionStorage.setItem(KEY, '1');
+      hasFiredCelebration = true;
       return;
     }
-    sessionStorage.setItem(KEY, '1');
+    hasFiredCelebration = true;
 
     let cancelled = false;
     const timers: ReturnType<typeof setTimeout>[] = [];
