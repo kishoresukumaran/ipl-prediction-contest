@@ -6,6 +6,7 @@ import { Trophy, Calendar, Clock, ChevronRight, TrendingUp, Zap, Star, Target, L
 import { TEAMS, PARTICIPANTS } from '@/lib/constants';
 import { matchTimeToIrish, matchDateTimeUTC } from '@/lib/utils';
 import { Match, PlayerPointsBreakdown } from '@/lib/types';
+import TournamentCompleteBanner from '@/components/dashboard/TournamentCompleteBanner';
 
 interface LeaderboardEntry extends PlayerPointsBreakdown {
   avatarColor: string;
@@ -179,6 +180,46 @@ export default function Home() {
   const totalMatches = leaderboardData?.totalMatches || 0;
   const completedCount = leaderboardData?.completedMatches || 0;
   const progressPct = totalMatches > 0 ? (completedCount / totalMatches) * 100 : 0;
+  const isTournamentComplete = !loading && totalMatches > 0 && completedCount === totalMatches;
+  const podium = leaderboard.filter((p) => (p.rank || 0) >= 1 && (p.rank || 0) <= 3);
+
+  useEffect(() => {
+    if (!isTournamentComplete) return;
+    const KEY = 'ipl-celebration-2026';
+    if (typeof window === 'undefined') return;
+    if (sessionStorage.getItem(KEY)) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      sessionStorage.setItem(KEY, '1');
+      return;
+    }
+    sessionStorage.setItem(KEY, '1');
+
+    let cancelled = false;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    import('canvas-confetti').then(({ default: confetti }) => {
+      if (cancelled) return;
+      const colors = ['#fbbf24', '#f97316', '#ef4444', '#6366f1', '#14b8a6'];
+      const fire = (originX: number) =>
+        confetti({
+          particleCount: 60,
+          spread: 70,
+          startVelocity: 45,
+          origin: { x: originX, y: 0.6 },
+          colors,
+          disableForReducedMotion: true,
+          zIndex: 9999,
+        });
+      fire(0.5);
+      timers.push(setTimeout(() => fire(0.15), 250));
+      timers.push(setTimeout(() => fire(0.85), 450));
+      timers.push(setTimeout(() => fire(0.5), 700));
+    });
+
+    return () => {
+      cancelled = true;
+      timers.forEach(clearTimeout);
+    };
+  }, [isTournamentComplete]);
 
   return (
     <div className="px-4 py-6 max-w-lg mx-auto space-y-6">
@@ -199,6 +240,11 @@ export default function Home() {
           {PARTICIPANTS.length} players competing across {totalMatches} matches
         </p>
       </div>
+
+      {/* Tournament Complete Celebration */}
+      {isTournamentComplete && podium.length > 0 && (
+        <TournamentCompleteBanner winners={podium} />
+      )}
 
       {/* Tournament Progress */}
       {!loading && totalMatches > 0 && (
