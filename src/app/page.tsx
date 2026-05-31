@@ -243,7 +243,7 @@ export default function Home() {
 
       {/* Tournament Complete Celebration */}
       {isTournamentComplete && podium.length > 0 && (
-        <TournamentCompleteBanner winners={podium} />
+        <TournamentCompleteBanner winners={podium} participantCount={PARTICIPANTS.length} />
       )}
 
       {/* Tournament Progress */}

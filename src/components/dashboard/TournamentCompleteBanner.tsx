@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Trophy, PartyPopper } from 'lucide-react';
+import { Trophy, PartyPopper, Heart } from 'lucide-react';
 
 interface WinnerEntry {
   participantId: string;
@@ -17,9 +17,18 @@ const MEDAL: Record<number, { ring: string; badge: string; label: string }> = {
   3: { ring: 'ring-amber-700/70', badge: 'bg-amber-700 text-white', label: '3rd' },
 };
 
-export default function TournamentCompleteBanner({ winners }: { winners: WinnerEntry[] }) {
+export default function TournamentCompleteBanner({
+  winners,
+  participantCount,
+}: {
+  winners: WinnerEntry[];
+  participantCount?: number;
+}) {
   const top3 = winners.filter((w) => (w.rank || 0) >= 1 && (w.rank || 0) <= 3);
   if (top3.length === 0) return null;
+
+  const audience =
+    participantCount && participantCount > 0 ? `all ${participantCount} of you` : 'every one of you';
 
   return (
     <div className="relative overflow-hidden rounded-xl border border-amber-400/40 bg-gradient-to-br from-amber-500/20 via-orange-500/15 to-red-500/10 p-4 shadow-sm">
@@ -72,6 +81,25 @@ export default function TournamentCompleteBanner({ winners }: { winners: WinnerE
             </Link>
           );
         })}
+      </div>
+
+      <div className="mt-3 border-t border-amber-400/20 pt-3">
+        <div className="mb-1.5 flex items-center justify-center">
+          <Heart className="h-3.5 w-3.5 text-red-400" />
+        </div>
+        <div className="space-y-2 text-center text-xs leading-relaxed text-[var(--app-text-secondary)] sm:text-sm">
+          <p>
+            Thank you to {audience} for making Season 2026 unforgettable. Win or lose, every
+            prediction made this more fun &mdash; and in this league, everyone&apos;s a winner.
+          </p>
+          <p>
+            But honestly, the scores were only half the story. It was the non-stop group chats, the
+            bold calls, the friendly banter and the nail-biting debates that kept every one of us
+            hooked till the final ball. That buzz is exactly why so many of us finished neck-and-neck.
+            More than a contest, this season brought us closer as a group &mdash; and that&apos;s the
+            real win. See you next season!
+          </p>
+        </div>
       </div>
     </div>
   );
